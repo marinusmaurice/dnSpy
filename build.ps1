@@ -7,6 +7,14 @@ $configuration = 'Release'
 $net_baseoutput = "dnSpy\dnSpy\bin\$configuration"
 $apphostpatcher_dir = "Build\AppHostPatcher"
 
+# Antivirus scanners sometimes briefly lock newly built files, so retry file moves/renames
+function Invoke-WithRetry([scriptblock]$action) {
+	for ($i = 1; ; $i++) {
+		try { & $action; return }
+		catch { if ($i -ge 10) { throw }; Start-Sleep -Seconds 1 }
+	}
+}
+
 #
 # The reason we don't use dotnet build is that dotnet build doesn't support COM references yet https://github.com/dnSpy/dnSpy/issues/1053
 #
@@ -26,13 +34,13 @@ function Build-NetFramework {
 	}
 
 	# move all files to a bin sub dir but keep the exe files
-	Rename-Item $outdir bin
+	Invoke-WithRetry { Rename-Item $outdir bin }
 	New-Item -ItemType Directory $outdir > $null
-	Move-Item $net_baseoutput\bin $outdir
+	Invoke-WithRetry { Move-Item $net_baseoutput\bin $outdir }
 	foreach ($filename in 'dnSpy-x86.exe', 'dnSpy-x86.exe.config', 'dnSpy-x86.pdb',
 			 'dnSpy.exe', 'dnSpy.exe.config', 'dnSpy.pdb',
 			 'dnSpy.Console.exe', 'dnSpy.Console.exe.config', 'dnSpy.Console.pdb') {
-		Move-Item $outdir\bin\$filename $outdir
+		Invoke-WithRetry { Move-Item $outdir\bin\$filename $outdir }
 	}
 }
 
@@ -56,12 +64,12 @@ function Build-Net {
 
 	# move all files to a bin sub dir but keep the exe apphosts
 	$tmpbin = 'tmpbin'
-	Rename-Item $publishDir $tmpbin
+	Invoke-WithRetry { Rename-Item $publishDir $tmpbin }
 	New-Item -ItemType Directory $publishDir > $null
-	Move-Item $outdir\$tmpbin $publishDir
-	Rename-Item $publishDir\$tmpbin bin
+	Invoke-WithRetry { Move-Item $outdir\$tmpbin $publishDir }
+	Invoke-WithRetry { Rename-Item $publishDir\$tmpbin bin }
 	foreach ($exe in 'dnSpy.exe', 'dnSpy.Console.exe') {
-		Move-Item $publishDir\bin\$exe $publishDir
+		Invoke-WithRetry { Move-Item $publishDir\bin\$exe $publishDir }
 		& $apphostpatcher_dir\bin\$configuration\$netframework_tfm\AppHostPatcher.exe $publishDir\$exe -d bin
 		if ($LASTEXITCODE) { exit $LASTEXITCODE }
 	}
