@@ -21,7 +21,9 @@ using System;
 using System.ComponentModel;
 using System.Globalization;
 using System.IO;
+#if NETFRAMEWORK
 using System.Runtime.Serialization.Formatters.Binary;
+#endif
 using dnlib.DotNet.Resources;
 using dnSpy.Contracts.DnSpy.Properties;
 
@@ -70,13 +72,19 @@ namespace dnSpy.Contracts.Documents.TreeView.Resources {
 		public static byte[] Serialize(object obj) {
 			//TODO: The asm names of the saved types are saved in the serialized data. If the current
 			//		module is eg. a .NET 2.0 asm, you should replace the versions from 4.0.0.0 to 2.0.0.0.
+#if NETFRAMEWORK
 			var formatter = new BinaryFormatter();
 			var outStream = new MemoryStream();
-#pragma warning disable SYSLIB0011
 			formatter.Serialize(outStream, obj);
-#pragma warning restore SYSLIB0011
 			return outStream.ToArray();
+#else
+			throw new PlatformNotSupportedException(BinaryFormatterNotSupportedMessage);
+#endif
 		}
+
+#if !NETFRAMEWORK
+		const string BinaryFormatterNotSupportedMessage = "BinaryFormatter isn't available on this runtime. Use the .NET Framework version of dnSpy.";
+#endif
 
 		/// <summary>
 		/// Deserializes the data
@@ -86,10 +94,12 @@ namespace dnSpy.Contracts.Documents.TreeView.Resources {
 		/// <returns></returns>
 		public static string Deserialize(byte[] data, out object? obj) {
 			try {
-#pragma warning disable SYSLIB0011
+#if NETFRAMEWORK
 				obj = new BinaryFormatter().Deserialize(new MemoryStream(data));
-#pragma warning restore SYSLIB0011
 				return string.Empty;
+#else
+				throw new PlatformNotSupportedException(BinaryFormatterNotSupportedMessage);
+#endif
 			}
 			catch (Exception ex) {
 				obj = null;

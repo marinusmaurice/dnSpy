@@ -9,22 +9,19 @@ on:
   release:
     types: released
 
-env:
-  CI_REQ_DOTNET_SDK_VER: 5.0.100
-
 jobs:
   build:
     name: Build
     runs-on: windows-latest
 
     steps:
-      - uses: actions/checkout@v2
+      - uses: actions/checkout@v4
         with:
           submodules: true
 
-      - uses: actions/setup-dotnet@v1
+      - uses: actions/setup-dotnet@v4
         with:
-          dotnet-version: ${{env.CI_REQ_DOTNET_SDK_VER}}
+          global-json-file: global.json
 
       # Build each tfm separately since building all requires too much disk space
       - name: Build dnSpy (.NET Framework)
@@ -44,7 +41,7 @@ jobs:
           $env:PATH = $msbuildPath + ';' + $env:PATH
           .\build.ps1 net-x86
           New-Item -ItemType Directory -Path C:\builtfiles -Force > $null
-          Compress-Archive -Path dnSpy\dnSpy\bin\Release\net5.0-windows\win-x86\publish\* -DestinationPath C:\builtfiles\dnSpy-net-win32.zip
+          Compress-Archive -Path dnSpy\dnSpy\bin\Release\net10.0-windows\win-x86\publish\* -DestinationPath C:\builtfiles\dnSpy-net-win32.zip
           .\clean-all.cmd
 
       - name: Build dnSpy (.NET x64)
@@ -54,24 +51,24 @@ jobs:
           $env:PATH = $msbuildPath + ';' + $env:PATH
           .\build.ps1 net-x64
           New-Item -ItemType Directory -Path C:\builtfiles -Force > $null
-          Compress-Archive -Path dnSpy\dnSpy\bin\Release\net5.0-windows\win-x64\publish\* -DestinationPath C:\builtfiles\dnSpy-net-win64.zip
+          Compress-Archive -Path dnSpy\dnSpy\bin\Release\net10.0-windows\win-x64\publish\* -DestinationPath C:\builtfiles\dnSpy-net-win64.zip
           .\clean-all.cmd
 
-      - uses: actions/upload-artifact@v2
+      - uses: actions/upload-artifact@v4
         if: github.ref == 'refs/heads/master' || startsWith(github.ref, 'refs/tags/')
         with:
           name: dnSpy-netframework
           path: C:\builtfiles\dnSpy-netframework.zip
           if-no-files-found: error
 
-      - uses: actions/upload-artifact@v2
+      - uses: actions/upload-artifact@v4
         if: github.ref == 'refs/heads/master' || startsWith(github.ref, 'refs/tags/')
         with:
           name: dnSpy-net-win32
           path: C:\builtfiles\dnSpy-net-win32.zip
           if-no-files-found: error
 
-      - uses: actions/upload-artifact@v2
+      - uses: actions/upload-artifact@v4
         if: github.ref == 'refs/heads/master' || startsWith(github.ref, 'refs/tags/')
         with:
           name: dnSpy-net-win64
@@ -80,7 +77,7 @@ jobs:
 
       # Create a new release: create a tag, then 'git push origin <tagname>', wait for it to build
       - name: Create a new GitHub release if a new tag is pushed
-        uses: softprops/action-gh-release@b28d815 #@v1
+        uses: softprops/action-gh-release@v2
         with:
           files: |
             C:\builtfiles\dnSpy-netframework.zip

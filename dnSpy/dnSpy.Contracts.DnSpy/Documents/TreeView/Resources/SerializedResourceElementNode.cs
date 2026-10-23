@@ -20,7 +20,9 @@
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.IO;
+#if NETFRAMEWORK
 using System.Runtime.Serialization.Formatters.Binary;
+#endif
 using System.Threading;
 using dnlib.DotNet.Resources;
 using dnSpy.Contracts.Images;
@@ -92,15 +94,18 @@ namespace dnSpy.Contracts.Documents.TreeView.Resources {
 				return;
 
 			var serializedData = ((BinaryResourceData)ResourceElement.ResourceData).Data;
+#if NETFRAMEWORK
 			var formatter = new BinaryFormatter();
 			try {
-#pragma warning disable SYSLIB0011
 				deserializedData = formatter.Deserialize(new MemoryStream(serializedData));
-#pragma warning restore SYSLIB0011
 			}
 			catch {
 				return;
 			}
+#else
+			// BinaryFormatter isn't available on .NET 9+, leave it serialized (deserializedData stays null)
+			_ = serializedData;
+#endif
 			if (deserializedData is null)
 				return;
 
