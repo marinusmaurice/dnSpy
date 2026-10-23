@@ -51,6 +51,17 @@ namespace dnSpy.Decompiler.MSBuild {
 			};
 			if (projectVersion == ProjectVersion.VS2005)
 				settings.OmitXmlDeclaration = true;
+
+			// .NET Core / .NET / .NET Standard projects only build if they're SDK-style projects
+			if (projectVersion >= ProjectVersion.VS2017 && GetSdkTargetFramework(TargetFrameworkInfo.Create(project.Module)) is string sdkTargetFramework) {
+				settings.OmitXmlDeclaration = true;
+				using (var writer = XmlWriter.Create(project.Filename, settings)) {
+					project.Platform = GetPlatformString();
+					WriteSdkStyle(writer, sdkTargetFramework);
+				}
+				return;
+			}
+
 			using (var writer = XmlWriter.Create(project.Filename, settings)) {
 				project.Platform = GetPlatformString();
 
@@ -225,6 +236,141 @@ namespace dnSpy.Decompiler.MSBuild {
 			}
 		}
 
+		// Returns the TargetFramework of an SDK-style project or null if it must be an old style project
+		static string? GetSdkTargetFramework(TargetFrameworkInfo fwkInfo) {
+			if (!System.Version.TryParse(fwkInfo.Version, out var version))
+				return null;
+			var ver = version.Major.ToString() + "." + Math.Max(version.Minor, 0).ToString();
+			switch (fwkInfo.Framework) {
+			case ".NETCoreApp":
+				return version.Major >= 5 ? "net" + ver : "netcoreapp" + ver;
+			case ".NETStandard":
+				return "netstandard" + ver;
+			default:
+				return null;
+			}
+		}
+
+		const string WpfProjectTypeGuid = "60DC8134-EBA5-43B8-BCC9-BB4BC16C2548";
+
+		void WriteSdkStyle(XmlWriter writer, string targetFramework) {
+			bool useWPF = project.ProjectTypeGuids.Contains(new Guid(WpfProjectTypeGuid));
+			bool useWinForms = project.Files.Any(a => a is WinFormsProjectFile) ||
+				project.Module.GetAssemblyRefs().Any(a => a.Name == "System.Windows.Forms");
+			// WPF/WinForms need a Windows TFM on .NET 5+
+			if ((useWPF || useWinForms) && targetFramework.StartsWith("net") && !targetFramework.StartsWith("netcoreapp") && !targetFramework.StartsWith("netstandard"))
+				targetFramework += "-windows";
+
+			writer.WriteStartElement("Project");
+			writer.WriteAttributeString("Sdk", "Microsoft.NET.Sdk");
+
+			writer.WriteStartElement("PropertyGroup");
+			writer.WriteElementString("TargetFramework", targetFramework);
+			writer.WriteElementString("OutputType", GetOutputType());
+			writer.WriteElementString("RootNamespace", GetRootNamespace());
+			var asmName = GetAssemblyName();
+			if (!string.IsNullOrEmpty(asmName))
+				writer.WriteElementString("AssemblyName", asmName);
+			// All files are listed below and the decompiled AssemblyInfo file has the assembly attributes
+			writer.WriteElementString("EnableDefaultItems", "false");
+			writer.WriteElementString("GenerateAssemblyInfo", "false");
+			writer.WriteElementString("GenerateTargetFrameworkAttribute", "false");
+			writer.WriteElementString("LangVersion", "latest");
+			if (project.Platform != "AnyCPU")
+				writer.WriteElementString("PlatformTarget", project.Platform);
+			if (useWPF)
+				writer.WriteElementString("UseWPF", "true");
+			if (useWinForms)
+				writer.WriteElementString("UseWindowsForms", "true");
+			if (project.AllowUnsafeBlocks)
+				writer.WriteElementString("AllowUnsafeBlocks", "true");
+			var noWarnList = GetNoWarnList();
+			if (noWarnList is not null)
+				writer.WriteElementString("NoWarn", noWarnList);
+			if (project.ApplicationManifest is not null)
+				writer.WriteElementString("ApplicationManifest", GetRelativePath(project.ApplicationManifest.Filename));
+			if (project.ApplicationIcon is not null)
+				writer.WriteElementString("ApplicationIcon", GetRelativePath(project.ApplicationIcon.Filename));
+			if (project.StartupObject is not null)
+				writer.WriteElementString("StartupObject", project.StartupObject);
+			writer.WriteEndElement();
+
+			// References that aren't part of the framework (the SDK adds those)
+			var refs = new List<(string name, string? hintPath)>();
+			var hash = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
+			foreach (var r in project.Module.GetAssemblyRefs().OrderBy(a => a.Name.String, StringComparer.OrdinalIgnoreCase)) {
+				var asm = project.Module.Context.AssemblyResolver.Resolve(r, project.Module);
+				if (asm is not null && ExistsInProject(asm.ManifestModule.Location))
+					continue;
+				if (IsFrameworkAssembly(r, asm))
+					continue;
+				if (hash.Add(r.Name))
+					refs.Add((r.Name, GetHintPath(asm)));
+			}
+			if (refs.Count > 0) {
+				writer.WriteStartElement("ItemGroup");
+				foreach (var (name, hintPath) in refs) {
+					writer.WriteStartElement("Reference");
+					writer.WriteAttributeString("Include", IdentifierEscaper.Escape(name));
+					if (hintPath is not null)
+						writer.WriteElementString("HintPath", hintPath);
+					writer.WriteEndElement();
+				}
+				writer.WriteEndElement();
+			}
+
+			Write(writer, BuildAction.Compile);
+			Write(writer, BuildAction.EmbeddedResource);
+
+			var projRefs = project.Module.GetAssemblyRefs().
+				Select(a => project.Module.Context.AssemblyResolver.Resolve(a, project.Module)).
+				Select(a => a is null ? null : FindOtherProject(a.ManifestModule.Location)).
+				OfType<Project>().OrderBy(a => a.Filename, StringComparer.OrdinalIgnoreCase).ToArray();
+			if (projRefs.Length > 0) {
+				writer.WriteStartElement("ItemGroup");
+				foreach (var otherProj in projRefs) {
+					writer.WriteStartElement("ProjectReference");
+					writer.WriteAttributeString("Include", GetRelativePath(otherProj.Filename));
+					writer.WriteEndElement();
+				}
+				writer.WriteEndElement();
+			}
+
+			Write(writer, BuildAction.None);
+			Write(writer, BuildAction.ApplicationDefinition);
+			Write(writer, BuildAction.Page);
+			Write(writer, BuildAction.Resource);
+			Write(writer, BuildAction.SplashScreen);
+
+			writer.WriteEndElement();
+		}
+
+		static readonly HashSet<string> frameworkPublicKeyTokens = new HashSet<string>(StringComparer.OrdinalIgnoreCase) {
+			"b77a5c561934e089", "b03f5f7f11d50a3a", "31bf3856ad364e35", "cc7b13ffcd2ddd51", "7cec85d7bea7798e",
+		};
+
+		static bool IsFrameworkAssembly(AssemblyRef asmRef, AssemblyDef? asm) {
+			if (asm is not null) {
+				var location = asm.ManifestModule.Location;
+				if (!string.IsNullOrEmpty(location)) {
+					var dir = location.Replace('/', '\\');
+					// Shared framework dirs and reference packs: ...\dotnet\shared\Microsoft.NETCore.App\10.0.0\ and ...\dotnet\packs\...
+					if (dir.IndexOf(@"\dotnet\shared\", StringComparison.OrdinalIgnoreCase) >= 0 || dir.IndexOf(@"\dotnet\packs\", StringComparison.OrdinalIgnoreCase) >= 0)
+						return true;
+				}
+			}
+			// Unresolved or self-contained app (framework files in the app dir)
+			var token = asmRef.PublicKeyOrToken?.Token?.ToString();
+			if (token is null || !frameworkPublicKeyTokens.Contains(token))
+				return false;
+			string name = asmRef.Name;
+			return name == "mscorlib" || name == "netstandard" || name == "WindowsBase" ||
+				name.StartsWith("System.", StringComparison.Ordinal) || name == "System" ||
+				name.StartsWith("Microsoft.Win32.", StringComparison.Ordinal) || name.StartsWith("Microsoft.VisualBasic", StringComparison.Ordinal) ||
+				name.StartsWith("Presentation", StringComparison.Ordinal) || name.StartsWith("UIAutomation", StringComparison.Ordinal) ||
+				name == "Microsoft.CSharp" || name == "WindowsFormsIntegration" || name == "ReachFramework";
+		}
+
 		static string GetRelativePath(string sourceDir, string destFile) {
 			var s = FilenameUtils.GetRelativePath(sourceDir, destFile);
 			if (Path.DirectorySeparatorChar != '\\')
@@ -288,6 +434,8 @@ namespace dnSpy.Decompiler.MSBuild {
 			case ProjectVersion.VS2015: return "14.0";
 			case ProjectVersion.VS2017: return "15.0";
 			case ProjectVersion.VS2019: return "15.0";
+			case ProjectVersion.VS2022: return "Current";
+			case ProjectVersion.VS2026: return "Current";
 			default: throw new InvalidOperationException();
 			}
 		}

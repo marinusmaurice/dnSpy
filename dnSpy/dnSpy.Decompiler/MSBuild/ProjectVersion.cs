@@ -28,5 +28,8 @@ namespace dnSpy.Decompiler.MSBuild {
 		VS2015,
 		VS2017,
 		VS2019,
+		// Only add new versions at the end: the value is saved in the settings file
+		VS2022,
+		VS2026,
 	}
 }

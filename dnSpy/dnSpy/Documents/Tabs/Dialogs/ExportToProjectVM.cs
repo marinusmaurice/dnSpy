@@ -250,7 +250,7 @@ namespace dnSpy.Documents.Tabs.Dialogs {
 			createResX = true;
 			decompileXaml = canDecompileBaml;
 			createSolution = true;
-			ProjectVersionVM.SelectedItem = ProjectVersion.VS2010;
+			ProjectVersionVM.SelectedItem = ProjectVersion.VS2026;
 			allDecompilers = new ObservableCollection<DecompilerVM>(decompilerService.AllDecompilers.Where(a => a.ProjectFileExtension is not null).Select(a => new DecompilerVM(a)));
 			decompiler = allDecompilers.First();
 			isIndeterminate = false;

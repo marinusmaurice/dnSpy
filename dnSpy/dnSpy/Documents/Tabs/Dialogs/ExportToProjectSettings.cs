@@ -39,7 +39,7 @@ namespace dnSpy.Documents.Tabs.Dialogs {
 				}
 			}
 		}
-		ProjectVersion projectVersion = ProjectVersion.VS2010;
+		ProjectVersion projectVersion = ProjectVersion.VS2026;
 	}
 
 	[Export(typeof(IExportToProjectSettings))]

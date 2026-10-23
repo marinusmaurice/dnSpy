@@ -38,6 +38,9 @@ namespace dnSpy.Decompiler.ILSpy.Core.CSharp {
 						Compare(ca.AttributeType, systemSecurityString, unverifiableCodeAttributeString) ||
 						Compare(ca.AttributeType, systemRuntimeCompilerServicesyString, compilationRelaxationsAttributeString) ||
 						Compare(ca.AttributeType, systemRuntimeCompilerServicesyString, runtimeCompatibilityAttributeString) ||
+						// Reserved for compiler usage (CS8335), the compiler adds them
+						Compare(ca.AttributeType, systemRuntimeCompilerServicesyString, refSafetyRulesAttributeString) ||
+						Compare(ca.AttributeType, systemRuntimeCompilerServicesyString, nullablePublicOnlyAttributeString) ||
 						Compare(ca.AttributeType, systemDiagnosticsString, debuggableAttributeString);
 				}
 				if (!remove && attr.Annotation<SecurityAttribute>() is SecurityAttribute)
@@ -53,6 +56,8 @@ namespace dnSpy.Decompiler.ILSpy.Core.CSharp {
 		static readonly UTF8String systemRuntimeCompilerServicesyString = new UTF8String("System.Runtime.CompilerServices");
 		static readonly UTF8String compilationRelaxationsAttributeString = new UTF8String("CompilationRelaxationsAttribute");
 		static readonly UTF8String runtimeCompatibilityAttributeString = new UTF8String("RuntimeCompatibilityAttribute");
+		static readonly UTF8String refSafetyRulesAttributeString = new UTF8String("RefSafetyRulesAttribute");
+		static readonly UTF8String nullablePublicOnlyAttributeString = new UTF8String("NullablePublicOnlyAttribute");
 		static readonly UTF8String systemDiagnosticsString = new UTF8String("System.Diagnostics");
 		static readonly UTF8String debuggableAttributeString = new UTF8String("DebuggableAttribute");
 

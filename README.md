@@ -65,6 +65,7 @@ To debug Unity games, you need this repo too: https://github.com/dnSpy/dnSpy-Uni
 - Fixed: *Prevent managed debugger detection* didn't hide the debugger from .NET 10 processes (`Debugger.IsAttached`/`IsLogging` became QCalls) and never patched `Debugger.Launch` on .NET 5+. QCalls are now found and patched too.
 - Updated libraries: dnlib 4.5.0 (fixes `IEnumerable<!0>` in decompiled code; resources keep their reader type when edited), Iced 1.21.0, Ookii.Dialogs.Wpf 5.0.1, Newtonsoft.Json 13.0.4 and MSBuild 17.14 packages for the build tools (both fix known-vulnerability warnings). `app.config` redirects old dnlib/Ookii versions so existing extensions keep loading.
 - VS-MEF 17.13 and ClrMD 3.1. The .NET Framework build now uses System.Collections.Immutable / System.Reflection.Metadata / System.Composition 8.0 (binding redirects updated; Roslyn 2.10 verified on them).
+- Export to Project: VS 2022 and VS 2026 options (VS 2026 is the new default). .NET Core / .NET 5+ / .NET Standard assemblies are exported as SDK-style projects (`net10.0`, `netstandard2.0`, `net10.0-windows` + `UseWPF`/`UseWindowsForms`); before, they got old-style projects that couldn't build. .NET Framework assemblies still get classic projects. Compiler-reserved attributes (`RefSafetyRules`, `NullablePublicOnly`) and compiler-synthesized types (`[Embedded]`) are no longer exported (they broke the build with CS8335).
 - Serialized images in resources are read with `System.Formats.Nrbf` on .NET (no type loading)
 - Only the app projects are self-contained when publishing (build output went from >10 GB to about 2 GB)
 - `build.ps1` retries file moves that antivirus scanners briefly lock
@@ -83,6 +84,7 @@ To debug Unity games, you need this repo too: https://github.com/dnSpy/dnSpy-Uni
 | Iced 1.21 update: native `IsDebuggerPresent`/`CheckRemoteDebuggerPresent` hooks in all 26 attach combinations | ✅ |
 | ClrMD 3.1 (threads, IP → method, method table → type) against .NET Core 3.1, .NET 5–10 and .NET Framework 4.8, x86 and x64 | ✅ 13/13 |
 | GitHub Actions CI: .NET Framework, .NET x86 and .NET x64 builds | ✅ |
+| Export to Project (`--vs 2026`): .NET 10 app + netstandard2.0 library + NuGet reference + .NET Framework 4.8 app in one solution, and a .NET 10 WinForms/WPF app. Exported solutions build with MSBuild and the programs print the same output as the originals | ✅ |
 
 Not tested yet: the disassembly window and the folder picker after the Iced/Ookii updates, launching under the debugger from the .NET Framework and x86 builds, .NET Core 2.x targets, Unity/Mono debugging, `build.ps1 -NoMsbuild`.
 

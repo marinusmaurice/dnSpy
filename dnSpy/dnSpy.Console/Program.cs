@@ -177,7 +177,7 @@ namespace dnSpy_Console {
 		int mdToken;
 		int spaces;
 		string? typeName;
-		ProjectVersion projectVersion = ProjectVersion.VS2010;
+		ProjectVersion projectVersion = ProjectVersion.VS2026;
 		string? outputDir;
 		string slnName = "solution.sln";
 		readonly List<string> files;
@@ -343,7 +343,7 @@ namespace dnSpy_Console {
 			new UsageInfo("--no-baml", null, dnSpy_Console_Resources.CmdLineDescription_NoBAML),
 			new UsageInfo("--no-color", null, dnSpy_Console_Resources.CmdLineDescription_NoColor),
 			new UsageInfo("--spaces", "N", dnSpy_Console_Resources.CmdLineDescription_Spaces),
-			new UsageInfo("--vs", "N", string.Format(dnSpy_Console_Resources.CmdLineDescription_VSVersion, 2017)),
+			new UsageInfo("--vs", "N", string.Format(dnSpy_Console_Resources.CmdLineDescription_VSVersion, 2026)),
 			new UsageInfo("--project-guid", "N", dnSpy_Console_Resources.CmdLineDescription_ProjectGUID),
 			new UsageInfo("-t", dnSpy_Console_Resources.CmdLineName, dnSpy_Console_Resources.CmdLineDescription_Type1),
 			new UsageInfo("--type", dnSpy_Console_Resources.CmdLineName, dnSpy_Console_Resources.CmdLineDescription_Type2),
@@ -560,6 +560,8 @@ namespace dnSpy_Console {
 						case 2015: projectVersion = ProjectVersion.VS2015; break;
 						case 2017: projectVersion = ProjectVersion.VS2017; break;
 						case 2019: projectVersion = ProjectVersion.VS2019; break;
+						case 2022: projectVersion = ProjectVersion.VS2022; break;
+						case 2026: projectVersion = ProjectVersion.VS2026; break;
 						default: throw new ErrorException(string.Format(dnSpy_Console_Resources.InvalidVSVersion, vsVer));
 						}
 						break;
