@@ -61,6 +61,7 @@ To debug Unity games, you need this repo too: https://github.com/dnSpy/dnSpy-Uni
 - Fixed: with C# 14, `CustomAttributeNamedArgumentMirror.Field` (Mono debugger) always returned `null`
 - Fixed: the .NET build never applied the `IsDotNet` build settings (typo since the .NET 5 update)
 - Fixed: *Prevent managed debugger detection* didn't hide the debugger from .NET 10 processes (`Debugger.IsAttached`/`IsLogging` became QCalls) and never patched `Debugger.Launch` on .NET 5+. QCalls are now found and patched too.
+- Updated libraries: dnlib 4.5.0 (fixes `IEnumerable<!0>` in decompiled code; resources keep their reader type when edited), Iced 1.21.0, Ookii.Dialogs.Wpf 5.0.1, Newtonsoft.Json 13.0.4 and MSBuild 17.14 packages for the build tools (both fix known-vulnerability warnings). `app.config` redirects old dnlib/Ookii versions so existing extensions keep loading.
 - Serialized images in resources are read with `System.Formats.Nrbf` on .NET (no type loading)
 - Only the app projects are self-contained when publishing (build output went from >10 GB to about 2 GB)
 - `build.ps1` retries file moves that antivirus scanners briefly lock
@@ -75,8 +76,10 @@ To debug Unity games, you need this repo too: https://github.com/dnSpy/dnSpy-Uni
 | Launch under the debugger from the .NET 10 x64 build: .NET 10 and .NET Framework 4.8 apps. Break at entry point, step over/into, Locals, Watch expressions, function evaluation | ✅ |
 | Edit Method (C#) + Save Module, then run the saved app (.NET 10 and .NET Framework 4.8 targets) | ✅ |
 | Decompile with `dnSpy.Console` on .NET 10 | ✅ |
+| dnlib 4.5 update: decompiled output of 5 assemblies (4981 files) compared before/after | ✅ identical except fixed generic names |
+| Iced 1.21 update: native `IsDebuggerPresent`/`CheckRemoteDebuggerPresent` hooks in all 26 attach combinations | ✅ |
 
-Not tested yet: launching under the debugger from the .NET Framework and x86 builds, .NET Core 2.x targets, Unity/Mono debugging, `build.ps1 -NoMsbuild`, CI on GitHub.
+Not tested yet: the disassembly window and the folder picker after the Iced/Ookii updates, launching under the debugger from the .NET Framework and x86 builds, .NET Core 2.x targets, Unity/Mono debugging, `build.ps1 -NoMsbuild`, CI on GitHub.
 
 ## Known limitations
 

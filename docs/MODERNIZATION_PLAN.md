@@ -35,16 +35,18 @@ Branch: `0000_Update`. Started 2026-10-23.
 
 Each item is its own commit; build and smoke-test after each.
 
-1. dnlib 3.3.2 → 4.x (API changes: `ModuleDefMD` writer options, `CustomAttribute`, PDB). Update `app.config` binding redirects.
-2. Iced 1.9 → latest 1.x (formatter/decoder API renames).
-3. Newtonsoft.Json 12 → 13.
-4. System.ComponentModel.Composition / MS.VS.Composition: latest that still supports net48.
-5. Microsoft.Diagnostics.Runtime (ClrMD) 1.1 → 3.x. This is a big API change; it is used by the debugger.
-6. Microsoft.DiaSymReader, Ookii.Dialogs, MSBuild NuGet packages.
+1. ✅ dnlib 3.3.2 → 4.5.0. Breaks: `BinaryResourceData` needs a `SerializationFormat`, and `ResourceElementSet` has no default ctor (regenerated resources now keep their original reader type). `app.config` redirect 3.0.0.0–4.5.0.0.
+2. ✅ Iced 1.9.0 → 1.21.0 (`Memory64` → `Memory`, `MemoryDisplacement` → `MemoryDisplacement32`, `FlowControl`/`IsStackInstruction` moved to `Instruction`, `Minimum` → `Minimal`).
+3. ✅ Newtonsoft.Json 12.0.3 → 13.0.4 (build tool only; fixes NU1903).
+4. ✅ Ookii.Dialogs.Wpf 3.0.1 → 5.0.1 (`app.config` redirect 3.0.0.0–5.0.0.0).
+5. ✅ MSBuild packages for the `Build\` task projects 16.7.0 → 17.14.28 (fixes NU1904 `System.Drawing.Common` 4.7.0).
+6. ➡️ Moved to Phase 3: MS.VS.Composition 16.4 → 17.x and ClrMD 1.1 → 3.x. On net48 both need `System.Collections.Immutable` ≥ 6/8 and `System.Reflection.Metadata` 8, but Roslyn 2.10 is pinned to 1.2.3 / 1.4.3 by `app.config`. Those versions have to move together with Roslyn. ClrMD 4.x pulls in Azure.Identity, so use 3.1.x.
 7. Leave Microsoft.VisualStudio.Text 15.5 alone. It is self-contained, and newer versions pull in the VS SDK.
+8. Not done: Microsoft.DiaSymReader.Native 1.7.0 is already the latest.
 
-## Phase 3: Roslyn 2.10 → 4.x
+## Phase 3: Roslyn 2.10 → 4.x (+ the System.Collections.Immutable / System.Reflection.Metadata move)
 
+0. Move net48 to current `System.Collections.Immutable` / `System.Reflection.Metadata` and update `app.config`, then MS.VS.Composition 17.x and ClrMD 3.1.x (only `DAC\ClrDacImpl.cs` and `ClrDacProvider.cs` use ClrMD).
 1. Update the Roslyn packages (`RoslynVersion`) for the C#/VB compiler, Workspaces and scripting.
 2. Fix `dnSpy/Roslyn` (completion, quick info, classification, signature help). These use internal Roslyn APIs through `MakeEverythingPublic`, so expect breakage here.
 3. Rebase the `Roslyn.ExpressionCompiler` fork onto the matching Roslyn tag. This is the hardest item in the phase.
@@ -83,3 +85,5 @@ Each item is its own commit; build and smoke-test after each.
 | 2026-10-23 | smoke test | net10 x64 dnSpy, test app in scratchpad (`SmokeApp`, net10.0 + net48). **Debugging .NET 10 target** failed at first with "Couldn't find dbgshim.dll" (.NET 7+ runtimes don't ship it). Fixed: `Microsoft.Diagnostics.DbgShim` 10.0 NuGet copied to `debug\core\<arch>` for both TFMs, which also replaces net48's 2017 dbgshim. After that: break at entry point, step over/into, Locals, Watch `a + b * 2` and func-eval `Environment.Version` all work. **Debugging .NET Framework 4.8 target**: same checks pass. **Edit Method (C#) + Save Module**: net48 target produced a broken exe referencing `System.Private.CoreLib 5.0`, because AssemblyResolver preferred an already loaded .NET runtime `mscorlib.dll` facade (same identity) over the GAC (upstream bug, also in 6.1.8). Fixed in `AssemblyResolver.IsDotNetRuntimeDocument`; edited net48 and net10 apps now run and print the new value. Note: edited .NET modules also reference `System.Private.CoreLib` (compiled against implementation assemblies; long-standing, works). Not tested: net48 *host* after these changes, attach to process, Unity/Mono, x86 build. |
 | 2026-10-23 | attach matrix | Scripted test (scratchpad `attach-matrix.ps1`): start a target, `dnSpy.exe --multiple --pid <pid>`, wait for dnSpy's title to show "Debugging". Hosts: .NET 10 x64/x86 (`build.ps1` publish) and net48 x64/x86. Targets: .NET Core 3.1 (x86 only installed), .NET 5, 6, 8, 9, 10, .NET Framework 4.8, x64 and x86. **All 26 combinations attach.** Found: anti-debugger-detection doesn't hide `Debugger.IsAttached` on .NET 10 (added to Phase 4). `build.ps1 net-x86` failed once on a transient "access denied" (antivirus), so renames/moves are now retried. Launch-under-debugger from the net48 and x86 hosts was not tested (screen access to those builds was declined). `netcorefiles` submodule removed: nothing used it any more, and the new dbgshim covers .NET Core 3.1–.NET 10. |
 | 2026-10-23 | anti-detection | Fixed the QCall lookup above. Attach matrix rerun on all 4 hosts × 7 runtimes: after attach the target reports `IsAttached=False`, `IsLogging()=False`, `Launch()=True` and keeps running (26/26). Note: the test app must only call `Debugger.Launch()` after dnSpy has attached, otherwise Windows opens the JIT debugger prompt (happened once during testing). |
+| 2026-10-23 | 2.1 dnlib | Builds (both TFMs). Regression: decompiled 5 assemblies (dnSpy.Contracts.DnSpy, dnSpy.AsmEditor, Microsoft.CodeAnalysis.CSharp 2.10, System.Linq 10, System.Windows.Forms 4.8; 4981 files incl. extracted resources) with the build before and after. Only differences: random project GUIDs and 55 lines where dnlib 4 fixes `IEnumerable<!0>` → `IEnumerable<T>`. Edit Method + Save Module on net48 app: saved exe runs and prints the new value. |
+| 2026-10-23 | 2.2–2.5 | Iced/Newtonsoft/Ookii/MSBuild pkgs build on both TFMs (one transient MSBuild worker crash, retry passed). Attach matrix extended: the target also checks that kernel32/KernelBase `IsDebuggerPresent`/`CheckRemoteDebuggerPresent` were hooked (dnSpy decodes them with Iced) and calls them. 26/26 pass with `hooked=yes`. Not tested: disassembly window UI, Ookii folder picker UI. |
