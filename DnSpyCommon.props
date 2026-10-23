@@ -46,16 +46,21 @@
     <IcedVersion>1.21.0</IcedVersion>
     <MSBuildNuGetVersion>17.14.28</MSBuildNuGetVersion>
     <MSDiagRuntimeVersion>1.1.142101</MSDiagRuntimeVersion>
-    <MSVSCompositionVersion>16.4.11</MSVSCompositionVersion>
+    <MSVSCompositionVersion>17.13.41</MSVSCompositionVersion>
     <MSVSIntellisenseVersion>15.5.27130</MSVSIntellisenseVersion>
     <MSVSTextVersion>15.5.27130</MSVSTextVersion>
     <NewtonsoftJsonVersion>13.0.4</NewtonsoftJsonVersion>
     <OokiiDialogsWpfVersion>5.0.1</OokiiDialogsWpfVersion>
     <RoslynVersion>2.10.0</RoslynVersion>
-    <SCCompositionVersion>4.6.0</SCCompositionVersion>
+    <SCCompositionVersion>10.0.13</SCCompositionVersion>
   </PropertyGroup>
 
   <Import Project="$(MSBuildThisFileDirectory)Build\ConvertToNetstandardReferences\ConvertToNetstandardReferences.tasks" Condition=" '$(IsDotNet)' == 'true' " />
+
+  <!-- MEF attributes. .NET gets them from the System.ComponentModel.Composition package referenced by dnSpy.Contracts.DnSpy. -->
+  <ItemGroup Condition=" '$(IsDotNetFramework)' == 'true' ">
+    <Reference Include="System.ComponentModel.Composition" />
+  </ItemGroup>
 
   <!-- .NET 5.0 SDK doesn't currently support COMReference: https://github.com/dnSpy/dnSpy/issues/1053 -->
   <PropertyGroup>
