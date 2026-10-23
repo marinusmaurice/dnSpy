@@ -1,0 +1,79 @@
+# dnSpy modernization plan
+
+Branch: `0000_Update`. Started 2026-10-23.
+
+## Ground rules
+
+- **Backward compatibility:** `dnSpy.Contracts.*` is the public extension API. Changes are additive only; nothing is removed or renamed without an `[Obsolete]` period. User settings files (`dnSpy.xml`) must keep loading.
+- **Targets:** keep `net48` (the .NET Framework host) and replace `net5.0-windows` with `net10.0-windows` (current LTS). Whether to drop `net48` is decided at the end of Phase 6, not before.
+- **One phase per PR-sized chunk.** Each phase ends with a green build of both TFMs and a smoke test: start the app, open an assembly, decompile it, edit a method, and debug a hello-world app (.NET Framework + .NET 10).
+- Submodule forks (ILSpy 2.3, NRefactory, Roslyn EE, Mono.Debugger.Soft) are only touched in the phase that owns them.
+
+## Phase 0: Baseline
+
+1. Build the current tree as-is (`build.ps1 netframework`, then `net-x64`) with the SDKs and VS on this machine. Record warnings and errors.
+2. Record which smoke-test steps work today, so later regressions are measurable.
+
+## Phase 1: Toolchain and target frameworks
+
+1. Add a `global.json` that pins the .NET 10 SDK (`rollForward: latestFeature`).
+2. `DnSpyCommon.props`: change `net5.0-windows` to `net10.0-windows`.
+3. Fix the `IsDotNet` bug: line 13 sets `false` where it should set `true`. It has been there since commit 04915a693, which means the .NET build never imported ConvertToNetstandardReferences or set `CopyLocalLockFileAssemblies`/self-contained. Verify what changes when it is fixed.
+4. Re-check the COM reference workaround (`HasCOMReference`). Modern `dotnet build` supports `COMReference` for some cases, so it may be possible to drop the msbuild-only path.
+5. `build.ps1`: new TFM. Check that AppHostPatcher still works with .NET 10 apphosts. If not, replace it with the SDK's own apphost settings.
+6. Fix new compiler and analyzer errors: nullable, obsoletions (`SYSLIB*`), WPF changes.
+7. BinaryFormatter throws on .NET 9+. It is used in `dnSpy.Contracts.DnSpy/Documents/TreeView/Resources/`:
+   - `Deserializer` (shows serialized Bitmap/Icon/ImageListStreamer resources): rewrite it on `System.Formats.Nrbf`, which reads the format without loading types. Safer, and works on both TFMs (the NuGet package supports net48).
+   - `SerializationUtilities.Serialize/Deserialize` (AsmEditor: create/edit user-type resources): on net10, either use the `System.Runtime.Serialization.Formatters` compat package or show "not supported on this runtime". Decide when we get there.
+8. CI: `actions/checkout@v4`, `setup-dotnet@v4` reading `global.json`, `upload-artifact@v4`, and paths for the new TFM.
+9. Publish size: `build.ps1` passes `SelfContained=True` and the RID globally, so every project copies the whole .NET + WPF runtime into its own `bin` (needs >10 GB of disk). Make only the app projects (`dnSpy`, `dnSpy-x86`, `dnSpy.Console`) self-contained.
+10. Clean up the new net10 warnings (nullability annotations in the BCL, SYSLIB0050/0021, CA2022) and the vulnerable packages (Newtonsoft 12.0.3, System.Drawing.Common 4.7.0 in the Build tools).
+11. Re-implement "create serialized image resource" on .NET (write NRBF for Bitmap/Icon/ImageListStreamer); until then it reports "not supported on this runtime".
+12. Bump the version to 6.2.0-dev and update the copyright year.
+
+## Phase 2: Core libraries
+
+Each item is its own commit; build and smoke-test after each.
+
+1. dnlib 3.3.2 → 4.x (API changes: `ModuleDefMD` writer options, `CustomAttribute`, PDB). Update `app.config` binding redirects.
+2. Iced 1.9 → latest 1.x (formatter/decoder API renames).
+3. Newtonsoft.Json 12 → 13.
+4. System.ComponentModel.Composition / MS.VS.Composition: latest that still supports net48.
+5. Microsoft.Diagnostics.Runtime (ClrMD) 1.1 → 3.x. This is a big API change; it is used by the debugger.
+6. Microsoft.DiaSymReader, Ookii.Dialogs, MSBuild NuGet packages.
+7. Leave Microsoft.VisualStudio.Text 15.5 alone. It is self-contained, and newer versions pull in the VS SDK.
+
+## Phase 3: Roslyn 2.10 → 4.x
+
+1. Update the Roslyn packages (`RoslynVersion`) for the C#/VB compiler, Workspaces and scripting.
+2. Fix `dnSpy/Roslyn` (completion, quick info, classification, signature help). These use internal Roslyn APIs through `MakeEverythingPublic`, so expect breakage here.
+3. Rebase the `Roslyn.ExpressionCompiler` fork onto the matching Roslyn tag. This is the hardest item in the phase.
+4. Smoke test: Edit Method (C#), Edit Class, the C# Interactive window, and watch/immediate expressions in the debugger.
+
+## Phase 4: Debugger runtime support
+
+1. .NET 8/9/10 launch and attach: dbgshim from the NuGet `Microsoft.Diagnostics.DbgShim` package instead of `netcorefiles`.
+2. Update `AppHostInfoGenerator` data for new apphost versions.
+3. Mono/Unity: verify the `Mono.Debugger.Soft` fork against current Unity; update it from upstream mono/debugger-libs.
+4. Debugging memory-only and dynamic modules on new runtimes.
+
+## Phase 5: Modern ILSpy decompiler (side by side)
+
+1. **Spike (throwaway):** decompile from a dnlib `ModuleDef` with ICSharpCode.Decompiler 9.x. Approach: write the module to a memory stream, load it as a `PEFile`, and map tokens back. Prove that token-based reference highlighting and the IL offset ↔ text maps (`MethodDebugInfo`) are correct for the debugger.
+2. New extension `ILSpy9.Decompiler` implementing `IDecompiler` as a new language ("C# (ILSpy 9)"). The old 2.3-based languages stay as they are.
+3. Hook up the debugger's statement mapping, Edit Method's compilable output, and the BAML decompiler.
+4. When at parity, make it the default. Remove the old one only after a release with both.
+
+## Phase 6: Cleanup and release
+
+1. Decide whether to drop `net48`.
+2. Update translations and the README; refresh `dnSpy.Images` if needed.
+3. Release builds: signing, CI release job.
+
+## Progress log
+
+| Date | Phase.step | Result |
+|---|---|---|
+| 2026-10-23 | 0.1 | Baseline net48 builds with VS 18 MSBuild: 0 errors, 3 warnings. App starts. Found CS9258: with `LangVersion=latest` (C# 14), `CustomAttributeNamedArgumentMirror.Field` in Mono.Debugger.Soft binds to a synthesized field and always returns null. |
+| 2026-10-23 | 1.1–1.3, 1.5, 1.7, 1.8 | `global.json` (SDK 10), `net10.0-windows`, `IsDotNet` typo fixed, `LangVersion` pinned to 13.0, `build.ps1` and CI updated. BinaryFormatter: NRBF-based `Deserializer` on .NET; full (de)serialization is net48-only. net48 and net10 both build with 0 errors. |
+| 2026-10-23 | 1.5 publish | **Blocked:** `build.ps1 net-x64` runs out of disk space (only about 4 GB free). The publish and the net10 launch test have not been done. See 1.9. |
