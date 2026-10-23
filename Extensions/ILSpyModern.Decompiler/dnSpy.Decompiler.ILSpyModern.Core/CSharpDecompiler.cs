@@ -22,6 +22,7 @@ using dnlib.DotNet;
 using dnSpy.Contracts.Decompiler;
 using ICSharpCode.Decompiler.CSharp.OutputVisitor;
 using ICSharpCode.Decompiler.CSharp.Syntax;
+using ICSharpCode.Decompiler.CSharp.Transforms;
 using ICSharpCode.Decompiler.TypeSystem;
 using ILSpyDecompiler = ICSharpCode.Decompiler.CSharp.CSharpDecompiler;
 
@@ -98,9 +99,37 @@ namespace dnSpy.Decompiler.ILSpyModern.Core {
 				Decompile(mod, output, ctx, (d, m) => d.DecompileModuleAndAssemblyAttributes());
 		}
 
-		void Decompile(ModuleDef module, IDecompilerOutput output, DecompilationContext ctx, Func<ILSpyDecompiler, ConvertedModule, SyntaxTree> decompile) {
-			// Using declarations are kept for single members too (like ILSpy): without them, every type name is fully qualified
+		public override bool CanDecompile(DecompilationType decompilationType) {
+			switch (decompilationType) {
+			case DecompilationType.TypeMethods:
+				return true;
+			}
+			return base.CanDecompile(decompilationType);
+		}
+
+		public override void Decompile(DecompilationType decompilationType, object data) {
+			switch (decompilationType) {
+			case DecompilationType.TypeMethods:
+				DecompileTypeMethods((DecompileTypeMethods)data);
+				return;
+			}
+			base.Decompile(decompilationType, data);
+		}
+
+		void DecompileTypeMethods(DecompileTypeMethods info) {
 			var settings = langSettings.CreateILSpySettings();
+			DecompileTypeMethodsTransform.UpdateSettings(settings, info);
+			var modules = info.Context.GetOrCreate<ConvertedModules>();
+			var mainModule = modules.GetMainModule(info.Type.Module);
+			Decompile(info.Type.Module, info.Output, info.Context, settings, new DecompileTypeMethodsTransform(info, modules, mainModule),
+				(d, m) => d.DecompileTypes(new[] { (TypeDefinitionHandle)m.GetHandle(info.Type) }));
+		}
+
+		void Decompile(ModuleDef module, IDecompilerOutput output, DecompilationContext ctx, Func<ILSpyDecompiler, ConvertedModule, SyntaxTree> decompile) =>
+			// Using declarations are kept for single members too (like ILSpy): without them, every type name is fully qualified
+			Decompile(module, output, ctx, langSettings.CreateILSpySettings(), null, decompile);
+
+		void Decompile(ModuleDef module, IDecompilerOutput output, DecompilationContext ctx, ICSharpCode.Decompiler.DecompilerSettings settings, IAstTransform? lastTransform, Func<ILSpyDecompiler, ConvertedModule, SyntaxTree> decompile) {
 			var modules = ctx.GetOrCreate<ConvertedModules>();
 			var mainModule = modules.GetMainModule(module);
 			var decompiler = new ILSpyDecompiler(mainModule.File, new DnlibAssemblyResolver(module, modules, ctx), settings) {
@@ -116,6 +145,8 @@ namespace dnSpy.Decompiler.ILSpyModern.Core {
 				decompiler.AstTransforms.Add(new StringConcatToInterpolationTransform());
 			}
 			decompiler.AstTransforms.Add(new FixEmptyDirectionExpressionsTransform());
+			if (lastTransform is not null)
+				decompiler.AstTransforms.Add(lastTransform);
 			var syntaxTree = decompile(decompiler, mainModule);
 			var tokenWriter = new DecompilerOutputTokenWriter(output, modules);
 			// Also stores the text locations in the AST, needed to create the debugger's statement mapping

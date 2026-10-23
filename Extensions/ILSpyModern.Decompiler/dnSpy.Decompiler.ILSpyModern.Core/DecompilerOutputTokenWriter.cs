@@ -229,7 +229,31 @@ namespace dnSpy.Decompiler.ILSpyModern.Core {
 		static object GetLocalColor(object local) =>
 			local is ILVariable v && v.Kind == VariableKind.Parameter ? BoxedTextColor.Parameter : BoxedTextColor.Local;
 
-		public override void WriteKeyword(string keyword) => output.Write(keyword, BoxedTextColor.Keyword);
+		public override void WriteKeyword(string keyword) {
+			// Accessor keywords are the definitions of the accessor methods (like the old C# language)
+			if (nodeStack.Count != 0 && nodeStack.Peek() is Accessor accessor) {
+				switch (keyword) {
+				case "get": case "set": case "init": case "add": case "remove":
+					var symbol = accessor.GetSymbol();
+					var def = symbol is null ? null : ToDnlib(symbol);
+					if (def is not null) {
+						output.Write(keyword, def, DecompilerReferenceFlags.Definition, BoxedTextColor.Keyword);
+						return;
+					}
+					break;
+				}
+			}
+			// Operators have no name, so "operator" is the definition
+			else if (keyword == "operator" && nodeStack.Count != 0 && nodeStack.Peek() is OperatorDeclaration op) {
+				var symbol = op.GetSymbol();
+				var def = symbol is null ? null : ToDnlib(symbol);
+				if (def is not null) {
+					output.Write(keyword, def, DecompilerReferenceFlags.Definition, BoxedTextColor.Keyword);
+					return;
+				}
+			}
+			output.Write(keyword, BoxedTextColor.Keyword);
+		}
 
 		public override void WriteToken(string token) {
 			switch (token) {
@@ -263,7 +287,14 @@ namespace dnSpy.Decompiler.ILSpyModern.Core {
 			output.Write(text, color);
 		}
 
-		public override void WritePrimitiveType(string type) => output.Write(type, BoxedTextColor.Keyword);
+		public override void WritePrimitiveType(string type) {
+			output.Write(type, BoxedTextColor.Keyword);
+			// The new() constraint is a primitive type and the token writer adds the parentheses (same as TextWriterTokenWriter)
+			if (type == "new") {
+				output.Write("(", BoxedTextColor.Punctuation);
+				output.Write(")", BoxedTextColor.Punctuation);
+			}
+		}
 
 		public override void WriteInterpolatedText(string text) => output.Write(Format(w => w.WriteInterpolatedText(text)), BoxedTextColor.String);
 
