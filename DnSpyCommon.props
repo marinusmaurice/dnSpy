@@ -44,13 +44,13 @@
     <DiaSymReaderVersion>1.7.0</DiaSymReaderVersion>
     <DnlibVersion>4.5.0</DnlibVersion>
     <IcedVersion>1.21.0</IcedVersion>
-    <MSBuildNuGetVersion>16.7.0</MSBuildNuGetVersion>
+    <MSBuildNuGetVersion>17.14.28</MSBuildNuGetVersion>
     <MSDiagRuntimeVersion>1.1.142101</MSDiagRuntimeVersion>
     <MSVSCompositionVersion>16.4.11</MSVSCompositionVersion>
     <MSVSIntellisenseVersion>15.5.27130</MSVSIntellisenseVersion>
     <MSVSTextVersion>15.5.27130</MSVSTextVersion>
     <NewtonsoftJsonVersion>13.0.4</NewtonsoftJsonVersion>
-    <OokiiDialogsWpfVersion>3.0.1</OokiiDialogsWpfVersion>
+    <OokiiDialogsWpfVersion>5.0.1</OokiiDialogsWpfVersion>
     <RoslynVersion>2.10.0</RoslynVersion>
     <SCCompositionVersion>4.6.0</SCCompositionVersion>
   </PropertyGroup>
