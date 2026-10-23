@@ -13,6 +13,8 @@
     <OutputPath Condition=" '$(IsDotNetFramework)' == 'true' ">..\dnSpy\bin\$(Configuration)\</OutputPath>
 
     <RuntimeIdentifiers>$(DnSpyRuntimeIdentifiers)</RuntimeIdentifiers>
+    <!-- Must match dnSpy.csproj (NETSDK1151) -->
+    <SelfContained Condition=" '$(IsDotNet)' == 'true' and '$(DnSpySelfContained)' == 'true' ">true</SelfContained>
     <OutputType>WinExe</OutputType>
     <Prefer32Bit>true</Prefer32Bit>
     <PlatformTarget>AnyCPU</PlatformTarget>

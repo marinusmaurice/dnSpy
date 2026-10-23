@@ -12,6 +12,10 @@
     <IsDotNetFramework Condition=" $(TargetFramework.StartsWith(net4)) ">true</IsDotNetFramework>
     <IsDotNet Condition=" !$(TargetFramework.StartsWith(net4)) ">true</IsDotNet>
     <IsSelfContainedDotNet Condition=" '$(IsDotNet)' == 'true' ">true</IsSelfContainedDotNet>
+    <!-- build.ps1 sets DnSpySelfContained=True when publishing. Only the app projects (dnSpy, dnSpy-x86, dnSpy.Console) use
+         it to set SelfContained. Passing SelfContained=True globally copies the whole runtime into every
+         project's bin dir (>10GB). -->
+    <DnSpySelfContained Condition=" '$(DnSpySelfContained)' == '' ">false</DnSpySelfContained>
     <Features>strict;nullablePublicOnly</Features>
     <!-- Don't use 'latest': C# 14 changed the meaning of 'field' in property accessors (CS9258), which
          silently broke code in Mono.Debugger.Soft. Bump this deliberately and review the new warnings. -->

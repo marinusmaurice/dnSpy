@@ -19,6 +19,7 @@ The workaround is to add WindowsDesktop above.
     <Nullable>enable</Nullable>
 
     <RuntimeIdentifiers>$(DnSpyRuntimeIdentifiers)</RuntimeIdentifiers>
+    <SelfContained Condition=" '$(IsDotNet)' == 'true' and '$(DnSpySelfContained)' == 'true' ">true</SelfContained>
     <OutputType>Exe</OutputType>
     <Prefer32Bit>false</Prefer32Bit>
     <PlatformTarget>AnyCPU</PlatformTarget>
