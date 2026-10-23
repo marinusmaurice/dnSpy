@@ -24,6 +24,10 @@ using System.Reflection.PortableExecutable;
 using dnlib.DotNet;
 using dnlib.DotNet.Writer;
 using ICSharpCode.Decompiler.Metadata;
+using IEntity = ICSharpCode.Decompiler.TypeSystem.IEntity;
+using IMember = ICSharpCode.Decompiler.TypeSystem.IMember;
+using ISymbol = ICSharpCode.Decompiler.TypeSystem.ISymbol;
+using IType = ICSharpCode.Decompiler.TypeSystem.IType;
 
 namespace dnSpy.Decompiler.ILSpyModern.Core {
 	/// <summary>
@@ -159,6 +163,20 @@ namespace dnSpy.Decompiler.ILSpyModern.Core {
 				return null;
 			lock (lockObj)
 				return byFile.TryGetValue(file, out var converted) ? converted : null;
+		}
+
+		/// <summary>
+		/// Gets the dnlib definition of a type or member, or null if it's not in a module that dnSpy knows about
+		/// </summary>
+		public IMemberDef? GetDefinition(ISymbol? symbol) {
+			IEntity? entity = symbol switch {
+				IMember member => member.MemberDefinition,
+				IType type => type.GetDefinition(),
+				_ => null,
+			};
+			if (entity is null || entity.MetadataToken.IsNil)
+				return null;
+			return TryGet(entity.ParentModule?.MetadataFile)?.GetDefinition(MetadataTokens.GetToken(entity.MetadataToken));
 		}
 	}
 }

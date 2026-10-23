@@ -103,8 +103,12 @@ namespace dnSpy.Decompiler.ILSpyModern.Core {
 				DebugInfoProvider = new DnlibDebugInfoProvider(mainModule),
 			};
 			var syntaxTree = decompile(decompiler, mainModule);
-			var writer = TokenWriter.InsertRequiredSpaces(new DecompilerOutputTokenWriter(output, modules));
+			var tokenWriter = new DecompilerOutputTokenWriter(output, modules);
+			// Also stores the text locations in the AST, needed to create the debugger's statement mapping
+			var writer = TokenWriter.WrapInWriterThatSetsLocationsInAST(tokenWriter);
 			syntaxTree.AcceptVisitor(new CSharpOutputVisitor(writer, settings.CSharpFormattingOptions));
+			if (output.UsesCustomData)
+				MethodDebugInfoCreator.AddDebugInfos(output, decompiler, syntaxTree, tokenWriter, modules, langSettings.Version);
 		}
 	}
 

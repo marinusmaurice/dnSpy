@@ -17,7 +17,6 @@
 
 using System.Collections.Generic;
 using System.IO;
-using System.Reflection.Metadata.Ecma335;
 using dnSpy.Contracts.Decompiler;
 using dnSpy.Contracts.Text;
 using ICSharpCode.Decompiler.CSharp;
@@ -33,14 +32,37 @@ namespace dnSpy.Decompiler.ILSpyModern.Core {
 	/// Writes ICSharpCode.Decompiler's C# AST to dnSpy's <see cref="IDecompilerOutput"/>: colors,
 	/// indentation and references to dnlib definitions (so they can be clicked)
 	/// </summary>
-	sealed class DecompilerOutputTokenWriter : TokenWriter {
+	sealed class DecompilerOutputTokenWriter : TokenWriter, ILocatable {
 		readonly IDecompilerOutput output;
 		readonly ConvertedModules modules;
 		readonly Stack<AstNode> nodeStack = new Stack<AstNode>();
+		// Output position of the start of each line (before indentation). Used to convert the
+		// TextLocations that ICSharpCode.Decompiler stores in the AST to output positions.
+		readonly List<int> lineStarts = new List<int>();
 
 		public DecompilerOutputTokenWriter(IDecompilerOutput output, ConvertedModules modules) {
 			this.output = output;
 			this.modules = modules;
+			lineStarts.Add(output.Length);
+		}
+
+		// NextPosition includes indentation that hasn't been written yet, so a location at the
+		// start of a line is the position of its first token
+		public TextLocation Location => new TextLocation(lineStarts.Count, output.NextPosition - lineStarts[lineStarts.Count - 1] + 1);
+		public int Length => output.NextPosition;
+
+		/// <summary>
+		/// Converts a location that was set by this writer to an output position, or returns -1
+		/// </summary>
+		public int GetPosition(int line, int column) {
+			if (line < 1 || line > lineStarts.Count || column < 1)
+				return -1;
+			return lineStarts[line - 1] + column - 1;
+		}
+
+		void WriteLine() {
+			output.WriteLine();
+			lineStarts.Add(output.Length);
 		}
 
 		public override void StartNode(AstNode node) => nodeStack.Push(node);
@@ -173,20 +195,7 @@ namespace dnSpy.Decompiler.ILSpyModern.Core {
 			return null;
 		}
 
-		/// <summary>
-		/// Gets the dnlib definition of a type or member, or null if it's not in a module that dnSpy knows about
-		/// </summary>
-		object? ToDnlib(ISymbol symbol) {
-			IEntity? entity = symbol switch {
-				IMember member => member.MemberDefinition,
-				IType type => type.GetDefinition(),
-				_ => null,
-			};
-			if (entity is null || entity.MetadataToken.IsNil)
-				return null;
-			var module = modules.TryGet(entity.ParentModule?.MetadataFile);
-			return module?.GetDefinition(MetadataTokens.GetToken(entity.MetadataToken));
-		}
+		object? ToDnlib(ISymbol symbol) => modules.GetDefinition(symbol);
 
 		static object GetColor(object? dnlibDef, ISymbol symbol) {
 			if (dnlibDef is not null)
@@ -261,19 +270,19 @@ namespace dnSpy.Decompiler.ILSpyModern.Core {
 		public override void Space() => output.Write(" ", BoxedTextColor.Text);
 		public override void Indent() => output.IncreaseIndent();
 		public override void Unindent() => output.DecreaseIndent();
-		public override void NewLine() => output.WriteLine();
+		public override void NewLine() => WriteLine();
 
 		public override void WriteComment(CommentType commentType, string content) {
 			var text = Format(w => w.WriteComment(commentType, content));
 			output.Write(text.TrimEnd('\r', '\n'), BoxedTextColor.Comment);
 			if (commentType == CommentType.SingleLine || commentType == CommentType.Documentation)
-				output.WriteLine();
+				WriteLine();
 		}
 
 		public override void WritePreProcessorDirective(PreProcessorDirectiveType type, string? argument) {
 			var text = Format(w => w.WritePreProcessorDirective(type, argument));
 			output.Write(text.TrimEnd('\r', '\n'), BoxedTextColor.PreprocessorKeyword);
-			output.WriteLine();
+			WriteLine();
 		}
 
 		// Uses ICSharpCode.Decompiler's own escaping and number formatting
