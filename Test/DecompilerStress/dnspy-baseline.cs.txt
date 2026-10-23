@@ -1,0 +1,58 @@
+﻿using System;
+using System.Collections.Generic;
+using System.Linq;
+using System.Runtime.CompilerServices;
+using System.Text.Json;
+using System.Threading.Tasks;
+
+namespace DecompilerStress
+{
+	// Token: 0x02000021 RID: 33
+	[NullableContext(1)]
+	[Nullable(0)]
+	internal static class Program
+	{
+		// Token: 0x060000EF RID: 239 RVA: 0x00005880 File Offset: 0x00003A80
+		private static Task Main()
+		{
+			Program.<Main>d__0 <Main>d__;
+			<Main>d__.<>t__builder = AsyncTaskMethodBuilder.Create();
+			<Main>d__.<>1__state = -1;
+			<Main>d__.<>t__builder.Start<Program.<Main>d__0>(ref <Main>d__);
+			return <Main>d__.<>t__builder.Task;
+		}
+
+		// Token: 0x060000F0 RID: 240 RVA: 0x000058BB File Offset: 0x00003ABB
+		private static List<TResult> Transform<[Nullable(2)] TSource, [Nullable(2)] TResult, [Nullable(0)] TKey>(IEnumerable<TSource> source, Func<TSource, TResult> selector, Func<TResult, TKey> keySelector) where TKey : IComparable<TKey>
+		{
+			return Enumerable.ToList<TResult>(Enumerable.OrderBy<TResult, TKey>(Enumerable.Select<TSource, TResult>(source, selector), keySelector));
+		}
+
+		// Token: 0x060000F1 RID: 241 RVA: 0x000058D0 File Offset: 0x00003AD0
+		private static Task<List<TResult>> BuildReportAsync<[Nullable(2)] TResult>(IEnumerable<TResult> source)
+		{
+			Program.<BuildReportAsync>d__2<TResult> <BuildReportAsync>d__;
+			<BuildReportAsync>d__.<>t__builder = AsyncTaskMethodBuilder<List<TResult>>.Create();
+			<BuildReportAsync>d__.source = source;
+			<BuildReportAsync>d__.<>1__state = -1;
+			<BuildReportAsync>d__.<>t__builder.Start<Program.<BuildReportAsync>d__2<TResult>>(ref <BuildReportAsync>d__);
+			return <BuildReportAsync>d__.<>t__builder.Task;
+		}
+
+		// Token: 0x060000F2 RID: 242 RVA: 0x00005914 File Offset: 0x00003B14
+		private static void Dump<[Nullable(2)] T>(string title, IEnumerable<T> items)
+		{
+			Console.WriteLine("\n--- " + title + " ---");
+			foreach (T t in items)
+			{
+				Console.WriteLine(JsonSerializer.Serialize<T>(t, null));
+			}
+		}
+
+		// Token: 0x060000F3 RID: 243 RVA: 0x00005974 File Offset: 0x00003B74
+		private static void <Main>()
+		{
+			Program.Main().GetAwaiter().GetResult();
+		}
+	}
+}

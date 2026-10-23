@@ -1,0 +1,439 @@
+// Reference: ILSpy's decompilation of DecompilerStress.Program (provided by the repo owner).
+// Goal: dnSpy's new decompiler should produce output at least this good, ideally better
+// (e.g. no `if (1 == 0) { }` leftovers, no `<>h__TransparentIdentifier` names, `let` restored,
+// switch expressions kept, string interpolation kept, no needless (decimal) casts).
+
+// ConsoleApp1, Version=1.0.0.0, Culture=neutral, PublicKeyToken=null
+// DecompilerStress.Program
+using System;
+using System.Collections.Generic;
+using System.Linq;
+using System.Linq.Expressions;
+using System.Reflection;
+using System.Runtime.CompilerServices;
+using System.Text.Json;
+using System.Threading.Tasks;
+
+internal static class Program
+{
+	private static async Task Main()
+	{
+		var customers = new[]
+		{
+			new
+			{
+				Id = 1,
+				Name = "Alice",
+				Region = "West",
+				Tier = 2
+			},
+			new
+			{
+				Id = 2,
+				Name = "Bob",
+				Region = "North",
+				Tier = 1
+			},
+			new
+			{
+				Id = 3,
+				Name = "Charlie",
+				Region = "West",
+				Tier = 3
+			},
+			new
+			{
+				Id = 4,
+				Name = "Diana",
+				Region = "South",
+				Tier = 2
+			},
+			new
+			{
+				Id = 5,
+				Name = "Eve",
+				Region = "North",
+				Tier = 3
+			}
+		};
+		var products = new[]
+		{
+			new
+			{
+				Id = 10,
+				Name = "Laptop",
+				Category = "Tech",
+				Price = 1200m
+			},
+			new
+			{
+				Id = 11,
+				Name = "Mouse",
+				Category = "Tech",
+				Price = 40m
+			},
+			new
+			{
+				Id = 12,
+				Name = "Desk",
+				Category = "Office",
+				Price = 350m
+			},
+			new
+			{
+				Id = 13,
+				Name = "Chair",
+				Category = "Office",
+				Price = 220m
+			}
+		};
+		var orders = new[]
+		{
+			new
+			{
+				Id = 100,
+				CustomerId = 1,
+				ProductId = 10,
+				Quantity = 1
+			},
+			new
+			{
+				Id = 101,
+				CustomerId = 1,
+				ProductId = 11,
+				Quantity = 3
+			},
+			new
+			{
+				Id = 102,
+				CustomerId = 2,
+				ProductId = 12,
+				Quantity = 2
+			},
+			new
+			{
+				Id = 103,
+				CustomerId = 3,
+				ProductId = 10,
+				Quantity = 1
+			},
+			new
+			{
+				Id = 104,
+				CustomerId = 3,
+				ProductId = 13,
+				Quantity = 4
+			},
+			new
+			{
+				Id = 105,
+				CustomerId = 5,
+				ProductId = 11,
+				Quantity = 5
+			},
+			new
+			{
+				Id = 106,
+				CustomerId = 5,
+				ProductId = 12,
+				Quantity = 1
+			}
+		};
+		var enriched = (from o in orders
+			join c in customers on o.CustomerId equals c.Id
+			select new
+			{
+				Order = o,
+				Customer = c
+			} into x
+			join p in products on x.Order.ProductId equals p.Id
+			select new
+			{
+				Id = x.Order.Id,
+				Customer = new
+				{
+					x.Customer.Id,
+					x.Customer.Name,
+					x.Customer.Region,
+					x.Customer.Tier
+				},
+				Product = new { p.Id, p.Name, p.Category, p.Price },
+				Quantity = x.Order.Quantity,
+				Total = (decimal)x.Order.Quantity * p.Price,
+				IsLarge = ((decimal)x.Order.Quantity * p.Price >= 500m),
+				Label = x.Customer.Name + ":" + p.Name
+			} into x
+			where x.Customer.Tier >= 2
+			orderby x.Total descending
+			select x).Select((x, int index) => new
+		{
+			Position = index + 1,
+			Id = x.Id,
+			Label = x.Label,
+			Customer = x.Customer,
+			Product = x.Product,
+			Quantity = x.Quantity,
+			Total = x.Total,
+			IsLarge = x.IsLarge,
+			Discounted = x.Total * ((x.Customer.Tier == 3) ? 0.85m : 0.95m)
+		}).ToArray();
+		Dump("1. Enriched orders", enriched);
+		var regionalReport = (from x in enriched
+			group x by new
+			{
+				Region = x.Customer.Region,
+				Priority = ((x.Customer.Tier >= 3) ? "High" : "Normal")
+			} into g
+			select new
+			{
+				Group = g.Key,
+				OrderCount = g.Count(),
+				CustomerCount = g.Select(x => x.Customer.Id).Distinct().Count(),
+				Revenue = g.Sum(x => x.Total),
+				AverageOrder = g.Average(x => (double)x.Total),
+				Expensive = (from x in g
+					where x.IsLarge
+					select new
+					{
+						x.Label,
+						x.Total,
+						x.Product.Category
+					}).ToList(),
+				Summary = new
+				{
+					First = (from x in g
+						orderby x.Total
+						select x.Label).FirstOrDefault(),
+					Last = (from x in g
+						orderby x.Total descending
+						select x.Label).FirstOrDefault()
+				}
+			} into x
+			orderby x.Revenue descending
+			select x).ToList();
+		Dump("2. Regional report", regionalReport);
+		var customerReport = (from x in (from c in customers
+				join o in orders on c.Id equals o.CustomerId into customerOrders
+				select new
+				{
+					Customer = c,
+					Orders = customerOrders
+				} into x
+				from order in x.Orders.DefaultIfEmpty()
+				select new
+				{
+					Id = x.Customer.Id,
+					Name = x.Customer.Name,
+					Region = x.Customer.Region,
+					OrderId = order?.Id,
+					ProductId = order?.ProductId,
+					Quantity = (order?.Quantity ?? 0)
+				} into x
+				group x by new { x.Region, x.Name }).Select(g =>
+			{
+				string region = g.Key.Region;
+				string name = g.Key.Name;
+				int[] orderIds = (from x in g
+					where x.OrderId.HasValue
+					select x.OrderId.Value).ToArray();
+				List<int> productIds = (from x in g
+					where x.ProductId.HasValue
+					select x.ProductId.Value).Distinct().ToList();
+				int units = g.Sum(x => x.Quantity);
+				int num2 = g.Sum(x => x.Quantity);
+				if (1 == 0)
+				{
+				}
+				string status = ((num2 < 4) ? ((num2 != 0) ? "Small" : "Inactive") : ((num2 >= 8) ? "Large" : "Medium"));
+				if (1 == 0)
+				{
+				}
+				return new
+				{
+					Region = region,
+					Name = name,
+					OrderIds = orderIds,
+					ProductIds = productIds,
+					Units = units,
+					Status = status
+				};
+			})
+			select new
+			{
+				Region = x.Region,
+				Name = x.Name,
+				OrderIds = x.OrderIds,
+				ProductIds = x.ProductIds,
+				Units = x.Units,
+				Status = x.Status,
+				Metadata = new
+				{
+					Key = x.Region + "/" + x.Name,
+					Hash = HashCode.Combine(x.Name, x.Region, x.Units),
+					HasOrders = (x.OrderIds.Length != 0)
+				}
+			}).ToArray();
+		Dump("3. Customer report", customerReport);
+		var querySyntax = (from <>h__TransparentIdentifier3 in (from o in orders
+				join c in customers on o.CustomerId equals c.Id
+				join p in products on o.ProductId equals p.Id
+				select new
+				{
+					<>h__TransparentIdentifier1 = <>h__TransparentIdentifier1,
+					gross = (decimal)o.Quantity * p.Price
+				}).Select(<>h__TransparentIdentifier2 =>
+			{
+				int tier = <>h__TransparentIdentifier2.<>h__TransparentIdentifier1.<>h__TransparentIdentifier0.c.Tier;
+				if (1 == 0)
+				{
+				}
+				string segment = tier switch
+				{
+					1 => "Bronze",
+					2 => "Silver",
+					_ => "Gold",
+				};
+				if (1 == 0)
+				{
+				}
+				return new { <>h__TransparentIdentifier2, segment };
+			})
+			where <>h__TransparentIdentifier3.<>h__TransparentIdentifier2.gross > 100m
+			group new
+			{
+				Order = <>h__TransparentIdentifier3.<>h__TransparentIdentifier2.<>h__TransparentIdentifier1.<>h__TransparentIdentifier0.o,
+				Customer = <>h__TransparentIdentifier3.<>h__TransparentIdentifier2.<>h__TransparentIdentifier1.<>h__TransparentIdentifier0.c,
+				Product = <>h__TransparentIdentifier3.<>h__TransparentIdentifier2.<>h__TransparentIdentifier1.p,
+				Gross = <>h__TransparentIdentifier3.<>h__TransparentIdentifier2.gross,
+				Segment = <>h__TransparentIdentifier3.segment
+			} by new
+			{
+				Region = <>h__TransparentIdentifier3.<>h__TransparentIdentifier2.<>h__TransparentIdentifier1.<>h__TransparentIdentifier0.c.Region,
+				Segment = <>h__TransparentIdentifier3.segment
+			} into grp
+			orderby grp.Sum(x => x.Gross) descending
+			select new
+			{
+				Region = grp.Key.Region,
+				Segment = grp.Key.Segment,
+				Count = grp.Count(),
+				Total = grp.Sum(x => x.Gross),
+				Items = grp.Select(x => new
+				{
+					Name = x.Customer.Name,
+					Product = x.Product.Name,
+					Gross = x.Gross,
+					Quantity = x.Order.Quantity
+				}).ToArray()
+			}).ToList();
+		Dump("4. Query syntax", querySyntax);
+		int threshold = 100;
+		Func<decimal, bool> isAboveThreshold = (decimal num2) => num2 > (decimal)threshold;
+		var before = (from x in enriched
+			where isAboveThreshold(x.Total)
+			select new { x.Label, x.Total }).ToList();
+		threshold = 500;
+		var after = (from x in enriched
+			where isAboveThreshold(x.Total)
+			select new { x.Label, x.Total }).ToList();
+		Dump("5a. Closure before", before);
+		Dump("5b. Closure after", after);
+		var transformed = Transform(enriched, x =>
+		{
+			string key = x.Label.ToUpperInvariant();
+			decimal total = x.Total;
+			decimal total2 = x.Total;
+			if (1 == 0)
+			{
+			}
+			int bucket = ((!(total2 < 100m)) ? ((total2 < 500m) ? 1 : 2) : 0);
+			if (1 == 0)
+			{
+			}
+			return new
+			{
+				Key = key,
+				Amount = total,
+				Bucket = bucket,
+				Info = new
+				{
+					Name = x.Customer.Name,
+					Category = x.Product.Category,
+					IsPreferred = (x.Customer.Tier == 3)
+				}
+			};
+		}, x => x.Amount + (decimal)x.Bucket * 10m);
+		Dump("6. Generic transformation", transformed);
+		var lookup = products.ToDictionary(p => p.Id, p => new
+		{
+			Name = p.Name,
+			Category = p.Category,
+			PriceWithTax = p.Price * 1.15m
+		});
+		var tupleProjection = orders.Select(o =>
+		{
+			<>f__AnonymousType27<string, string, decimal> value2;
+			bool flag = lookup.TryGetValue(o.ProductId, out value2);
+			return (Order: o.Id, Details: new
+			{
+				Name = (flag ? value2.Name : "Unknown"),
+				Category = (flag ? value2.Category : "Unknown"),
+				Value = (flag ? (value2.PriceWithTax * (decimal)o.Quantity) : 0m)
+			});
+		}).ToList();
+		Dump("7. Tuple projection", tupleProjection);
+		Expression<Func<decimal, bool>> expensive = (decimal x) => x >= 300m;
+		Expression<Func<decimal, bool>> affordable = (decimal x) => x < 1000m;
+		ParameterExpression parameter = Expression.Parameter(typeof(decimal), "amount");
+		Expression<Func<decimal, bool>> combined = Expression.Lambda<Func<decimal, bool>>(Expression.AndAlso(Expression.Invoke(expensive, parameter), Expression.Invoke(affordable, parameter)), new ParameterExpression[1] { parameter });
+		Func<decimal, bool> compiledPredicate = combined.Compile();
+		var filtered = (from x in enriched
+			where compiledPredicate(x.Total)
+			select new
+			{
+				Label = x.Label,
+				Total = x.Total,
+				Result = (compiledPredicate(x.Total) ? "Accepted" : "Rejected")
+			}).ToArray();
+		Dump("8. Expression tree", filtered);
+		Dump("9. Async report", await BuildReportAsync(enriched));
+		var sample = enriched.First();
+		Type type = sample.GetType();
+		Console.WriteLine("\n10. Anonymous type reflection");
+		Console.WriteLine("Type: " + type.FullName);
+		Console.WriteLine($"Compiler generated: {type.IsDefined(typeof(CompilerGeneratedAttribute), inherit: false)}");
+		PropertyInfo[] properties = type.GetProperties();
+		foreach (PropertyInfo property in properties)
+		{
+			object value = property.GetValue(sample);
+			Console.WriteLine($"{property.Name} : {property.PropertyType.Name} = {value}");
+		}
+		Console.WriteLine("\nAll tests completed.");
+	}
+
+	private static List<TResult> Transform<TSource, TResult, TKey>(IEnumerable<TSource> source, Func<TSource, TResult> selector, Func<TResult, TKey> keySelector) where TKey : IComparable<TKey>
+	{
+		return source.Select(selector).OrderBy(keySelector).ToList();
+	}
+
+	private static async Task<List<TResult>> BuildReportAsync<TResult>(IEnumerable<TResult> source)
+	{
+		await Task.Delay(5).ConfigureAwait(continueOnCapturedContext: false);
+		return (from x in source.Select((TResult x, int i) => new
+			{
+				Index = i,
+				Value = x
+			})
+			where x.Index % 2 == 0
+			select x.Value).ToList();
+	}
+
+	private static void Dump<T>(string title, IEnumerable<T> items)
+	{
+		Console.WriteLine("\n--- " + title + " ---");
+		foreach (T item in items)
+		{
+			Console.WriteLine(JsonSerializer.Serialize(item));
+		}
+	}
+}
