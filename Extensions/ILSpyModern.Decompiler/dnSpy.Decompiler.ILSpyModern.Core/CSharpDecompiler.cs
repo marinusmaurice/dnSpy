@@ -102,6 +102,9 @@ namespace dnSpy.Decompiler.ILSpyModern.Core {
 				CancellationToken = ctx.CancellationToken,
 				DebugInfoProvider = new DnlibDebugInfoProvider(mainModule),
 			};
+			// Run before ILSpy's last steps (parentheses are inserted after all transforms)
+			decompiler.AstTransforms.Add(new RemoveImplicitDecimalCastsTransform());
+			decompiler.AstTransforms.Add(new StringConcatToInterpolationTransform());
 			var syntaxTree = decompile(decompiler, mainModule);
 			var tokenWriter = new DecompilerOutputTokenWriter(output, modules);
 			// Also stores the text locations in the AST, needed to create the debugger's statement mapping
