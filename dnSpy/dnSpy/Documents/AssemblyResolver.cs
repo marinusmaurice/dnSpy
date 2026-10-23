@@ -485,6 +485,17 @@ namespace dnSpy.Documents {
 			return true;
 		}
 
+		// A .NET runtime's mscorlib.dll (and other facades) has the same identity as the .NET Framework assembly
+		// but it forwards all types to System.Private.CoreLib. Don't let an already loaded .NET runtime assembly
+		// win over the GAC when resolving for a .NET Framework module or code compiled against it (eg. Edit Method)
+		// will reference System.Private.CoreLib.
+		bool IsDotNetRuntimeDocument(IDsDocument document, FrameworkKind sourceFwkKind) {
+			if (sourceFwkKind != FrameworkKind.DotNetFramework2 && sourceFwkKind != FrameworkKind.DotNetFramework4)
+				return false;
+			var fwkKind = GetFrameworkKind(document.ModuleDef, out _, out _);
+			return fwkKind == FrameworkKind.DotNet || fwkKind == FrameworkKind.SelfContainedDotNet;
+		}
+
 		IDsDocument? ResolveNormal(IAssembly assembly, ModuleDef? sourceModule) {
 			var fwkKind = GetFrameworkKind(sourceModule, out var netVersion, out var sourceModuleDirectoryHint);
 			if (fwkKind == FrameworkKind.DotNet && !dotNetPathProvider.HasDotNet)
@@ -536,7 +547,7 @@ namespace dnSpy.Documents {
 				if (redirected)
 					options |= FindAssemblyOptions.Version;
 				existingDocument = documentService.FindAssembly(assembly, options);
-				if (existingDocument is not null)
+				if (existingDocument is not null && !IsDotNetRuntimeDocument(existingDocument, fwkKind))
 					return existingDocument;
 
 				(document, loaded) = LookupFromSearchPaths(assembly, sourceModule, sourceModuleDirectoryHint, netVersion);
