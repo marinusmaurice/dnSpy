@@ -48,7 +48,7 @@ namespace dnSpy.Roslyn.EditorFeatures.Host {
 			public CancellationToken CancellationToken { get; }
 			public bool AllowCancel { get; set; }
 			public string Message { get; set; }
-			public IProgressTracker ProgressTracker { get; }
+			public ProgressTracker ProgressTracker { get; }
 
 			public WaitContext(string message, bool allowCancel) {
 				CancellationToken = CancellationToken.None;

@@ -3,8 +3,9 @@
 using System;
 using System.Threading;
 using dnSpy.Roslyn.EditorFeatures.Extensions;
-using dnSpy.Roslyn.Internal.SmartIndent;
 using Microsoft.CodeAnalysis;
+using Microsoft.CodeAnalysis.Formatting;
+using Microsoft.CodeAnalysis.Indentation;
 using Microsoft.CodeAnalysis.Shared.Extensions;
 using Microsoft.CodeAnalysis.Text;
 using Microsoft.VisualStudio.Text;
@@ -41,22 +42,16 @@ namespace dnSpy.Roslyn.EditorFeatures.SmartIndent
             //using (Logger.LogBlock(FunctionId.SmartIndentation_Start, cancellationToken))
             {
                 var document = lineToBeIndented.Snapshot.GetOpenDocumentInCurrentContextWithChanges();
-                var syncService = document?.GetLanguageService<ISynchronousIndentationService>();
-
-                if (syncService != null)
+                var service = document?.GetLanguageService<IIndentationService>();
+                if (service == null)
                 {
-                    var result = syncService.GetDesiredIndentation(document, lineToBeIndented.LineNumber, cancellationToken);
-                    return result?.GetIndentation(_textView, lineToBeIndented);
+                    return null;
                 }
 
-                var asyncService = document?.GetLanguageService<IIndentationService>();
-                if (asyncService != null)
-                {
-                    var result = asyncService.GetDesiredIndentation(document, lineToBeIndented.LineNumber, cancellationToken).WaitAndGetResult(cancellationToken);
-                    return result?.GetIndentation(_textView, lineToBeIndented);
-                }
-
-                return null;
+                var parsedDocument = ParsedDocument.CreateSynchronously(document, cancellationToken);
+                var formattingOptions = document.GetSyntaxFormattingOptionsAsync(cancellationToken).AsTask().WaitAndGetResult(cancellationToken);
+                var result = service.GetIndentation(parsedDocument, lineToBeIndented.LineNumber, new IndentationOptions(formattingOptions), cancellationToken);
+                return result.GetIndentation(_textView, lineToBeIndented);
             }
         }
     }

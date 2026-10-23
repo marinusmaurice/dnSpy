@@ -9,7 +9,7 @@ namespace dnSpy.Roslyn.EditorFeatures.Host
     /// <summary>
     /// Utility class that can be used to track the progress of an operation in a threadsafe manner.
     /// </summary>
-    internal class ProgressTracker : IProgressTracker
+    internal class ProgressTracker
     {
         private int _completedItems;
         private int _totalItems;

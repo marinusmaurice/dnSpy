@@ -18,79 +18,77 @@
 */
 
 using System;
-using System.Collections.Generic;
-using System.Composition;
-using System.Linq;
+using System.Collections.Immutable;
 using System.Threading;
 using System.Threading.Tasks;
 using Microsoft.CodeAnalysis;
-using Microsoft.CodeAnalysis.Host;
-using Microsoft.CodeAnalysis.Host.Mef;
-using Microsoft.CodeAnalysis.Shared.Utilities;
+using Microsoft.CodeAnalysis.QuickInfo;
+using Microsoft.CodeAnalysis.Text;
+using RQI = Microsoft.CodeAnalysis.QuickInfo;
 
 namespace dnSpy.Roslyn.Internal.QuickInfo {
-	[ExportLanguageServiceFactory(typeof(QuickInfoService), LanguageNames.CSharp), Shared]
-	sealed class CSharpQuickInfoServiceFactory : ILanguageServiceFactory {
-		readonly Lazy<IQuickInfoProvider, OrderableLanguageMetadata>[] quickInfoProviders;
+	/// <summary>
+	/// Converts the quick info items created by Roslyn's own quick info service to the content the UI shows
+	/// </summary>
+	sealed class QuickInfoService {
+		readonly RQI.QuickInfoService service;
 
-		[ImportingConstructor]
-		public CSharpQuickInfoServiceFactory([ImportMany] IEnumerable<Lazy<IQuickInfoProvider, OrderableLanguageMetadata>> quickInfoProviders) {
-			this.quickInfoProviders = quickInfoProviders.Where(a => a.Metadata.Language == LanguageNames.CSharp).ToArray();
-		}
-
-		public ILanguageService CreateLanguageService(HostLanguageServices languageServices) =>
-			new CSharpQuickInfoService(quickInfoProviders);
-	}
-
-	sealed class CSharpQuickInfoService : QuickInfoService {
-		public override string Language => LanguageNames.CSharp;
-		public CSharpQuickInfoService(Lazy<IQuickInfoProvider, OrderableLanguageMetadata>[] quickInfoProviders)
-			: base(quickInfoProviders) {
-		}
-	}
-
-	[ExportLanguageServiceFactory(typeof(QuickInfoService), LanguageNames.VisualBasic), Shared]
-	sealed class VisualBasicQuickInfoServiceFactory : ILanguageServiceFactory {
-		readonly Lazy<IQuickInfoProvider, OrderableLanguageMetadata>[] quickInfoProviders;
-
-		[ImportingConstructor]
-		public VisualBasicQuickInfoServiceFactory([ImportMany] IEnumerable<Lazy<IQuickInfoProvider, OrderableLanguageMetadata>> quickInfoProviders) {
-			this.quickInfoProviders = quickInfoProviders.Where(a => a.Metadata.Language == LanguageNames.VisualBasic).ToArray();
-		}
-
-		public ILanguageService CreateLanguageService(HostLanguageServices languageServices) =>
-			new VisualBasicQuickInfoService(quickInfoProviders);
-	}
-
-	sealed class VisualBasicQuickInfoService : QuickInfoService {
-		public override string Language => LanguageNames.VisualBasic;
-		public VisualBasicQuickInfoService(Lazy<IQuickInfoProvider, OrderableLanguageMetadata>[] quickInfoProviders)
-			: base(quickInfoProviders) {
-		}
-	}
-
-	abstract partial class QuickInfoService : ILanguageService {
-		readonly IQuickInfoProvider[] quickInfoProviders;
-
-		public abstract string Language { get; }
-
-		protected QuickInfoService(Lazy<IQuickInfoProvider, OrderableLanguageMetadata>[] quickInfoProviders) {
-			this.quickInfoProviders = ExtensionOrderer.Order(quickInfoProviders).Select(a => a.Value).ToArray();
-		}
+		QuickInfoService(RQI.QuickInfoService service) => this.service = service;
 
 		public static QuickInfoService GetService(Document document) {
 			if (document == null)
 				throw new ArgumentNullException(nameof(document));
-			return document.Project.LanguageServices.GetService<QuickInfoService>();
+			var service = RQI.QuickInfoService.GetService(document);
+			return service == null ? null : new QuickInfoService(service);
 		}
 
 		public async Task<QuickInfoItem> GetItemAsync(Document document, int position, CancellationToken cancellationToken = default(CancellationToken)) {
-			foreach (var p in quickInfoProviders) {
-				var item = await p.GetItemAsync(document, position, cancellationToken);
-				if (item != null)
-					return item;
+			var item = await service.GetQuickInfoAsync(document, position, cancellationToken).ConfigureAwait(false);
+			if (item == null)
+				return null;
+
+			// Syntactic quick info (eg. hovering over '}') only has the related spans
+			if (item.Sections.IsDefaultOrEmpty) {
+				if (item.RelatedSpans.IsDefaultOrEmpty)
+					return null;
+				var span = TextSpan.FromBounds(item.RelatedSpans[0].Start, item.RelatedSpans[item.RelatedSpans.Length - 1].End);
+				return new QuickInfoItem(item.Span, new CodeSpanQuickInfoContent(span));
 			}
-			return null;
+
+			Glyph? symbolGlyph = null;
+			Glyph? warningGlyph = null;
+			foreach (var roslynGlyph in Microsoft.CodeAnalysis.GlyphExtensions.GetGlyphs(item.Tags)) {
+				var glyph = roslynGlyph.ToOurGlyph();
+				if (glyph == Glyph.CompletionWarning)
+					warningGlyph = glyph;
+				else if (symbolGlyph == null && glyph != Glyph.None)
+					symbolGlyph = glyph;
+			}
+
+			var content = new InformationQuickInfoContent(symbolGlyph, warningGlyph,
+				GetText(item, QuickInfoSectionKinds.Description),
+				GetText(item, QuickInfoSectionKinds.DocumentationComments, QuickInfoSectionKinds.RemarksDocumentationComments, QuickInfoSectionKinds.ReturnsDocumentationComments, QuickInfoSectionKinds.ValueDocumentationComments),
+				GetText(item, QuickInfoSectionKinds.TypeParameters),
+				GetText(item, QuickInfoSectionKinds.AnonymousTypes),
+				GetText(item, QuickInfoSectionKinds.Usage, QuickInfoSectionKinds.Captures, QuickInfoSectionKinds.Text),
+				GetText(item, QuickInfoSectionKinds.Exception));
+			return new QuickInfoItem(item.Span, content);
+		}
+
+		static ImmutableArray<TaggedText> GetText(RQI.QuickInfoItem item, params string[] kinds) {
+			var builder = ImmutableArray.CreateBuilder<TaggedText>();
+			foreach (var kind in kinds) {
+				foreach (var section in item.Sections) {
+					if (section.Kind != kind || section.TaggedParts.IsDefaultOrEmpty)
+						continue;
+					if (builder.Count != 0) {
+						builder.Add(new TaggedText(TextTags.LineBreak, Environment.NewLine));
+						builder.Add(new TaggedText(TextTags.LineBreak, Environment.NewLine));
+					}
+					builder.AddRange(section.TaggedParts);
+				}
+			}
+			return builder.ToImmutable();
 		}
 	}
 }

@@ -17,8 +17,11 @@
     along with dnSpy.  If not, see <http://www.gnu.org/licenses/>.
 */
 
+using System;
 using System.Collections.Generic;
+using System.Composition.Hosting;
 using System.Diagnostics;
+using System.Linq;
 using System.Reflection;
 using System.Threading;
 using dnSpy.Roslyn.Internal.SignatureHelp;
@@ -57,9 +60,23 @@ namespace dnSpy.Roslyn.Text {
 			}
 			// dnSpy.Roslyn.Internal exports some stuff too
 			asms.Add(typeof(SignatureHelpService).Assembly);
-			asms.Add(typeof(Internal.QuickInfo.CSharp.SemanticQuickInfoProvider).Assembly);
-			asms.Add(typeof(Microsoft.CodeAnalysis.Editor.VisualBasic.QuickInfo.SemanticQuickInfoProvider).Assembly);
-			return MefHostServices.Create(asms);
+			var parts = new List<Type>();
+			foreach (var asm in asms)
+				parts.AddRange(GetTypes(asm).Where(a => !IsExcludedPart(a)));
+			return MefHostServices.Create(new ContainerConfiguration().WithParts(parts).CreateContainer());
+		}
+
+		// Parts whose required imports are only exported by VS (eg. IntelliCode). System.Composition validates
+		// every [ImportMany] dependency so they'd prevent eg. all signature help providers from being created.
+		static bool IsExcludedPart(Type type) => type.Namespace?.Contains(".ExternalAccess.Pythia") == true;
+
+		static Type[] GetTypes(Assembly asm) {
+			try {
+				return asm.GetTypes();
+			}
+			catch (ReflectionTypeLoadException ex) {
+				return ex.Types.Where(a => a is not null).ToArray()!;
+			}
 		}
 		static readonly string[] otherAssemblies = new string[] {
 			"Microsoft.CodeAnalysis.Features, Version={0}, Culture=neutral, PublicKeyToken=31bf3856ad364e35",

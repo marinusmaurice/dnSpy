@@ -64,7 +64,9 @@ To debug Unity games, you need this repo too: https://github.com/dnSpy/dnSpy-Uni
 - Fixed: the .NET build never applied the `IsDotNet` build settings (typo since the .NET 5 update)
 - Fixed: *Prevent managed debugger detection* didn't hide the debugger from .NET 10 processes (`Debugger.IsAttached`/`IsLogging` became QCalls) and never patched `Debugger.Launch` on .NET 5+. QCalls are now found and patched too.
 - Updated libraries: dnlib 4.5.0 (fixes `IEnumerable<!0>` in decompiled code; resources keep their reader type when edited), Iced 1.21.0, Ookii.Dialogs.Wpf 5.0.1, Newtonsoft.Json 13.0.4 and MSBuild 17.14 packages for the build tools (both fix known-vulnerability warnings). `app.config` redirects old dnlib/Ookii versions so existing extensions keep loading.
-- VS-MEF 17.13 and ClrMD 3.1. The .NET Framework build now uses System.Collections.Immutable / System.Reflection.Metadata / System.Composition 8.0 (binding redirects updated; Roslyn 2.10 verified on them).
+- VS-MEF 17.13 and ClrMD 3.1
+- Roslyn 2.10 → 5.9: Edit Method, C# Interactive and the debugger's expression evaluator now understand current C# (14) and VB. The expression compiler fork is rebased onto Roslyn 5.9.0 with dnSpy's patches. dnSpy's copies of Roslyn 2.10's quick info providers and smart indenters are replaced with Roslyn 5.9's own services. The .NET Framework build now uses System.Collections.Immutable / System.Reflection.Metadata / System.Composition 10.0; binding redirects are generated from the shipped files.
+- Fixed: Roslyn 5.9's Visual Studio IntelliCode MEF parts would stop signature help from loading; they're left out of dnSpy's Roslyn MEF container
 - Export to Project: VS 2022 and VS 2026 options (VS 2026 is the new default). .NET Core / .NET 5+ / .NET Standard assemblies are exported as SDK-style projects (`net10.0`, `netstandard2.0`, `net10.0-windows` + `UseWPF`/`UseWindowsForms`); before, they got old-style projects that couldn't build. .NET Framework assemblies still get classic projects. Compiler-reserved attributes (`RefSafetyRules`, `NullablePublicOnly`) and compiler-synthesized types (`[Embedded]`) are no longer exported (they broke the build with CS8335).
 - Serialized images in resources are read with `System.Formats.Nrbf` on .NET (no type loading)
 - Only the app projects are self-contained when publishing (build output went from >10 GB to about 2 GB)
@@ -85,8 +87,9 @@ To debug Unity games, you need this repo too: https://github.com/dnSpy/dnSpy-Uni
 | ClrMD 3.1 (threads, IP → method, method table → type) against .NET Core 3.1, .NET 5–10 and .NET Framework 4.8, x86 and x64 | ✅ 13/13 |
 | GitHub Actions CI: .NET Framework, .NET x86 and .NET x64 builds | ✅ |
 | Export to Project (`--vs 2026`): .NET 10 app + netstandard2.0 library + NuGet reference + .NET Framework 4.8 app in one solution, and a .NET 10 WinForms/WPF app. Exported solutions build with MSBuild and the programs print the same output as the originals | ✅ |
+| Roslyn 5.9, both builds (.NET Framework run with dnSpy's own binding redirects): compile + emit + run (Edit Method path), quick info, signature help, smart indent, and the C# expression evaluator (expressions, compile errors, locals, assignment) | ✅ 9/9 on each |
 
-Not tested yet: the disassembly window and the folder picker after the Iced/Ookii updates, launching under the debugger from the .NET Framework and x86 builds, .NET Core 2.x targets, Unity/Mono debugging, `build.ps1 -NoMsbuild`.
+Not tested yet: the Edit Method/Edit Class dialogs, the C# Interactive window and debugger watch expressions in the UI after the Roslyn 5.9 update, the disassembly window and the folder picker after the Iced/Ookii updates, launching under the debugger from the .NET Framework and x86 builds, .NET Core 2.x targets, Unity/Mono debugging, `build.ps1 -NoMsbuild`.
 
 ## Known limitations
 

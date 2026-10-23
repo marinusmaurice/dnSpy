@@ -44,7 +44,7 @@ namespace dnSpy.Roslyn.Internal.SignatureHelp {
 
 				cancellationToken.ThrowIfCancellationRequested();
 
-				var currentItems = await provider.GetItemsAsync(document, caretPosition, triggerInfo, cancellationToken).ConfigureAwait(false);
+				var currentItems = await provider.GetItemsAsync(document, caretPosition, triggerInfo, MemberDisplayOptions.Default, cancellationToken).ConfigureAwait(false);
 				if (currentItems != null && currentItems.ApplicableSpan.IntersectsWith(caretPosition)) {
 					// If another provider provides sig help items, then only take them if they
 					// start after the last batch of items.  i.e. we want the set of items that
@@ -83,7 +83,7 @@ namespace dnSpy.Roslyn.Internal.SignatureHelp {
 				return null;
 
 			var selectedItem = GetSelectedItem(items, res.provider);
-			var syntaxFactsService = document?.Project?.LanguageServices?.GetService<Microsoft.CodeAnalysis.LanguageServices.ISyntaxFactsService>();
+			var syntaxFactsService = document?.Project?.LanguageServices?.GetService<Microsoft.CodeAnalysis.LanguageService.ISyntaxFactsService>();
 			var isCaseSensitive = syntaxFactsService == null || syntaxFactsService.IsCaseSensitive;
 			var selection = DefaultSignatureHelpSelector.GetSelection(items.Items,
 				selectedItem, items.ArgumentIndex, items.ArgumentCount, items.ArgumentName, isCaseSensitive);
