@@ -1,8 +1,10 @@
 name: GitHub CI
 on:
+  # Build every pushed branch; artifacts are only uploaded for master and tags (see below)
   push:
     branches:
-      - master
+      - '**'
+  workflow_dispatch:
   pull_request:
     branches:
       - master
