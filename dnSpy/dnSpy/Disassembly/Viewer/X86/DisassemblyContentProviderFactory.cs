@@ -125,10 +125,7 @@ namespace dnSpy.Disassembly.Viewer.X86 {
 							addresses.Add(instr.GetImmediate(j));
 							break;
 
-						case OpKind.Memory64:
-							addresses.Add(instr.MemoryAddress64);
-							break;
-
+						// 64-bit absolute addresses (moffs64) are also OpKind.Memory with an 8-byte displacement
 						case OpKind.Memory:
 							if (instr.IsIPRelativeMemoryOperand)
 								addresses.Add(instr.IPRelativeMemoryAddress);
@@ -136,7 +133,7 @@ namespace dnSpy.Disassembly.Viewer.X86 {
 								switch (instr.MemoryDisplSize) {
 								case 2:
 								case 4:
-									addresses.Add(instr.MemoryDisplacement);
+									addresses.Add(instr.MemoryDisplacement32);
 									break;
 
 								case 8:
