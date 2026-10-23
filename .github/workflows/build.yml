@@ -56,6 +56,16 @@ jobs:
           Compress-Archive -Path dnSpy\dnSpy\bin\Release\net10.0-windows\win-x64\publish\* -DestinationPath C:\builtfiles\dnSpy-net-win64.zip
           .\clean-all.cmd
 
+      # Visual Studio builds the Debug configuration, which can break independently of Release
+      - name: Build dnSpy (Debug, .NET Framework)
+        shell: pwsh
+        run: |
+          $msbuildPath = Split-Path (& "${env:ProgramFiles(x86)}\Microsoft Visual Studio\Installer\vswhere.exe" -latest -requires Microsoft.Component.MSBuild -find MSBuild\Current\Bin\amd64\MSBuild.exe | Select-Object -First 1) -Parent
+          $env:PATH = $msbuildPath + ';' + $env:PATH
+          msbuild -v:m -m -restore -t:Build -p:Configuration=Debug -p:TargetFramework=net48 dnSpy.sln
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+          .\clean-all.cmd
+
       - uses: actions/upload-artifact@v4
         if: github.ref == 'refs/heads/master' || startsWith(github.ref, 'refs/tags/')
         with:

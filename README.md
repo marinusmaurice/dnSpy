@@ -74,7 +74,8 @@ To debug Unity games, you need this repo too: https://github.com/dnSpy/dnSpy-Uni
 - MessagePack (used by VS-MEF) pinned to 2.5.307 (fixes 3 security advisories)
 - Fixed: watch expressions with a pattern variable (`x is int y`) showed "Internal debugger error"; they now report CS8185 (Roslyn's expression evaluator can't compile them, dotnet/roslyn#25702)
 - New decompiler language **C# (ILSpy 11)**, next to the old ones (work in progress, not the default). It uses ICSharpCode.Decompiler 11.1 from NuGet, the current ILSpy engine: async/await, `let` clauses, switch expressions, pattern matching, `out var`, local functions, records and so on. It decompiles the module as dnSpy currently has it in memory (so edits show up) and uses the PDB that dnSpy loaded for local names. Types, members, locals and parameters are clickable. The package's `ICSharpCode.Decompiler.dll` has the same name and key as the old ILSpy 2.3 fork, so the build renames it to `dnSpy.ICSharpCode.Decompiler.dll` (signed with `dnSpy.snk`) and both ship side by side. `dnSpy.Console -l 8E0CBE51-4A6E-4C8C-9B3E-2D6D6C1F8A11` uses it.
-- CI uses current GitHub Actions and reads the SDK version from `global.json`
+- Fixed: the Debug configuration (what Visual Studio builds) failed with about 25 errors in the C# and VB expression compilers (`MethodSymbolAdapter`, `WithSynthesizedLocalKindAndSyntax`). The Roslyn 5.9 sources use `#if DEBUG` for code that only compiles against Roslyn's own Debug build, and dnSpy uses the Release NuGet packages, so those two projects no longer define `DEBUG`.
+- CI uses current GitHub Actions and reads the SDK version from `global.json`. It also builds the Debug configuration (.NET Framework).
 - Submodules point to forks under `marinusmaurice` (all upstream branches kept). The Roslyn expression compiler is on branch `dnSpy-roslyn-5.9`; the others are pinned to the same commits as upstream dnSpy.
 
 ## Tested
@@ -97,10 +98,11 @@ To debug Unity games, you need this repo too: https://github.com/dnSpy/dnSpy-Uni
 | C# (ILSpy 11) clickable references (headless probe): every type/member reference points to the dnlib definition with the same name; locals, parameters and `let` variables are linked | ✅ |
 | Old C# (ILSpy 2.3) language output on the benchmark after adding the new language | ✅ unchanged |
 | Both GUI builds start with the new extension loaded (main window shown, no error) | ✅ |
+| Debug and Release configurations, both target frameworks, build with 0 errors; `dnSpy.Console` from all four outputs decompiles the benchmark identically | ✅ |
 
 Known issue: `out var` in a watch expression shows "Internal debugger error" (probably an old bug, not investigated).
 
-Not tested yet: the C# (ILSpy 11) language in the GUI (selecting it, clicking references, tooltips), the disassembly window and the folder picker after the Iced/Ookii updates, launching under the debugger from the .NET Framework and x86 builds, .NET Core 2.x targets, Unity/Mono debugging, `build.ps1 -NoMsbuild`.
+Not tested yet: debugging with a Debug build of dnSpy (its expression evaluator now compiles the same code as the Release build), the C# (ILSpy 11) language in the GUI (selecting it, clicking references, tooltips), the disassembly window and the folder picker after the Iced/Ookii updates, launching under the debugger from the .NET Framework and x86 builds, .NET Core 2.x targets, Unity/Mono debugging, `build.ps1 -NoMsbuild`.
 
 ## Known limitations
 
