@@ -23,6 +23,8 @@ function Build-NetFramework {
 	Write-Host 'Building .NET Framework x86 and x64 binaries'
 
 	$outdir = "$net_baseoutput\$netframework_tfm"
+	# Remove the previous run's layout, or it gets nested in the new bin dir
+	if (Test-Path $outdir) { Invoke-WithRetry { Remove-Item $outdir -Recurse -Force } }
 
 	if ($NoMsbuild) {
 		dotnet build -v:m -c $configuration -f $netframework_tfm
@@ -52,6 +54,8 @@ function Build-Net {
 	$rid = "win-$arch"
 	$outdir = "$net_baseoutput\$net_tfm\$rid"
 	$publishDir = "$outdir\publish"
+	# Remove the previous run's layout, or it gets nested in the new bin dir
+	if (Test-Path $publishDir) { Invoke-WithRetry { Remove-Item $publishDir -Recurse -Force } }
 
 	if ($NoMsbuild) {
 		dotnet publish -v:m -c $configuration -f $net_tfm -r $rid -p:DnSpySelfContained=True

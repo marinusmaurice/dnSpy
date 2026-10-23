@@ -25,9 +25,7 @@
     <ProjectReference Include="..\..\dnSpy.Contracts.Debugger\dnSpy.Contracts.Debugger.csproj" />
     <ProjectReference Include="..\..\dnSpy.Contracts.DnSpy\dnSpy.Contracts.DnSpy.csproj" />
     <ProjectReference Include="..\..\dnSpy.Contracts.Logic\dnSpy.Contracts.Logic.csproj" />
-    <ProjectReference Include="..\dnSpy.Roslyn.CSharp.Internal\dnSpy.Roslyn.CSharp.Internal.csproj" />
     <ProjectReference Include="..\dnSpy.Roslyn.Internal\dnSpy.Roslyn.Internal.csproj" />
-    <ProjectReference Include="..\dnSpy.Roslyn.VisualBasic.Internal\dnSpy.Roslyn.VisualBasic.Internal.vbproj" />
     <ProjectReference Include="..\Roslyn.ExpressionCompiler\Core\ExpressionCompiler\ExpressionCompiler.csproj" />
     <ProjectReference Include="..\Roslyn.ExpressionCompiler\CSharp\CSharpExpressionCompiler\CSharpExpressionCompiler.csproj" />
     <ProjectReference Include="..\Roslyn.ExpressionCompiler\VisualBasic\BasicExpressionCompiler\BasicExpressionCompiler.vbproj" />

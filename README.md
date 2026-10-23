@@ -70,7 +70,9 @@ To debug Unity games, you need this repo too: https://github.com/dnSpy/dnSpy-Uni
 - Export to Project: VS 2022 and VS 2026 options (VS 2026 is the new default). .NET Core / .NET 5+ / .NET Standard assemblies are exported as SDK-style projects (`net10.0`, `netstandard2.0`, `net10.0-windows` + `UseWPF`/`UseWindowsForms`); before, they got old-style projects that couldn't build. .NET Framework assemblies still get classic projects. Compiler-reserved attributes (`RefSafetyRules`, `NullablePublicOnly`) and compiler-synthesized types (`[Embedded]`) are no longer exported (they broke the build with CS8335).
 - Serialized images in resources are read with `System.Formats.Nrbf` on .NET (no type loading)
 - Only the app projects are self-contained when publishing (build output went from >10 GB to about 2 GB)
-- `build.ps1` retries file moves that antivirus scanners briefly lock
+- `build.ps1` retries file moves that antivirus scanners briefly lock, and no longer nests the previous build in `bin\bin\...` when run again
+- MessagePack (used by VS-MEF) pinned to 2.5.307 (fixes 3 security advisories)
+- Fixed: watch expressions with a pattern variable (`x is int y`) showed "Internal debugger error"; they now report CS8185 (Roslyn's expression evaluator can't compile them, dotnet/roslyn#25702)
 - CI uses current GitHub Actions and reads the SDK version from `global.json`
 - Submodules point to forks under `marinusmaurice` (all upstream branches kept). The Roslyn expression compiler is on branch `dnSpy-roslyn-5.9`; the others are pinned to the same commits as upstream dnSpy.
 
@@ -90,7 +92,11 @@ To debug Unity games, you need this repo too: https://github.com/dnSpy/dnSpy-Uni
 | Export to Project (`--vs 2026`): .NET 10 app + netstandard2.0 library + NuGet reference + .NET Framework 4.8 app in one solution, and a .NET 10 WinForms/WPF app. Exported solutions build with MSBuild and the programs print the same output as the originals | ✅ |
 | Roslyn 5.9, both builds (.NET Framework run with dnSpy's own binding redirects): compile + emit + run (Edit Method path), quick info, signature help, smart indent, and the C# expression evaluator (expressions, compile errors, locals, assignment) | ✅ 9/9 on each |
 
-Not tested yet: the Edit Method/Edit Class dialogs, the C# Interactive window and debugger watch expressions in the UI after the Roslyn 5.9 update, the disassembly window and the folder picker after the Iced/Ookii updates, launching under the debugger from the .NET Framework and x86 builds, .NET Core 2.x targets, Unity/Mono debugging, `build.ps1 -NoMsbuild`.
+| Roslyn 5.9 in the UI (.NET 10 x64 build): Edit Method with quick info, signature help and smart indent, Edit Class, C# Interactive, debugger Locals and Watch (arithmetic, function evaluation, arrays, compile errors) | ✅ |
+
+Known issue: `out var` in a watch expression shows "Internal debugger error" (probably an old bug, not investigated).
+
+Not tested yet: the disassembly window and the folder picker after the Iced/Ookii updates, launching under the debugger from the .NET Framework and x86 builds, .NET Core 2.x targets, Unity/Mono debugging, `build.ps1 -NoMsbuild`.
 
 ## Known limitations
 

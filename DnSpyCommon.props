@@ -47,6 +47,8 @@
     <MSBuildNuGetVersion>17.14.28</MSBuildNuGetVersion>
     <MSDiagRuntimeVersion>3.1.512801</MSDiagRuntimeVersion>
     <MSVSCompositionVersion>17.13.41</MSVSCompositionVersion>
+    <!-- VS-MEF 17.13 depends on MessagePack 2.5.192 (GHSA-vh6j-jc39-fggf, GHSA-w567-gjr2-hm5j, GHSA-wfr3-xj75-pfwh) -->
+    <MessagePackVersion>2.5.307</MessagePackVersion>
     <MSVSIntellisenseVersion>15.5.27130</MSVSIntellisenseVersion>
     <MSVSTextVersion>15.5.27130</MSVSTextVersion>
     <NewtonsoftJsonVersion>13.0.4</NewtonsoftJsonVersion>
