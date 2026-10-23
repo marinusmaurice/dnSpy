@@ -105,6 +105,7 @@ namespace dnSpy.Decompiler.ILSpyModern.Core {
 			// Run before ILSpy's last steps (parentheses are inserted after all transforms)
 			decompiler.AstTransforms.Add(new RemoveImplicitDecimalCastsTransform());
 			decompiler.AstTransforms.Add(new StringConcatToInterpolationTransform());
+			decompiler.AstTransforms.Add(new FixEmptyDirectionExpressionsTransform());
 			var syntaxTree = decompile(decompiler, mainModule);
 			var tokenWriter = new DecompilerOutputTokenWriter(output, modules);
 			// Also stores the text locations in the AST, needed to create the debugger's statement mapping

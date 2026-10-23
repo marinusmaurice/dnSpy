@@ -91,6 +91,21 @@ namespace dnSpy.Decompiler.ILSpyModern.Core {
 	}
 
 	/// <summary>
+	/// ICSharpCode.Decompiler 11.1 can create an <c>out</c>/<c>ref</c>/<c>in</c> argument without an
+	/// expression, and its output visitor then throws a <see cref="System.NullReferenceException"/> for the
+	/// whole type. Seen with the <c>InlineArrayAsReadOnlySpan</c> helper (<c>params ReadOnlySpan&lt;T&gt;</c>
+	/// calls) when <c>System.*</c> references resolve to .NET Framework facades. Writes an error comment instead.
+	/// </summary>
+	sealed class FixEmptyDirectionExpressionsTransform : IAstTransform {
+		public void Run(AstNode rootNode, TransformContext context) {
+			foreach (var direction in rootNode.Descendants.OfType<DirectionExpression>().ToArray()) {
+				if (direction.Expression is null)
+					direction.Expression = new ErrorExpression("missing argument");
+			}
+		}
+	}
+
+	/// <summary>
 	/// Turns string concatenations of string operands with at least one literal back into
 	/// interpolated strings: <c>a + ":" + b</c> → <c>$"{a}:{b}"</c>. The compiler lowers such an
 	/// interpolated string to the same <c>string.Concat</c> call.
