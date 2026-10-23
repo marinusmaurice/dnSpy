@@ -103,6 +103,9 @@ namespace dnSpy.Decompiler.ILSpyModern.Core {
 				DebugInfoProvider = new DnlibDebugInfoProvider(mainModule),
 			};
 			// Run before ILSpy's last steps (parentheses are inserted after all transforms)
+			decompiler.AstTransforms.Add(new RemoveEmptyConstantIfTransform());
+			decompiler.AstTransforms.Add(new ConditionalToSwitchExpressionTransform());
+			decompiler.AstTransforms.Add(new InlineLambdaTemporariesTransform());
 			decompiler.AstTransforms.Add(new RemoveImplicitDecimalCastsTransform());
 			decompiler.AstTransforms.Add(new StringConcatToInterpolationTransform());
 			decompiler.AstTransforms.Add(new FixEmptyDirectionExpressionsTransform());
@@ -110,7 +113,7 @@ namespace dnSpy.Decompiler.ILSpyModern.Core {
 			var tokenWriter = new DecompilerOutputTokenWriter(output, modules);
 			// Also stores the text locations in the AST, needed to create the debugger's statement mapping
 			var writer = TokenWriter.WrapInWriterThatSetsLocationsInAST(tokenWriter);
-			syntaxTree.AcceptVisitor(new CSharpOutputVisitor(writer, settings.CSharpFormattingOptions));
+			syntaxTree.AcceptVisitor(new ModernCSharpOutputVisitor(writer, settings.CSharpFormattingOptions));
 			if (output.UsesCustomData)
 				MethodDebugInfoCreator.AddDebugInfos(output, decompiler, syntaxTree, tokenWriter, modules, langSettings.Version);
 		}

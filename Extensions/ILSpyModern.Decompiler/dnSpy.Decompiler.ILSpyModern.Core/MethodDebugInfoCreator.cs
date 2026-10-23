@@ -16,6 +16,7 @@
 */
 
 using System.Collections.Generic;
+using System.Linq;
 using dnlib.DotNet;
 using dnlib.DotNet.Emit;
 using dnSpy.Contracts.Decompiler;
@@ -38,6 +39,8 @@ namespace dnSpy.Decompiler.ILSpyModern.Core {
 					functionNodes.Add(function, node);
 			}
 
+			var expressionBodies = GetExpressionBodies(syntaxTree);
+
 			foreach (var kv in decompiler.CreateSequencePoints(syntaxTree)) {
 				var function = kv.Key;
 				if (function.Kind == ILFunctionKind.ExpressionTree)
@@ -53,6 +56,7 @@ namespace dnSpy.Decompiler.ILSpyModern.Core {
 
 				var builder = new MethodDebugInfoBuilder(settingsVersion, stateMachineKind, method, kickoffMethod, CreateLocals(function, method, modules), CreateParameters(function, kickoffMethod ?? method, kickoffMethod is not null ? method.DeclaringType : null, modules), null);
 				uint codeSize = (uint)method.Body.GetCodeSize();
+				var covered = new List<(uint start, uint end)>();
 				foreach (var sp in kv.Value) {
 					if (sp.IsHidden || sp.Offset < 0 || sp.EndOffset <= sp.Offset || (uint)sp.EndOffset > codeSize)
 						continue;
@@ -61,7 +65,10 @@ namespace dnSpy.Decompiler.ILSpyModern.Core {
 					if (start < 0 || end < start)
 						continue;
 					builder.Add(new SourceStatement(ILSpan.FromBounds((uint)sp.Offset, (uint)sp.EndOffset), TextSpan.FromBounds(start, end)));
+					covered.Add(((uint)sp.Offset, (uint)sp.EndOffset));
 				}
+				if (expressionBodies.TryGetValue(function, out var body))
+					AddExpressionBodyRanges(builder, function, body, covered, codeSize, writer);
 				if (functionNodes.TryGetValue(function, out var functionNode)) {
 					int start = writer.GetPosition(functionNode.StartLocation.Line, functionNode.StartLocation.Column);
 					int end = writer.GetPosition(functionNode.EndLocation.Line, functionNode.EndLocation.Column);
@@ -71,6 +78,77 @@ namespace dnSpy.Decompiler.ILSpyModern.Core {
 					}
 				}
 				output.AddDebugInfo(builder.Create());
+			}
+		}
+
+		static Dictionary<ILFunction, Expression> GetExpressionBodies(SyntaxTree syntaxTree) {
+			var bodies = new Dictionary<ILFunction, Expression>();
+			foreach (var lambda in syntaxTree.Descendants.OfType<LambdaExpression>()) {
+				if (lambda.Body is Expression body && lambda.Annotation<ILFunction>() is ILFunction function && !bodies.ContainsKey(function))
+					bodies.Add(function, body);
+			}
+			return bodies;
+		}
+
+		/// <summary>
+		/// ICSharpCode.Decompiler's sequence points only keep the first contiguous IL range of a statement. An expression
+		/// lambda's body is one statement, and if it contains branches (switch expressions, <c>?:</c>, <c>??</c>) most of its
+		/// IL isn't mapped. Maps the rest of the body's IL to the body too.
+		/// </summary>
+		static void AddExpressionBodyRanges(MethodDebugInfoBuilder builder, ILFunction function, Expression body, List<(uint start, uint end)> covered, uint codeSize, DecompilerOutputTokenWriter writer) {
+			int textStart = writer.GetPosition(body.StartLocation.Line, body.StartLocation.Column);
+			int textEnd = writer.GetPosition(body.EndLocation.Line, body.EndLocation.Column);
+			if (textStart < 0 || textEnd < textStart)
+				return;
+			var ranges = new List<(uint start, uint end)>();
+			var seen = new HashSet<ILInstruction>();
+			foreach (var node in body.DescendantsAndSelf) {
+				foreach (var inst in node.Annotations.OfType<ILInstruction>())
+					AddRanges(inst);
+			}
+			ranges.Sort();
+			uint? curStart = null, curEnd = null;
+			foreach (var (start, end) in ranges) {
+				if (curEnd is uint e && start <= e) {
+					if (end > e)
+						curEnd = end;
+					continue;
+				}
+				Flush();
+				curStart = start;
+				curEnd = end;
+			}
+			Flush();
+
+			void AddRanges(ILInstruction inst) {
+				if (!seen.Add(inst))
+					return;
+				// A nested function's own range is its delegate creation in this method (like ILSpy's SequencePointBuilder)
+				if (!inst.ILRangeIsEmpty && !(inst is Block) && !(inst is BlockContainer) && inst.Parent?.Ancestors.OfType<ILFunction>().FirstOrDefault() == function) {
+					foreach (var range in inst.ILRanges) {
+						if (range.Start >= 0 && range.End > range.Start && (uint)range.End <= codeSize)
+							ranges.Add(((uint)range.Start, (uint)range.End));
+					}
+				}
+				if (inst is ILFunction)
+					return;
+				foreach (var child in inst.Children)
+					AddRanges(child);
+			}
+
+			void Flush() {
+				if (curStart is uint start && curEnd is uint end) {
+					// Only the parts that no other statement maps
+					foreach (var (s, e) in covered.Where(a => a.end > start && a.start < end).OrderBy(a => a.start)) {
+						if (s > start)
+							builder.Add(new SourceStatement(ILSpan.FromBounds(start, s), TextSpan.FromBounds(textStart, textEnd)));
+						if (e > start)
+							start = e;
+					}
+					if (end > start)
+						builder.Add(new SourceStatement(ILSpan.FromBounds(start, end), TextSpan.FromBounds(textStart, textEnd)));
+				}
+				curStart = curEnd = null;
 			}
 		}
 
