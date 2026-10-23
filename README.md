@@ -72,6 +72,7 @@ To debug Unity games, you need this repo too: https://github.com/dnSpy/dnSpy-Uni
 - Only the app projects are self-contained when publishing (build output went from >10 GB to about 2 GB)
 - `build.ps1` retries file moves that antivirus scanners briefly lock
 - CI uses current GitHub Actions and reads the SDK version from `global.json`
+- Submodules point to forks under `marinusmaurice` (all upstream branches kept). The Roslyn expression compiler is on branch `dnSpy-roslyn-5.9`; the others are pinned to the same commits as upstream dnSpy.
 
 ## Tested
 
