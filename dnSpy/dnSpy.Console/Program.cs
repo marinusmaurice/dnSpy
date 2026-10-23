@@ -225,6 +225,7 @@ namespace dnSpy_Console {
 		static IEnumerable<IDecompiler> GetAllLanguages() {
 			var asmNames = new string[] {
 				"dnSpy.Decompiler.ILSpy.Core",
+				"dnSpy.Decompiler.ILSpyModern.Core",
 			};
 			foreach (var asmName in asmNames) {
 				foreach (var l in GetLanguagesInAssembly(asmName))

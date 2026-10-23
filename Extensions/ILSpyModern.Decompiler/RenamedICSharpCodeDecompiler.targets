@@ -1,0 +1,61 @@
+<Project>
+	<!--
+		The old ILSpy 2.3 fork (Extensions/ILSpy.Decompiler/ICSharpCode.Decompiler) is also called
+		ICSharpCode.Decompiler and has the same public key, so both can't be in the same bin dir.
+		This rewrites the NuGet package's assembly with a new name (dnSpy.ICSharpCode.Decompiler),
+		signs it with dnSpy.snk and references that copy instead.
+	-->
+
+	<ItemGroup>
+		<PackageReference Include="ICSharpCode.Decompiler" Version="$(ICSharpCodeDecompilerVersion)" GeneratePathProperty="true" ExcludeAssets="compile;runtime" />
+	</ItemGroup>
+
+	<!-- ExcludeAssets also hides the package's dependencies. Same versions as the rest of the net48 build (Roslyn). -->
+	<ItemGroup Condition=" '$(TargetFramework)' == 'net48' ">
+		<PackageReference Include="System.Collections.Immutable" Version="10.0.1" />
+		<PackageReference Include="System.Reflection.Metadata" Version="10.0.1" />
+	</ItemGroup>
+
+	<PropertyGroup>
+		<_RenamedDecompilerName>dnSpy.ICSharpCode.Decompiler</_RenamedDecompilerName>
+		<!-- IntermediateOutputPath isn't set yet when this file is evaluated -->
+		<_RenamedDecompilerDir>$(BaseIntermediateOutputPath)$(Configuration)\$(TargetFramework)\RenamedDecompiler\</_RenamedDecompilerDir>
+		<_RenamedDecompilerFile>$(_RenamedDecompilerDir)$(_RenamedDecompilerName).dll</_RenamedDecompilerFile>
+	</PropertyGroup>
+
+	<ItemGroup>
+		<Reference Include="$(_RenamedDecompilerName)">
+			<HintPath>$(_RenamedDecompilerFile)</HintPath>
+			<Private>True</Private>
+		</Reference>
+	</ItemGroup>
+
+	<UsingTask TaskName="RenameICSharpCodeDecompiler" TaskFactory="RoslynCodeTaskFactory" AssemblyFile="$(MSBuildToolsPath)\Microsoft.Build.Tasks.Core.dll">
+		<ParameterGroup>
+			<SourceFile ParameterType="System.String" Required="true" />
+			<DestinationFile ParameterType="System.String" Required="true" />
+			<NewName ParameterType="System.String" Required="true" />
+			<KeyFile ParameterType="System.String" Required="true" />
+		</ParameterGroup>
+		<Task>
+			<Using Namespace="System.IO" />
+			<Using Namespace="dnlib.DotNet" />
+			<Using Namespace="dnlib.DotNet.Writer" />
+			<Code Type="Fragment" Language="cs"><![CDATA[
+				var module = ModuleDefMD.Load(File.ReadAllBytes(SourceFile));
+				module.Assembly.Name = NewName;
+				module.Name = NewName + ".dll";
+				var options = new ModuleWriterOptions(module);
+				options.MetadataOptions.Flags |= MetadataFlags.PreserveAll;
+				options.InitializeStrongNameSigning(module, new StrongNameKey(KeyFile));
+				Directory.CreateDirectory(Path.GetDirectoryName(DestinationFile));
+				module.Write(DestinationFile, options);
+			]]></Code>
+			<Reference Include="$(MSBuildThisFileDirectory)..\..\Build\compiled\dnlib.dll" />
+		</Task>
+	</UsingTask>
+
+	<Target Name="RenameICSharpCodeDecompiler" BeforeTargets="ResolveAssemblyReferences" Inputs="$(PkgICSharpCode_Decompiler)\lib\netstandard2.0\ICSharpCode.Decompiler.dll;$(MSBuildThisFileFullPath)" Outputs="$(_RenamedDecompilerFile)">
+		<RenameICSharpCodeDecompiler SourceFile="$(PkgICSharpCode_Decompiler)\lib\netstandard2.0\ICSharpCode.Decompiler.dll" DestinationFile="$(_RenamedDecompilerFile)" NewName="$(_RenamedDecompilerName)" KeyFile="$(MSBuildThisFileDirectory)..\..\dnSpy.snk" />
+	</Target>
+</Project>

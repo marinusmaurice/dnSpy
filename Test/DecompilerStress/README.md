@@ -14,6 +14,10 @@ dotnet build -c Release Test/DecompilerStress
 dnSpy.Console --no-color -t DecompilerStress.Program Test/DecompilerStress/bin/Release/net10.0/DecompilerStress.dll
 ```
 
+Add `-l 8E0CBE51-4A6E-4C8C-9B3E-2D6D6C1F8A11` to use the new C# (ILSpy 11) language instead of the old one.
+
+To check that the output compiles and behaves the same, put it in a copy of `DecompilerStress.csproj` as `Program.cs`, build it, and compare what both programs print. Ignore the `"Hash"` values: `HashCode.Combine` is seeded randomly per process, so they differ even between two runs of the original.
+
 Things to do better than the ILSpy reference:
 - No `if (1 == 0) { }` leftovers around switch expressions.
 - `let` clauses restored instead of `<>h__TransparentIdentifier` chains.

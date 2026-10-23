@@ -73,6 +73,7 @@ To debug Unity games, you need this repo too: https://github.com/dnSpy/dnSpy-Uni
 - `build.ps1` retries file moves that antivirus scanners briefly lock, and no longer nests the previous build in `bin\bin\...` when run again
 - MessagePack (used by VS-MEF) pinned to 2.5.307 (fixes 3 security advisories)
 - Fixed: watch expressions with a pattern variable (`x is int y`) showed "Internal debugger error"; they now report CS8185 (Roslyn's expression evaluator can't compile them, dotnet/roslyn#25702)
+- New decompiler language **C# (ILSpy 11)**, next to the old ones (work in progress, not the default). It uses ICSharpCode.Decompiler 11.1 from NuGet, the current ILSpy engine: async/await, `let` clauses, switch expressions, pattern matching, `out var`, local functions, records and so on. It decompiles the module as dnSpy currently has it in memory (so edits show up) and uses the PDB that dnSpy loaded for local names. Types, members, locals and parameters are clickable. The package's `ICSharpCode.Decompiler.dll` has the same name and key as the old ILSpy 2.3 fork, so the build renames it to `dnSpy.ICSharpCode.Decompiler.dll` (signed with `dnSpy.snk`) and both ship side by side. `dnSpy.Console -l 8E0CBE51-4A6E-4C8C-9B3E-2D6D6C1F8A11` uses it.
 - CI uses current GitHub Actions and reads the SDK version from `global.json`
 - Submodules point to forks under `marinusmaurice` (all upstream branches kept). The Roslyn expression compiler is on branch `dnSpy-roslyn-5.9`; the others are pinned to the same commits as upstream dnSpy.
 
@@ -91,17 +92,20 @@ To debug Unity games, you need this repo too: https://github.com/dnSpy/dnSpy-Uni
 | GitHub Actions CI: .NET Framework, .NET x86 and .NET x64 builds | ✅ |
 | Export to Project (`--vs 2026`): .NET 10 app + netstandard2.0 library + NuGet reference + .NET Framework 4.8 app in one solution, and a .NET 10 WinForms/WPF app. Exported solutions build with MSBuild and the programs print the same output as the originals | ✅ |
 | Roslyn 5.9, both builds (.NET Framework run with dnSpy's own binding redirects): compile + emit + run (Edit Method path), quick info, signature help, smart indent, and the C# expression evaluator (expressions, compile errors, locals, assignment) | ✅ 9/9 on each |
-
 | Roslyn 5.9 in the UI (.NET 10 x64 build): Edit Method with quick info, signature help and smart indent, Edit Class, C# Interactive, debugger Locals and Watch (arithmetic, function evaluation, arrays, compile errors) | ✅ |
+| C# (ILSpy 11) language with `dnSpy.Console` (.NET 10 and .NET Framework builds) on the decompiler benchmark (`Test/DecompilerStress`): the output compiles and the program prints the same as the original. Same output from both builds | ✅ |
+| C# (ILSpy 11) clickable references (headless probe): every type/member reference points to the dnlib definition with the same name; locals, parameters and `let` variables are linked | ✅ |
+| Old C# (ILSpy 2.3) language output on the benchmark after adding the new language | ✅ unchanged |
+| Both GUI builds start with the new extension loaded (main window shown, no error) | ✅ |
 
 Known issue: `out var` in a watch expression shows "Internal debugger error" (probably an old bug, not investigated).
 
-Not tested yet: the disassembly window and the folder picker after the Iced/Ookii updates, launching under the debugger from the .NET Framework and x86 builds, .NET Core 2.x targets, Unity/Mono debugging, `build.ps1 -NoMsbuild`.
+Not tested yet: the C# (ILSpy 11) language in the GUI (selecting it, clicking references, tooltips), the disassembly window and the folder picker after the Iced/Ookii updates, launching under the debugger from the .NET Framework and x86 builds, .NET Core 2.x targets, Unity/Mono debugging, `build.ps1 -NoMsbuild`.
 
 ## Known limitations
 
 - .NET build: viewing or creating `BinaryFormatter`-serialized resources (other than images) isn't supported because .NET 9+ removed `BinaryFormatter`. Use the .NET Framework build for that.
-- The C# decompiler is still the ILSpy 2.x fork. A modern ILSpy decompiler is planned as a side-by-side option (Phase 5 of the plan).
+- The default C# decompiler is still the ILSpy 2.x fork. The new C# (ILSpy 11) language doesn't support yet: debugger statement mapping (breakpoints/stepping in its output), Edit Method/Edit Class, Export to Project, settings, and XML doc comments. It writes the whole module to memory for every decompilation, which is slow for big assemblies. In `dnSpy.Console`, references of .NET (Core) assemblies are found with ICSharpCode.Decompiler's resolver because dnlib's default resolver doesn't search the .NET shared framework.
 
 # Debugger
 

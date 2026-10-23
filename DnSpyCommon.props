@@ -43,6 +43,7 @@
     <DbgShimVersion>10.0.750501</DbgShimVersion>
     <DiaSymReaderVersion>1.7.0</DiaSymReaderVersion>
     <DnlibVersion>4.5.0</DnlibVersion>
+    <ICSharpCodeDecompilerVersion>11.1.0.9782</ICSharpCodeDecompilerVersion>
     <IcedVersion>1.21.0</IcedVersion>
     <MSBuildNuGetVersion>17.14.28</MSBuildNuGetVersion>
     <MSDiagRuntimeVersion>3.1.512801</MSDiagRuntimeVersion>
