@@ -58,7 +58,7 @@ namespace dnSpy.Contracts.Documents.TreeView.Resources {
 			var userType = new UserResourceType(typeName, ResourceTypeCode.UserTypes);
 			var rsrcElem = new ResourceElement {
 				Name = Path.GetFileName(filename),
-				ResourceData = new BinaryResourceData(userType, serializedData),
+				ResourceData = new BinaryResourceData(userType, serializedData, SerializationFormat.BinaryFormatter),
 			};
 
 			return rsrcElem;

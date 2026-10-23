@@ -99,7 +99,8 @@ namespace dnSpy.Documents.TreeView.Resources {
 		void RegenerateEmbeddedResource(ModuleDef module) {
 			TreeNode.EnsureChildrenLoaded();
 			var outStream = new MemoryStream();
-			var resources = new ResourceElementSet();
+			// Keep the original reader type (eg. DeserializingResourceReader) and format version
+			var resources = resourceElementSet.Clone();
 			foreach (DocumentTreeNodeData child in TreeNode.DataChildren) {
 				var resourceElement = ResourceElementNode.GetResourceElement(child);
 				if (resourceElement is null)
