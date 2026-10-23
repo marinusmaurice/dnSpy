@@ -60,6 +60,7 @@ To debug Unity games, you need this repo too: https://github.com/dnSpy/dnSpy-Uni
 - Fixed: Edit Method could save .NET Framework assemblies that referenced `System.Private.CoreLib` (and crashed) when a .NET runtime `mscorlib.dll` was loaded in the assembly explorer
 - Fixed: with C# 14, `CustomAttributeNamedArgumentMirror.Field` (Mono debugger) always returned `null`
 - Fixed: the .NET build never applied the `IsDotNet` build settings (typo since the .NET 5 update)
+- Fixed: *Prevent managed debugger detection* didn't hide the debugger from .NET 10 processes (`Debugger.IsAttached`/`IsLogging` became QCalls) and never patched `Debugger.Launch` on .NET 5+. QCalls are now found and patched too.
 - Serialized images in resources are read with `System.Formats.Nrbf` on .NET (no type loading)
 - Only the app projects are self-contained when publishing (build output went from >10 GB to about 2 GB)
 - `build.ps1` retries file moves that antivirus scanners briefly lock
@@ -70,6 +71,7 @@ To debug Unity games, you need this repo too: https://github.com/dnSpy/dnSpy-Uni
 | Scenario | Result |
 |---|---|
 | Attach (`--pid`) from all four dnSpy builds (.NET 10 x64/x86, .NET Framework x64/x86) to .NET Core 3.1 (x86), .NET 5, 6, 8, 9, 10 and .NET Framework 4.8 (x64 and x86) | ✅ all 26 combinations |
+| *Prevent managed debugger detection* on the same 26 combinations: after attaching, the target sees `Debugger.IsAttached == false`, `IsLogging() == false`, `Launch() == true` and keeps running | ✅ |
 | Launch under the debugger from the .NET 10 x64 build: .NET 10 and .NET Framework 4.8 apps. Break at entry point, step over/into, Locals, Watch expressions, function evaluation | ✅ |
 | Edit Method (C#) + Save Module, then run the saved app (.NET 10 and .NET Framework 4.8 targets) | ✅ |
 | Decompile with `dnSpy.Console` on .NET 10 | ✅ |
@@ -79,7 +81,6 @@ Not tested yet: launching under the debugger from the .NET Framework and x86 bui
 ## Known limitations
 
 - .NET build: viewing or creating `BinaryFormatter`-serialized resources (other than images) isn't supported because .NET 9+ removed `BinaryFormatter`. Use the .NET Framework build for that.
-- *Prevent managed debugger detection* doesn't hide the debugger from .NET 10 processes yet (`Debugger.IsAttached` returns `true`). It works on .NET Core 3.1–.NET 9 and .NET Framework.
 - The C# decompiler is still the ILSpy 2.x fork. A modern ILSpy decompiler is planned as a side-by-side option (Phase 5 of the plan).
 
 # Debugger
