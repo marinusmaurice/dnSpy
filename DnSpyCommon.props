@@ -45,7 +45,7 @@
     <DnlibVersion>4.5.0</DnlibVersion>
     <IcedVersion>1.21.0</IcedVersion>
     <MSBuildNuGetVersion>17.14.28</MSBuildNuGetVersion>
-    <MSDiagRuntimeVersion>1.1.142101</MSDiagRuntimeVersion>
+    <MSDiagRuntimeVersion>3.1.512801</MSDiagRuntimeVersion>
     <MSVSCompositionVersion>17.13.41</MSVSCompositionVersion>
     <MSVSIntellisenseVersion>15.5.27130</MSVSIntellisenseVersion>
     <MSVSTextVersion>15.5.27130</MSVSTextVersion>

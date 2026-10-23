@@ -20,7 +20,9 @@
 using System;
 using System.ComponentModel.Composition;
 using System.Diagnostics;
+using System.Diagnostics.CodeAnalysis;
 using System.IO;
+using System.Runtime.InteropServices;
 using Microsoft.Diagnostics.Runtime;
 
 namespace dnSpy.Debugger.DotNet.CorDebug.DAC {
@@ -42,15 +44,15 @@ namespace dnSpy.Debugger.DotNet.CorDebug.DAC {
 			DataTarget? dataTarget = null;
 			bool failed = true;
 			try {
-				// The timeout isn't used if Passive is used
-				dataTarget = DataTarget.AttachToProcess(pid, 0, AttachFlag.Passive);
-				var clrInfo = GetClrInfo(dataTarget, clrPath);
+				// Don't suspend: we're the debugger and only use it when the process is paused
+				dataTarget = DataTarget.AttachToProcess(pid, suspend: false);
+				var clrInfo = GetClrInfo(dataTarget, clrPath, out var localDac);
 				if (clrInfo is null)
 					return null;
 
-				// Use this overload to make sure it doesn't try to download the dac file which
+				// Pass in the local dac file so it doesn't try to download it which
 				// will block this thread for several seconds or much longer.
-				var clrRuntime = clrInfo.CreateRuntime(clrInfo.LocalMatchingDac);
+				var clrRuntime = clrInfo.CreateRuntime(localDac);
 
 				var clrDac = new ClrDacImpl(dataTarget, clrRuntime, clrDacDebugger);
 				failed = false;
@@ -71,14 +73,27 @@ namespace dnSpy.Debugger.DotNet.CorDebug.DAC {
 			}
 		}
 
-		static ClrInfo? GetClrInfo(DataTarget dt, string clrPath) {
+		static ClrInfo? GetClrInfo(DataTarget dt, string clrPath, [NotNullWhen(true)] out string? localDac) {
 			foreach (var clrInfo in dt.ClrVersions) {
 				if (!StringComparer.OrdinalIgnoreCase.Equals(clrInfo.ModuleInfo.FileName, clrPath))
 					continue;
-				Debug.Assert(File.Exists(clrInfo.LocalMatchingDac));
-				if (!File.Exists(clrInfo.LocalMatchingDac))
+				localDac = GetLocalDac(clrInfo);
+				Debug2.Assert(localDac is not null);
+				if (localDac is null)
 					continue;
 				return clrInfo;
+			}
+			localDac = null;
+			return null;
+		}
+
+		// The dac file that's next to the CLR dll, eg. mscordaccore.dll
+		static string? GetLocalDac(ClrInfo clrInfo) {
+			foreach (var lib in clrInfo.DebuggingLibraries) {
+				if (lib.Kind != DebugLibraryKind.Dac || lib.TargetArchitecture != RuntimeInformation.ProcessArchitecture)
+					continue;
+				if (Path.IsPathRooted(lib.FileName) && File.Exists(lib.FileName))
+					return lib.FileName;
 			}
 			return null;
 		}

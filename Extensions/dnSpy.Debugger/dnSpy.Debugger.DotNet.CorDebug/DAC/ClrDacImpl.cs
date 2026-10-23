@@ -42,7 +42,7 @@ namespace dnSpy.Debugger.DotNet.CorDebug.DAC {
 		}
 
 		void Flush() {
-			clrRuntime.Flush();
+			clrRuntime.FlushCachedData();
 			toClrThread.Clear();
 			toClrThreadInitd = false;
 		}
@@ -81,25 +81,23 @@ namespace dnSpy.Debugger.DotNet.CorDebug.DAC {
 			var flags = ClrDacThreadFlags.None;
 			if (thread.IsFinalizer) flags |= ClrDacThreadFlags.IsFinalizer;
 			if (thread.IsAlive) flags |= ClrDacThreadFlags.IsAlive;
-			if (clrRuntime.ServerGC && thread.IsGC) flags |= ClrDacThreadFlags.IsGC;
-			if (thread.IsDebuggerHelper) flags |= ClrDacThreadFlags.IsDebuggerHelper;
-			if (thread.IsThreadpoolTimer) flags |= ClrDacThreadFlags.IsThreadpoolTimer;
-			if (thread.IsThreadpoolCompletionPort) flags |= ClrDacThreadFlags.IsThreadpoolCompletionPort;
-			if (thread.IsThreadpoolWorker) flags |= ClrDacThreadFlags.IsThreadpoolWorker;
-			if (thread.IsThreadpoolWait) flags |= ClrDacThreadFlags.IsThreadpoolWait;
-			if (thread.IsThreadpoolGate) flags |= ClrDacThreadFlags.IsThreadpoolGate;
-			if (thread.IsSuspendingEE) flags |= ClrDacThreadFlags.IsSuspendingEE;
-			if (thread.IsShutdownHelper) flags |= ClrDacThreadFlags.IsShutdownHelper;
-			if (thread.IsAbortRequested) flags |= ClrDacThreadFlags.IsAbortRequested;
-			if (thread.IsAborted) flags |= ClrDacThreadFlags.IsAborted;
-			if (thread.IsGCSuspendPending) flags |= ClrDacThreadFlags.IsGCSuspendPending;
-			if (thread.IsUserSuspended) flags |= ClrDacThreadFlags.IsUserSuspended;
-			if (thread.IsDebugSuspended) flags |= ClrDacThreadFlags.IsDebugSuspended;
-			if (thread.IsBackground) flags |= ClrDacThreadFlags.IsBackground;
-			if (thread.IsUnstarted) flags |= ClrDacThreadFlags.IsUnstarted;
-			if (thread.IsCoInitialized) flags |= ClrDacThreadFlags.IsCoInitialized;
-			if (thread.IsSTA) flags |= ClrDacThreadFlags.IsSTA;
-			if (thread.IsMTA) flags |= ClrDacThreadFlags.IsMTA;
+			if (clrRuntime.Heap.IsServer && thread.IsGc) flags |= ClrDacThreadFlags.IsGC;
+			// ClrMD 2.0+ doesn't expose the DAC's special thread types so these are never set:
+			// IsDebuggerHelper, IsThreadpoolTimer, IsThreadpoolWait, IsThreadpoolGate, IsSuspendingEE, IsShutdownHelper.
+			// The timer/wait/gate threads only exist in .NET Framework's native thread pool.
+			var state = thread.State;
+			if ((state & ClrThreadState.TS_CompletionPortThread) != 0) flags |= ClrDacThreadFlags.IsThreadpoolCompletionPort;
+			if ((state & ClrThreadState.TS_TPWorkerThread) != 0) flags |= ClrDacThreadFlags.IsThreadpoolWorker;
+			if ((state & ClrThreadState.TS_AbortRequested) != 0) flags |= ClrDacThreadFlags.IsAbortRequested;
+			if ((state & ClrThreadState.TS_Aborted) != 0) flags |= ClrDacThreadFlags.IsAborted;
+			if ((state & ClrThreadState.TS_GCSuspendPending) != 0) flags |= ClrDacThreadFlags.IsGCSuspendPending;
+			if ((state & ClrThreadState.TS_UserSuspendPending) != 0) flags |= ClrDacThreadFlags.IsUserSuspended;
+			if ((state & ClrThreadState.TS_DebugSuspendPending) != 0) flags |= ClrDacThreadFlags.IsDebugSuspended;
+			if ((state & ClrThreadState.TS_Background) != 0) flags |= ClrDacThreadFlags.IsBackground;
+			if ((state & ClrThreadState.TS_Unstarted) != 0) flags |= ClrDacThreadFlags.IsUnstarted;
+			if ((state & ClrThreadState.TS_CoInitialized) != 0) flags |= ClrDacThreadFlags.IsCoInitialized;
+			if ((state & ClrThreadState.TS_InSTA) != 0) flags |= ClrDacThreadFlags.IsSTA;
+			if ((state & ClrThreadState.TS_InMTA) != 0) flags |= ClrDacThreadFlags.IsMTA;
 			return new ClrDacThreadInfo(thread.ManagedThreadId, flags);
 		}
 
@@ -118,16 +116,17 @@ namespace dnSpy.Debugger.DotNet.CorDebug.DAC {
 				return true;
 			}
 
-			name = clrRuntime.GetMethodTableName(address);
+			name = clrRuntime.GetTypeByMethodTable(address)?.Name;
 			if (name is not null) {
 				result = new SymbolResolverResult(SymbolKind.Data, "methodtable(" + name + ")", address);
 				return true;
 			}
 
-			var method = clrRuntime.GetMethodByAddress(address);
-			if (method is null && (address & ((uint)clrRuntime.PointerSize - 1)) == 0) {
-				if (clrRuntime.ReadPointer(address, out ulong newAddress) && newAddress >= MIN_ADDR)
-					method = clrRuntime.GetMethodByAddress(newAddress);
+			var method = clrRuntime.GetMethodByInstructionPointer(address);
+			var dataReader = clrRuntime.DataTarget.DataReader;
+			if (method is null && (address & ((uint)dataReader.PointerSize - 1)) == 0) {
+				if (dataReader.ReadPointer(address, out ulong newAddress) && newAddress >= MIN_ADDR)
+					method = clrRuntime.GetMethodByInstructionPointer(newAddress);
 			}
 			if (method is not null) {
 				result = new SymbolResolverResult(SymbolKind.Function, method.ToString()!, address);
