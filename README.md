@@ -48,6 +48,8 @@ cd dnSpy
 
 Run it from a *Developer PowerShell for VS* (or put VS's `MSBuild\Current\Bin\amd64` on `PATH`). `./build.ps1 -NoMsbuild` builds with `dotnet` only, which drops the COM reference; it hasn't been re-verified since the .NET 10 update.
 
+`build.ps1` builds one target framework at a time, which leaves each project's `obj\project.assets.json` with only that target. If you have the solution open in Visual Studio afterwards (NETSDK1005 errors), run `msbuild -t:Restore dnSpy.sln`.
+
 Don't use `clean-all.cmd` with uncommitted work: it runs `git clean -xdf`, which also deletes new untracked files.
 
 To debug Unity games, you need this repo too: https://github.com/dnSpy/dnSpy-Unity-mono (or get the binaries from https://github.com/dnSpy/dnSpy/releases/unity)
@@ -62,6 +64,7 @@ To debug Unity games, you need this repo too: https://github.com/dnSpy/dnSpy-Uni
 - Fixed: the .NET build never applied the `IsDotNet` build settings (typo since the .NET 5 update)
 - Fixed: *Prevent managed debugger detection* didn't hide the debugger from .NET 10 processes (`Debugger.IsAttached`/`IsLogging` became QCalls) and never patched `Debugger.Launch` on .NET 5+. QCalls are now found and patched too.
 - Updated libraries: dnlib 4.5.0 (fixes `IEnumerable<!0>` in decompiled code; resources keep their reader type when edited), Iced 1.21.0, Ookii.Dialogs.Wpf 5.0.1, Newtonsoft.Json 13.0.4 and MSBuild 17.14 packages for the build tools (both fix known-vulnerability warnings). `app.config` redirects old dnlib/Ookii versions so existing extensions keep loading.
+- VS-MEF 17.13 and ClrMD 3.1. The .NET Framework build now uses System.Collections.Immutable / System.Reflection.Metadata / System.Composition 8.0 (binding redirects updated; Roslyn 2.10 verified on them).
 - Serialized images in resources are read with `System.Formats.Nrbf` on .NET (no type loading)
 - Only the app projects are self-contained when publishing (build output went from >10 GB to about 2 GB)
 - `build.ps1` retries file moves that antivirus scanners briefly lock
@@ -78,8 +81,10 @@ To debug Unity games, you need this repo too: https://github.com/dnSpy/dnSpy-Uni
 | Decompile with `dnSpy.Console` on .NET 10 | ✅ |
 | dnlib 4.5 update: decompiled output of 5 assemblies (4981 files) compared before/after | ✅ identical except fixed generic names |
 | Iced 1.21 update: native `IsDebuggerPresent`/`CheckRemoteDebuggerPresent` hooks in all 26 attach combinations | ✅ |
+| ClrMD 3.1 (threads, IP → method, method table → type) against .NET Core 3.1, .NET 5–10 and .NET Framework 4.8, x86 and x64 | ✅ 13/13 |
+| GitHub Actions CI: .NET Framework, .NET x86 and .NET x64 builds | ✅ |
 
-Not tested yet: the disassembly window and the folder picker after the Iced/Ookii updates, launching under the debugger from the .NET Framework and x86 builds, .NET Core 2.x targets, Unity/Mono debugging, `build.ps1 -NoMsbuild`, CI on GitHub.
+Not tested yet: the disassembly window and the folder picker after the Iced/Ookii updates, launching under the debugger from the .NET Framework and x86 builds, .NET Core 2.x targets, Unity/Mono debugging, `build.ps1 -NoMsbuild`.
 
 ## Known limitations
 
