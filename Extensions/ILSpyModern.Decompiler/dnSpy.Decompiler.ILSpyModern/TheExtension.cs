@@ -21,13 +21,14 @@ using dnSpy.Contracts.Decompiler;
 using dnSpy.Contracts.Extension;
 using dnSpy.Contracts.Text;
 using dnSpy.Decompiler.ILSpyModern.Core;
+using dnSpy.Decompiler.ILSpyModern.Settings;
 using Microsoft.VisualStudio.Utilities;
 
 namespace dnSpy.Decompiler.ILSpyModern {
 	[ExportExtension]
 	sealed class TheExtension : IExtension {
 		public IEnumerable<string> MergedResourceDictionaries {
-			get { yield break; }
+			get { yield return "Themes/wpf.styles.templates.xaml"; }
 		}
 
 		public ExtensionInfo ExtensionInfo => new ExtensionInfo {
@@ -41,7 +42,12 @@ namespace dnSpy.Decompiler.ILSpyModern {
 
 	[Export(typeof(IDecompilerCreator))]
 	sealed class MyDecompilerCreator : IDecompilerCreator {
-		public IEnumerable<IDecompiler> Create() => new DecompilerProvider().Create();
+		readonly CSharpDecompilerSettingsImpl decompilerSettings;
+
+		[ImportingConstructor]
+		MyDecompilerCreator(CSharpDecompilerSettingsImpl decompilerSettings) => this.decompilerSettings = decompilerSettings;
+
+		public IEnumerable<IDecompiler> Create() => new DecompilerProvider(decompilerSettings).Create();
 	}
 
 	static class ContentTypeDefinitions {

@@ -24,16 +24,19 @@ using ICSharpCode.Decompiler.CSharp.OutputVisitor;
 using ICSharpCode.Decompiler.CSharp.Syntax;
 using ICSharpCode.Decompiler.TypeSystem;
 using ILSpyDecompiler = ICSharpCode.Decompiler.CSharp.CSharpDecompiler;
-using ILSpyDecompilerSettings = ICSharpCode.Decompiler.DecompilerSettings;
 
 namespace dnSpy.Decompiler.ILSpyModern.Core {
 	public sealed class DecompilerProvider : IDecompilerProvider {
 		// Keep the default ctor. It's used by dnSpy.Console.exe
-		public DecompilerProvider() {
+		public DecompilerProvider()
+			: this(null) {
 		}
 
+		public DecompilerProvider(CSharpDecompilerSettings? settings) => this.settings = settings;
+		readonly CSharpDecompilerSettings? settings;
+
 		public IEnumerable<IDecompiler> Create() {
-			yield return new CSharpDecompiler(new CSharpDecompilerSettings());
+			yield return new CSharpDecompiler(settings ?? new CSharpDecompilerSettings());
 		}
 	}
 
@@ -51,7 +54,9 @@ namespace dnSpy.Decompiler.ILSpyModern.Core {
 		public override DecompilerSettingsBase Settings => langSettings;
 		public override string ContentTypeString => ContentTypesInternal.CSharpILSpyModern;
 		public override string GenericNameUI => DecompilerConstants.GENERIC_NAMEUI_CSHARP;
-		public override string UniqueNameUI => "C# (ILSpy " + typeof(ILSpyDecompiler).Assembly.GetName().Version!.Major.ToString() + ")";
+		public override string UniqueNameUI => NameUI;
+		/// <summary>"C# (ILSpy N)", N = the major version of ICSharpCode.Decompiler</summary>
+		internal static string NameUI => "C# (ILSpy " + typeof(ILSpyDecompiler).Assembly.GetName().Version!.Major.ToString() + ")";
 		// Right after the old C# (ILSpy) language. It's not the default until it's at parity.
 		public override double OrderUI => DecompilerConstants.CSHARP_ILSPY_ORDERUI + 1;
 		public override Guid GenericGuid => DecompilerConstants.LANGUAGE_CSHARP;
@@ -103,11 +108,13 @@ namespace dnSpy.Decompiler.ILSpyModern.Core {
 				DebugInfoProvider = new DnlibDebugInfoProvider(mainModule),
 			};
 			// Run before ILSpy's last steps (parentheses are inserted after all transforms)
-			decompiler.AstTransforms.Add(new RemoveEmptyConstantIfTransform());
-			decompiler.AstTransforms.Add(new ConditionalToSwitchExpressionTransform());
-			decompiler.AstTransforms.Add(new InlineLambdaTemporariesTransform());
-			decompiler.AstTransforms.Add(new RemoveImplicitDecimalCastsTransform());
-			decompiler.AstTransforms.Add(new StringConcatToInterpolationTransform());
+			if (langSettings.CleanUpOutput) {
+				decompiler.AstTransforms.Add(new RemoveEmptyConstantIfTransform());
+				decompiler.AstTransforms.Add(new ConditionalToSwitchExpressionTransform());
+				decompiler.AstTransforms.Add(new InlineLambdaTemporariesTransform());
+				decompiler.AstTransforms.Add(new RemoveImplicitDecimalCastsTransform());
+				decompiler.AstTransforms.Add(new StringConcatToInterpolationTransform());
+			}
 			decompiler.AstTransforms.Add(new FixEmptyDirectionExpressionsTransform());
 			var syntaxTree = decompile(decompiler, mainModule);
 			var tokenWriter = new DecompilerOutputTokenWriter(output, modules);
@@ -119,25 +126,9 @@ namespace dnSpy.Decompiler.ILSpyModern.Core {
 		}
 	}
 
-	sealed class CSharpDecompilerSettings : DecompilerSettingsBase {
-		public override int Version => 0;
-		public override event EventHandler? VersionChanged { add { } remove { } }
-
-		public CSharpDecompilerSettings() {
-		}
-
-		public override DecompilerSettingsBase Clone() => new CSharpDecompilerSettings();
-
-		public override IEnumerable<IDecompilerOption> Options {
-			get { yield break; }
-		}
-
-		public ILSpyDecompilerSettings CreateILSpySettings() => new ILSpyDecompilerSettings(ICSharpCode.Decompiler.CSharp.LanguageVersion.Latest) {
-			ThrowOnAssemblyResolveErrors = false,
-		};
-
-		public override bool Equals(object? obj) => obj is CSharpDecompilerSettings;
-		public override int GetHashCode() => 0;
+	public static class LanguageConstants {
+		/// <summary>Name of the C# (ILSpy N) language, N = the major version of ICSharpCode.Decompiler</summary>
+		public static string CSharpNameUI => CSharpDecompiler.NameUI;
 	}
 
 	public static class ContentTypesInternal {
