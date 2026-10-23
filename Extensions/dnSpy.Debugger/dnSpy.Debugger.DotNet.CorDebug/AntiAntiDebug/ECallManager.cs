@@ -33,6 +33,7 @@ namespace dnSpy.Debugger.DotNet.CorDebug.AntiAntiDebug {
 
 		readonly Dictionary<string, ECFunc[]> classToFuncsDict = new Dictionary<string, ECFunc[]>(StringComparer.Ordinal);
 		ulong clrDllBaseAddress;
+		string? clrFilename;
 
 		/// <summary>
 		/// Constructor that can be used to test this class on some random clr file
@@ -59,6 +60,7 @@ namespace dnSpy.Debugger.DotNet.CorDebug.AntiAntiDebug {
 		}
 
 		void Initialize(string filename) {
+			clrFilename = filename;
 			try {
 				using (var reader = new ECallListReader(filename)) {
 					foreach (var ecc in reader.List) {
@@ -83,6 +85,84 @@ namespace dnSpy.Debugger.DotNet.CorDebug.AntiAntiDebug {
 					methodAddr = clrDllBaseAddress + func.FunctionRVA;
 					return true;
 				}
+			}
+			return false;
+		}
+
+		/// <summary>
+		/// Finds a QCall (a native function called by CoreLib using [LibraryImport("QCall")]), eg. "DebugDebugger_IsManagedDebuggerAttached"
+		/// </summary>
+		/// <param name="name">Entry point name</param>
+		/// <param name="methodAddr">Updated with the address of the native function</param>
+		/// <returns></returns>
+		public bool FindQCall(string name, out ulong methodAddr) {
+			methodAddr = 0;
+			if (clrFilename is null)
+				return false;
+			uint? rva;
+			try {
+				rva = QCallFinder.FindFunctionRva(clrFilename, name);
+			}
+			catch {
+				rva = null;
+			}
+			if (rva is null)
+				return false;
+			methodAddr = clrDllBaseAddress + rva.Value;
+			return true;
+		}
+	}
+
+	// Refs: coreclr/src/vm/qcallentrypoints.cpp: s_QCall[] is an array of { const char* name, const void* method }
+	static class QCallFinder {
+		public static uint? FindFunctionRva(string filename, string name) {
+			using (var peImage = new PEImage(filename)) {
+				var data = peImage.CreateReader().ToArray();
+				var optHdr = peImage.ImageNTHeaders.OptionalHeader;
+				bool is32bit = optHdr.Magic == 0x010B;
+				int ptrSize = is32bit ? 4 : 8;
+				ulong imageBase = optHdr.ImageBase;
+				var nameBytes = Encoding.ASCII.GetBytes(name + "\0");
+
+				for (int nameOffset = 0; (nameOffset = IndexOf(data, nameBytes, nameOffset)) >= 0; nameOffset++) {
+					// Must be the whole string, not the end of a longer string
+					if (nameOffset != 0 && data[nameOffset - 1] != 0)
+						continue;
+					ulong namePtr = imageBase + (uint)peImage.ToRVA((FileOffset)nameOffset);
+					for (int pos = 0; pos + 2 * ptrSize <= data.Length; pos += ptrSize) {
+						if (ReadPtr(data, pos, is32bit) != namePtr)
+							continue;
+						ulong funcPtr = ReadPtr(data, pos + ptrSize, is32bit);
+						if (funcPtr <= imageBase)
+							continue;
+						ulong funcRva = funcPtr - imageBase;
+						if (funcRva <= uint.MaxValue && IsCodeRva(peImage, (uint)funcRva))
+							return (uint)funcRva;
+					}
+				}
+				return null;
+			}
+		}
+
+		static ulong ReadPtr(byte[] data, int pos, bool is32bit) =>
+			is32bit ? BitConverter.ToUInt32(data, pos) : BitConverter.ToUInt64(data, pos);
+
+		static int IndexOf(byte[] data, byte[] pattern, int start) {
+			for (int i = start; (i = Array.IndexOf(data, pattern[0], i)) >= 0 && i + pattern.Length <= data.Length; i++) {
+				int j = 1;
+				while (j < pattern.Length && data[i + j] == pattern[j])
+					j++;
+				if (j == pattern.Length)
+					return i;
+			}
+			return -1;
+		}
+
+		static bool IsCodeRva(PEImage peImage, uint rva) {
+			foreach (var sect in peImage.ImageSectionHeaders) {
+				if (sect.DisplayName != ".text")
+					continue;
+				return (uint)sect.VirtualAddress <= rva && rva < (uint)sect.VirtualAddress + Math.Max(sect.VirtualSize, sect.SizeOfRawData);
 			}
 			return false;
 		}

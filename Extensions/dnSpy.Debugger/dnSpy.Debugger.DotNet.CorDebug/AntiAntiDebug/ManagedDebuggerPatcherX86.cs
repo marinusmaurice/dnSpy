@@ -57,7 +57,11 @@ namespace dnSpy.Debugger.DotNet.CorDebug.AntiAntiDebug {
 
 			// Launch() returns true in CLR 4.x and false in earlier CLR versions when there's
 			// no debugger. At least on my system...
+			// Newer CoreLibs call QCalls instead of FCalls (LaunchInternal: .NET 5+, IsAttached and IsLogging: .NET 10+)
+			// and the QCalls return a BOOL so the same patches can be used.
 			bool b = mgr.FindFunc(debuggerClassName, "LaunchInternal", out ulong addr);
+			if (!b)
+				b = mgr.FindQCall("DebugDebugger_Launch", out addr);
 			if (b) {
 				if (isClrV2OrOlder)
 					WriteReturnFalse(addr);
@@ -68,10 +72,14 @@ namespace dnSpy.Debugger.DotNet.CorDebug.AntiAntiDebug {
 			b = mgr.FindFunc(debuggerClassName, "get_IsAttached", out addr);
 			if (!b)
 				b = mgr.FindFunc(debuggerClassName, "IsDebuggerAttached", out addr);
+			if (!b)
+				b = mgr.FindQCall("DebugDebugger_IsManagedDebuggerAttached", out addr);
 			if (b)
 				WriteReturnFalse(addr);
 
 			b = mgr.FindFunc(debuggerClassName, "IsLogging", out addr);
+			if (!b)
+				b = mgr.FindQCall("DebugDebugger_IsLoggingHelper", out addr);
 			if (b)
 				WriteReturnFalse(addr);
 
