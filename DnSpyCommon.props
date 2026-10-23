@@ -40,6 +40,7 @@
     <NoWarn Condition=" '$(IsDotNetFramework)' == 'true' ">$(NoWarn);CS8767</NoWarn>
 
     <!-- Update app.config whenever some of these versions change (eg. dnlib version) -->
+    <DbgShimVersion>10.0.750501</DbgShimVersion>
     <DiaSymReaderVersion>1.7.0</DiaSymReaderVersion>
     <DnlibVersion>3.3.2</DnlibVersion>
     <IcedVersion>1.9.0</IcedVersion>

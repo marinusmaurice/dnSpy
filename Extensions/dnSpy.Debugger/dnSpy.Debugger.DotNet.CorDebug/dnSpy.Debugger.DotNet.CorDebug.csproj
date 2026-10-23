@@ -46,19 +46,29 @@
     <ProjectReference Include="..\dnSpy.Debugger.DotNet.Metadata\dnSpy.Debugger.DotNet.Metadata.csproj" />
   </ItemGroup>
 
+  <!-- .NET 7+ runtimes don't ship dbgshim.dll so get it from NuGet and copy it to debug\core\<arch>\ (all TFMs).
+       It's only downloaded (ExcludeAssets=all), we copy the native DLLs ourselves. -->
   <ItemGroup>
-    <DotNetDebugFilesX86 Include="..\netcorefiles\x86\**" />
-    <DotNetDebugFilesX64 Include="..\netcorefiles\x64\**" />
+    <PackageReference Include="Microsoft.Diagnostics.DbgShim.win-x86" Version="$(DbgShimVersion)" ExcludeAssets="all" PrivateAssets="all" />
+    <PackageReference Include="Microsoft.Diagnostics.DbgShim.win-x64" Version="$(DbgShimVersion)" ExcludeAssets="all" PrivateAssets="all" />
   </ItemGroup>
 
-  <Target Name="CopyDotNetDebugFiles_AfterBuild" AfterTargets="AfterBuild" Condition=" '$(IsDotNetFramework)' == 'true' ">
-    <Copy SourceFiles="@(DotNetDebugFilesX86)" DestinationFolder="$(TargetDir)debug\core\x86" />
-    <Copy SourceFiles="@(DotNetDebugFilesX64)" DestinationFolder="$(TargetDir)debug\core\x64" />
+  <Target Name="GetDotNetDebugFiles">
+    <ItemGroup>
+      <DotNetDebugFilesX86 Include="$(NuGetPackageRoot)microsoft.diagnostics.dbgshim.win-x86\$(DbgShimVersion)\runtimes\win-x86\native\dbgshim.dll" />
+      <DotNetDebugFilesX64 Include="$(NuGetPackageRoot)microsoft.diagnostics.dbgshim.win-x64\$(DbgShimVersion)\runtimes\win-x64\native\dbgshim.dll" />
+    </ItemGroup>
+    <Error Condition=" !Exists('@(DotNetDebugFilesX86)') or !Exists('@(DotNetDebugFilesX64)') " Text="Couldn't find dbgshim.dll in the NuGet package cache" />
   </Target>
 
-  <Target Name="CopyDotNetDebugFiles_Publish" AfterTargets="Publish" Condition=" '$(IsDotNetFramework)' == 'true' ">
-    <Copy SourceFiles="@(DotNetDebugFilesX86)" DestinationFolder="$(PublishDir)debug\core\x86" />
-    <Copy SourceFiles="@(DotNetDebugFilesX64)" DestinationFolder="$(PublishDir)debug\core\x64" />
+  <Target Name="CopyDotNetDebugFiles_AfterBuild" AfterTargets="AfterBuild" DependsOnTargets="GetDotNetDebugFiles">
+    <Copy SourceFiles="@(DotNetDebugFilesX86)" DestinationFolder="$(TargetDir)debug\core\x86" SkipUnchangedFiles="true" />
+    <Copy SourceFiles="@(DotNetDebugFilesX64)" DestinationFolder="$(TargetDir)debug\core\x64" SkipUnchangedFiles="true" />
+  </Target>
+
+  <Target Name="CopyDotNetDebugFiles_Publish" AfterTargets="Publish" DependsOnTargets="GetDotNetDebugFiles">
+    <Copy SourceFiles="@(DotNetDebugFilesX86)" DestinationFolder="$(PublishDir)debug\core\x86" SkipUnchangedFiles="true" />
+    <Copy SourceFiles="@(DotNetDebugFilesX64)" DestinationFolder="$(PublishDir)debug\core\x64" SkipUnchangedFiles="true" />
   </Target>
 
   <ItemGroup>

@@ -105,8 +105,8 @@ namespace dnSpy.Debugger.DotNet.CorDebug.Utilities {
 			}
 		}
 
+		// .NET 7+ runtimes don't ship dbgshim.dll so all TFMs use the copy from the Microsoft.Diagnostics.DbgShim NuGet package
 		public static string GetDebugShimFilename(int bitness) {
-#if NETFRAMEWORK
 			var basePath = Contracts.App.AppDirectories.BinDirectory;
 			basePath = Path.Combine(basePath, "debug", "core");
 			var filename = FileUtilities.GetNativeDllFilename("dbgshim");
@@ -115,12 +115,6 @@ namespace dnSpy.Debugger.DotNet.CorDebug.Utilities {
 			case 64:	return Path.Combine(basePath, "x64", filename);
 			default:	throw new ArgumentOutOfRangeException(nameof(bitness));
 			}
-#elif NET
-			var filename = FileUtilities.GetNativeDllFilename("dbgshim");
-			return Path.Combine(Path.GetDirectoryName(typeof(void).Assembly.Location)!, filename);
-#else
-#error Unknown target framework
-#endif
 		}
 
 		public static bool IsDotNetExecutable(string filename) {
