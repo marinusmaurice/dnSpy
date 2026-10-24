@@ -364,6 +364,19 @@ namespace dnSpy.Decompiler.ILSpyModern.Core {
 				WriteLine();
 				return;
 			}
+			// Token/RVA comments: the token and addresses are references
+			if (commentType == CommentType.SingleLine && nodeStack.Count > 0 && nodeStack.Peek() is Comment comment &&
+				comment.Annotation<CommentReferences>() is CommentReferences refs) {
+				output.Write("//", BoxedTextColor.Comment);
+				foreach (var (part, reference) in refs.Parts) {
+					if (reference is null)
+						output.Write(part, BoxedTextColor.Comment);
+					else
+						output.Write(part, reference, DecompilerReferenceFlags.None, BoxedTextColor.Comment);
+				}
+				WriteLine();
+				return;
+			}
 			var text = Format(w => w.WriteComment(commentType, content));
 			output.Write(text.TrimEnd('\r', '\n'), BoxedTextColor.Comment);
 			if (commentType == CommentType.SingleLine)

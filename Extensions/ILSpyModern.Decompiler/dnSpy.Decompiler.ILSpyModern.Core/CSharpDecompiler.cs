@@ -180,6 +180,9 @@ namespace dnSpy.Decompiler.ILSpyModern.Core {
 			if (lastTransform is not null)
 				decompiler.AstTransforms.Add(lastTransform);
 			var syntaxTree = decompile(decompiler, mainModule);
+			// Not in the code that Edit Method/Edit Class compiles
+			if (langSettings.ShowTokenAndRvaComments && lastTransform is not DecompileTypeMethodsTransform)
+				TokenComments.Add(syntaxTree, modules);
 			var tokenWriter = new DecompilerOutputTokenWriter(output, modules);
 			// Also stores the text locations in the AST, needed to create the debugger's statement mapping
 			var writer = TokenWriter.WrapInWriterThatSetsLocationsInAST(tokenWriter);

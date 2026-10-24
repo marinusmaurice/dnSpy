@@ -102,6 +102,10 @@ namespace dnSpy.Decompiler.ILSpyModern.Core {
 				Description = "Show XML documentation in decompiled code",
 				Name = DecompilerOptionConstants.ShowXmlDocumentation_NAME,
 			};
+			yield return new DecompilerOption<bool>(DecompilerOptionConstants.ShowTokenAndRvaComments_GUID, () => ShowTokenAndRvaComments, a => ShowTokenAndRvaComments = a) {
+				Description = "Show tokens, RVAs and file offsets in comments",
+				Name = DecompilerOptionConstants.ShowTokenAndRvaComments_NAME,
+			};
 			yield return new DecompilerOption<string>(LanguageVersion_GUID, () => LanguageVersion, a => LanguageVersion = a) {
 				Description = "C# language version (" + string.Join(", ", LanguageVersions) + ")",
 				Name = LanguageVersion_NAME,
@@ -171,6 +175,15 @@ namespace dnSpy.Decompiler.ILSpyModern.Core {
 			set => SetValue(ref showXmlDocumentation, value, nameof(ShowXmlDocumentation));
 		}
 		bool showXmlDocumentation = true;
+
+		/// <summary>
+		/// Write a <c>// Token: ... RVA: ... File Offset: ...</c> comment before each definition (like the old C# language)
+		/// </summary>
+		public bool ShowTokenAndRvaComments {
+			get => showTokenAndRvaComments;
+			set => SetValue(ref showTokenAndRvaComments, value, nameof(ShowTokenAndRvaComments));
+		}
+		bool showTokenAndRvaComments = true;
 
 		/// <summary>
 		/// Run dnSpy's own AST transforms after ILSpy's (they're what makes the output closer to the original source)
@@ -257,6 +270,7 @@ namespace dnSpy.Decompiler.ILSpyModern.Core {
 			other.UsingDeclarations = UsingDeclarations;
 			other.UseDebugSymbols = UseDebugSymbols;
 			other.ShowXmlDocumentation = ShowXmlDocumentation;
+			other.ShowTokenAndRvaComments = ShowTokenAndRvaComments;
 			other.CleanUpOutput = CleanUpOutput;
 			other.LanguageVersion = LanguageVersion;
 			return other;
@@ -297,6 +311,7 @@ namespace dnSpy.Decompiler.ILSpyModern.Core {
 			UsingDeclarations == other.UsingDeclarations &&
 			UseDebugSymbols == other.UseDebugSymbols &&
 			ShowXmlDocumentation == other.ShowXmlDocumentation &&
+			ShowTokenAndRvaComments == other.ShowTokenAndRvaComments &&
 			CleanUpOutput == other.CleanUpOutput &&
 			LanguageVersion == other.LanguageVersion;
 

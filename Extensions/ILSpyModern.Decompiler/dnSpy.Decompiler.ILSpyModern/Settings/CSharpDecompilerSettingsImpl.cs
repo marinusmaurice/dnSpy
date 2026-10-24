@@ -43,6 +43,7 @@ namespace dnSpy.Decompiler.ILSpyModern.Settings {
 			UsingDeclarations = sect.Attribute<bool?>(nameof(UsingDeclarations)) ?? UsingDeclarations;
 			UseDebugSymbols = sect.Attribute<bool?>(nameof(UseDebugSymbols)) ?? UseDebugSymbols;
 			ShowXmlDocumentation = sect.Attribute<bool?>(nameof(ShowXmlDocumentation)) ?? ShowXmlDocumentation;
+			ShowTokenAndRvaComments = sect.Attribute<bool?>(nameof(ShowTokenAndRvaComments)) ?? ShowTokenAndRvaComments;
 			CleanUpOutput = sect.Attribute<bool?>(nameof(CleanUpOutput)) ?? CleanUpOutput;
 			LanguageVersion = sect.Attribute<string>(nameof(LanguageVersion)) ?? LanguageVersion;
 			disableSave = false;
@@ -64,6 +65,7 @@ namespace dnSpy.Decompiler.ILSpyModern.Settings {
 			sect.Attribute(nameof(UsingDeclarations), UsingDeclarations);
 			sect.Attribute(nameof(UseDebugSymbols), UseDebugSymbols);
 			sect.Attribute(nameof(ShowXmlDocumentation), ShowXmlDocumentation);
+			sect.Attribute(nameof(ShowTokenAndRvaComments), ShowTokenAndRvaComments);
 			sect.Attribute(nameof(CleanUpOutput), CleanUpOutput);
 			sect.Attribute(nameof(LanguageVersion), LanguageVersion);
 		}

@@ -18,6 +18,7 @@
             <CheckBox Margin="0 5 0 0" IsChecked="{Binding Settings.UsingDeclarations}" Content="Add using declarations"/>
             <CheckBox Margin="0 5 0 0" IsChecked="{Binding Settings.UseDebugSymbols}" Content="Use variable names from debug symbols, if available"/>
             <CheckBox Margin="0 5 0 0" IsChecked="{Binding Settings.ShowXmlDocumentation}" Content="Show XML documentation in decompiled code"/>
+            <CheckBox Margin="0 5 0 0" IsChecked="{Binding Settings.ShowTokenAndRvaComments}" Content="Show tokens, RVAs and file offsets in comments"/>
             <CheckBox Margin="0 5 0 0" IsChecked="{Binding Settings.CleanUpOutput}" Content="Clean up ILSpy's output (switch expressions, string interpolation, decimal casts, empty if statements)"/>
         </StackPanel>
     </DataTemplate>
