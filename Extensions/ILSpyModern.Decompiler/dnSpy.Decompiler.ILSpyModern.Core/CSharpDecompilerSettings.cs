@@ -126,6 +126,18 @@ namespace dnSpy.Decompiler.ILSpyModern.Core {
 				Description = "Sort custom attributes",
 				Name = DecompilerOptionConstants.SortCustomAttributes_NAME,
 			};
+			yield return new DecompilerOption<string>(DecompilerOptionConstants.MemberOrder_GUID, () => MemberOrder, a => MemberOrder = a) {
+				Description = "Decompilation order (t = nested types, f = fields, p = properties, e = events, m = methods)",
+				Name = DecompilerOptionConstants.MemberOrder_NAME,
+			};
+			yield return new DecompilerOption<bool>(DecompilerOptionConstants.SortMembers_GUID, () => SortMembers, a => SortMembers = a) {
+				Description = "Sort methods, fields, properties, events and types",
+				Name = DecompilerOptionConstants.SortMembers_NAME,
+			};
+			yield return new DecompilerOption<bool>(DecompilerOptionConstants.UseSourceCodeOrder_GUID, () => UseSourceCodeOrder, a => UseSourceCodeOrder = a) {
+				Description = "Order members in source code order",
+				Name = DecompilerOptionConstants.UseSourceCodeOrder_NAME,
+			};
 			yield return new DecompilerOption<bool>(DecompilerOptionConstants.UsingDeclarations_GUID, () => UsingDeclarations, a => UsingDeclarations = a) {
 				Description = "Add using declarations",
 				Name = DecompilerOptionConstants.UsingDeclarations_NAME,
@@ -248,6 +260,47 @@ namespace dnSpy.Decompiler.ILSpyModern.Core {
 		}
 		bool sortCustomAttributes = false;
 
+		/// <summary>
+		/// Default value of <see cref="MemberOrder"/>, ILSpy's order: nested types, fields, properties, events, methods
+		/// </summary>
+		public const string DefaultMemberOrder = "tfpem";
+
+		/// <summary>
+		/// Order of the member kinds in a type, a permutation of <see cref="DefaultMemberOrder"/> (same as the old
+		/// C# language's option: t = nested types, f = fields, p = properties, e = events, m = methods). Other values are ignored.
+		/// </summary>
+		public string MemberOrder {
+			get => memberOrder;
+			set {
+				if (value is null || value.Length != DefaultMemberOrder.Length || !value.OrderBy(c => c).SequenceEqual(DefaultMemberOrder.OrderBy(c => c)))
+					return;
+				if (memberOrder == value)
+					return;
+				memberOrder = value;
+				OnValueChanged(nameof(MemberOrder));
+			}
+		}
+		string memberOrder = DefaultMemberOrder;
+
+		/// <summary>
+		/// Sort the members of each kind by name (not the fields of types with a sequential or explicit layout)
+		/// </summary>
+		public bool SortMembers {
+			get => sortMembers;
+			set => SetValue(ref sortMembers, value, nameof(SortMembers));
+		}
+		bool sortMembers = false;
+
+		/// <summary>
+		/// Write methods, properties and events together in metadata order (a property or event at its first accessor),
+		/// at the position of the first of them in <see cref="MemberOrder"/>. Overrides <see cref="SortMembers"/>.
+		/// </summary>
+		public bool UseSourceCodeOrder {
+			get => useSourceCodeOrder;
+			set => SetValue(ref useSourceCodeOrder, value, nameof(UseSourceCodeOrder));
+		}
+		bool useSourceCodeOrder = false;
+
 		public bool UsingDeclarations {
 			get => usingDeclarations;
 			set => SetValue(ref usingDeclarations, value, nameof(UsingDeclarations));
@@ -366,6 +419,9 @@ namespace dnSpy.Decompiler.ILSpyModern.Core {
 			other.IntroduceIncrementAndDecrement = IntroduceIncrementAndDecrement;
 			other.MakeAssignmentExpressions = MakeAssignmentExpressions;
 			other.SortCustomAttributes = SortCustomAttributes;
+			other.MemberOrder = MemberOrder;
+			other.SortMembers = SortMembers;
+			other.UseSourceCodeOrder = UseSourceCodeOrder;
 			other.UsingDeclarations = UsingDeclarations;
 			other.UseDebugSymbols = UseDebugSymbols;
 			other.ShowXmlDocumentation = ShowXmlDocumentation;
@@ -425,6 +481,9 @@ namespace dnSpy.Decompiler.ILSpyModern.Core {
 			IntroduceIncrementAndDecrement == other.IntroduceIncrementAndDecrement &&
 			MakeAssignmentExpressions == other.MakeAssignmentExpressions &&
 			SortCustomAttributes == other.SortCustomAttributes &&
+			MemberOrder == other.MemberOrder &&
+			SortMembers == other.SortMembers &&
+			UseSourceCodeOrder == other.UseSourceCodeOrder &&
 			UsingDeclarations == other.UsingDeclarations &&
 			UseDebugSymbols == other.UseDebugSymbols &&
 			ShowXmlDocumentation == other.ShowXmlDocumentation &&
@@ -438,7 +497,7 @@ namespace dnSpy.Decompiler.ILSpyModern.Core {
 				if (opt.Value is bool b)
 					h = (h << 1) | (b ? 1 : 0);
 			}
-			return h ^ LanguageVersion.GetHashCode();
+			return h ^ LanguageVersion.GetHashCode() ^ MemberOrder.GetHashCode();
 		}
 	}
 }

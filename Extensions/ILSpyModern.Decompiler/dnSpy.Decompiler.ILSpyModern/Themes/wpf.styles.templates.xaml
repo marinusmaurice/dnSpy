@@ -29,6 +29,17 @@
             <CheckBox Margin="0 5 0 0" IsChecked="{Binding Settings.ShowXmlDocumentation}" Content="Show XML documentation in decompiled code"/>
             <CheckBox Margin="0 5 0 0" IsChecked="{Binding Settings.ShowTokenAndRvaComments}" Content="Show tokens, RVAs and file offsets in comments"/>
             <CheckBox Margin="0 5 0 0" IsChecked="{Binding Settings.CleanUpOutput}" Content="Clean up ILSpy's output (switch expressions, string interpolation, decimal casts, empty if statements)"/>
+            <CheckBox Margin="0 5 0 0" IsChecked="{Binding Settings.SortMembers}" Content="Sort methods, fields, properties, events and types"/>
+            <CheckBox Margin="0 5 0 0" IsChecked="{Binding Settings.UseSourceCodeOrder}" Content="Order members in source code order"/>
+            <GroupBox Margin="0 5 0 0" Header="Decompilation order">
+                <StackPanel>
+                    <ComboBox Margin="0 5 0 0" ItemsSource="{Binding MemberKinds}" SelectedItem="{Binding MemberOrder0}" DisplayMemberPath="Text"/>
+                    <ComboBox Margin="0 5 0 0" ItemsSource="{Binding MemberKinds}" SelectedItem="{Binding MemberOrder1}" DisplayMemberPath="Text"/>
+                    <ComboBox Margin="0 5 0 0" ItemsSource="{Binding MemberKinds}" SelectedItem="{Binding MemberOrder2}" DisplayMemberPath="Text"/>
+                    <ComboBox Margin="0 5 0 0" ItemsSource="{Binding MemberKinds}" SelectedItem="{Binding MemberOrder3}" DisplayMemberPath="Text"/>
+                    <ComboBox Margin="0 5 0 0" ItemsSource="{Binding MemberKinds}" SelectedItem="{Binding MemberOrder4}" DisplayMemberPath="Text"/>
+                </StackPanel>
+            </GroupBox>
         </StackPanel>
     </DataTemplate>
 

@@ -49,6 +49,9 @@ namespace dnSpy.Decompiler.ILSpyModern.Settings {
 			IntroduceIncrementAndDecrement = sect.Attribute<bool?>(nameof(IntroduceIncrementAndDecrement)) ?? IntroduceIncrementAndDecrement;
 			MakeAssignmentExpressions = sect.Attribute<bool?>(nameof(MakeAssignmentExpressions)) ?? MakeAssignmentExpressions;
 			SortCustomAttributes = sect.Attribute<bool?>(nameof(SortCustomAttributes)) ?? SortCustomAttributes;
+			MemberOrder = sect.Attribute<string>(nameof(MemberOrder)) ?? MemberOrder;
+			SortMembers = sect.Attribute<bool?>(nameof(SortMembers)) ?? SortMembers;
+			UseSourceCodeOrder = sect.Attribute<bool?>(nameof(UseSourceCodeOrder)) ?? UseSourceCodeOrder;
 			UsingDeclarations = sect.Attribute<bool?>(nameof(UsingDeclarations)) ?? UsingDeclarations;
 			UseDebugSymbols = sect.Attribute<bool?>(nameof(UseDebugSymbols)) ?? UseDebugSymbols;
 			ShowXmlDocumentation = sect.Attribute<bool?>(nameof(ShowXmlDocumentation)) ?? ShowXmlDocumentation;
@@ -80,6 +83,9 @@ namespace dnSpy.Decompiler.ILSpyModern.Settings {
 			sect.Attribute(nameof(IntroduceIncrementAndDecrement), IntroduceIncrementAndDecrement);
 			sect.Attribute(nameof(MakeAssignmentExpressions), MakeAssignmentExpressions);
 			sect.Attribute(nameof(SortCustomAttributes), SortCustomAttributes);
+			sect.Attribute(nameof(MemberOrder), MemberOrder);
+			sect.Attribute(nameof(SortMembers), SortMembers);
+			sect.Attribute(nameof(UseSourceCodeOrder), UseSourceCodeOrder);
 			sect.Attribute(nameof(UsingDeclarations), UsingDeclarations);
 			sect.Attribute(nameof(UseDebugSymbols), UseDebugSymbols);
 			sect.Attribute(nameof(ShowXmlDocumentation), ShowXmlDocumentation);

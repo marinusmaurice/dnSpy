@@ -180,6 +180,8 @@ namespace dnSpy.Decompiler.ILSpyModern.Core {
 			if (lastTransform is not null)
 				decompiler.AstTransforms.Add(lastTransform);
 			var syntaxTree = decompile(decompiler, mainModule);
+			if (!MemberOrderTransform.IsILSpyOrder(langSettings))
+				MemberOrderTransform.Run(syntaxTree, modules, langSettings);
 			// Not in the code that Edit Method/Edit Class compiles
 			if (langSettings.ShowTokenAndRvaComments && lastTransform is not DecompileTypeMethodsTransform)
 				TokenComments.Add(syntaxTree, modules);

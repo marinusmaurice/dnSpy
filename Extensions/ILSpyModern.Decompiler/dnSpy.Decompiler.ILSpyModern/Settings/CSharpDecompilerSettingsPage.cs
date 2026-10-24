@@ -65,6 +65,40 @@ namespace dnSpy.Decompiler.ILSpyModern.Settings {
 		/// </summary>
 		public LanguageVersionVM[] LanguageVersions { get; } = CSharpDecompilerSettings.LanguageVersions.Select(a => new LanguageVersionVM(a)).ToArray();
 
+		/// <summary>
+		/// Items of the member order combo boxes
+		/// </summary>
+		public MemberKindVM[] MemberKinds { get; } = new[] {
+			new MemberKindVM('m', "Methods"),
+			new MemberKindVM('p', "Properties"),
+			new MemberKindVM('e', "Events"),
+			new MemberKindVM('f', "Fields"),
+			new MemberKindVM('t', "Nested Types"),
+		};
+
+		// Like the old C# page: selecting a kind that's already used elsewhere swaps the two
+		public MemberKindVM MemberOrder0 { get => GetMemberKind(0); set => SetMemberKind(0, value); }
+		public MemberKindVM MemberOrder1 { get => GetMemberKind(1); set => SetMemberKind(1, value); }
+		public MemberKindVM MemberOrder2 { get => GetMemberKind(2); set => SetMemberKind(2, value); }
+		public MemberKindVM MemberOrder3 { get => GetMemberKind(3); set => SetMemberKind(3, value); }
+		public MemberKindVM MemberOrder4 { get => GetMemberKind(4); set => SetMemberKind(4, value); }
+
+		MemberKindVM GetMemberKind(int index) => MemberKinds.First(a => a.Kind == decompilerSettings.MemberOrder[index]);
+
+		void SetMemberKind(int index, MemberKindVM? newValue) {
+			if (newValue is null)
+				return;
+			var order = decompilerSettings.MemberOrder.ToCharArray();
+			int otherIndex = Array.IndexOf(order, newValue.Kind);
+			if (otherIndex < 0 || otherIndex == index)
+				return;
+			order[otherIndex] = order[index];
+			order[index] = newValue.Kind;
+			decompilerSettings.MemberOrder = new string(order);
+			OnPropertyChanged($"MemberOrder{otherIndex}");
+			OnPropertyChanged($"MemberOrder{index}");
+		}
+
 		public CSharpDecompilerSettingsPage(CSharpDecompilerSettings decompilerSettings) {
 			_global_decompilerSettings = decompilerSettings;
 			this.decompilerSettings = (CSharpDecompilerSettings)decompilerSettings.Clone();
@@ -85,6 +119,16 @@ namespace dnSpy.Decompiler.ILSpyModern.Settings {
 		}
 
 		public override string[]? GetSearchStrings() => decompilerSettings.Options.Select(a => a.Description).OfType<string>().ToArray();
+	}
+
+	sealed class MemberKindVM {
+		public char Kind { get; }
+		public string Text { get; }
+
+		public MemberKindVM(char kind, string text) {
+			Kind = kind;
+			Text = text;
+		}
 	}
 
 	sealed class LanguageVersionVM {
