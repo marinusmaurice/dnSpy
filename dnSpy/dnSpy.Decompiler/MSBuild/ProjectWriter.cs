@@ -349,7 +349,7 @@ namespace dnSpy.Decompiler.MSBuild {
 			"b77a5c561934e089", "b03f5f7f11d50a3a", "31bf3856ad364e35", "cc7b13ffcd2ddd51", "7cec85d7bea7798e",
 		};
 
-		static bool IsFrameworkAssembly(AssemblyRef asmRef, AssemblyDef? asm) {
+		bool IsFrameworkAssembly(AssemblyRef asmRef, AssemblyDef? asm) {
 			if (asm is not null) {
 				var location = asm.ManifestModule.Location;
 				if (!string.IsNullOrEmpty(location)) {
@@ -357,6 +357,12 @@ namespace dnSpy.Decompiler.MSBuild {
 					// Shared framework dirs and reference packs: ...\dotnet\shared\Microsoft.NETCore.App\10.0.0\ and ...\dotnet\packs\...
 					if (dir.IndexOf(@"\dotnet\shared\", StringComparison.OrdinalIgnoreCase) >= 0 || dir.IndexOf(@"\dotnet\packs\", StringComparison.OrdinalIgnoreCase) >= 0)
 						return true;
+					// A System.* file next to the app is a NuGet package (e.g. System.Composition.*), unless the app is self-contained.
+					// .NET Framework dirs and reference assemblies (incl. their Facades dirs) are framework dirs.
+					bool netFxDir = dir.IndexOf(@"\Reference Assemblies\", StringComparison.OrdinalIgnoreCase) >= 0 ||
+						dir.IndexOf(@"\Microsoft.NET\Framework", StringComparison.OrdinalIgnoreCase) >= 0;
+					if (!netFxDir && !IsGacPath(location) && !IsSelfContainedAppDir(Path.GetDirectoryName(location)))
+						return false;
 				}
 			}
 			// Unresolved or self-contained app (framework files in the app dir)
@@ -369,6 +375,17 @@ namespace dnSpy.Decompiler.MSBuild {
 				name.StartsWith("Microsoft.Win32.", StringComparison.Ordinal) || name.StartsWith("Microsoft.VisualBasic", StringComparison.Ordinal) ||
 				name.StartsWith("Presentation", StringComparison.Ordinal) || name.StartsWith("UIAutomation", StringComparison.Ordinal) ||
 				name == "Microsoft.CSharp" || name == "WindowsFormsIntegration" || name == "ReachFramework";
+		}
+
+		static bool IsSelfContainedAppDir(string? dir) {
+			if (string.IsNullOrEmpty(dir))
+				return false;
+			try {
+				return File.Exists(Path.Combine(dir, "System.Private.CoreLib.dll")) || File.Exists(Path.Combine(dir, "mscorlib.dll"));
+			}
+			catch (ArgumentException) {
+				return false;
+			}
 		}
 
 		static string GetRelativePath(string sourceDir, string destFile) {
