@@ -15,6 +15,15 @@
             <CheckBox Margin="0 5 0 0" IsChecked="{Binding Settings.ExpressionTrees}" Content="Decompile expression trees"/>
             <CheckBox Margin="0 5 0 0" IsChecked="{Binding Settings.SwitchExpressions}" Content="Decompile switch expressions"/>
             <CheckBox Margin="0 5 0 0" IsChecked="{Binding Settings.StringInterpolation}" Content="Use string interpolation"/>
+            <CheckBox Margin="0 5 0 0" IsChecked="{Binding Settings.AutomaticProperties}" Content="Decompile automatic properties"/>
+            <CheckBox Margin="0 5 0 0" IsChecked="{Binding Settings.AutomaticEvents}" Content="Decompile automatic events"/>
+            <CheckBox Margin="0 5 0 0" IsChecked="{Binding Settings.UsingStatement}" Content="Decompile using statements"/>
+            <CheckBox Margin="0 5 0 0" IsChecked="{Binding Settings.ForEachStatement}" Content="Decompile foreach statements"/>
+            <CheckBox Margin="0 5 0 0" IsChecked="{Binding Settings.LockStatement}" Content="Decompile lock statements"/>
+            <CheckBox Margin="0 5 0 0" IsChecked="{Binding Settings.ObjectOrCollectionInitializers}" Content="Decompile object or collection initializers"/>
+            <CheckBox Margin="0 5 0 0" IsChecked="{Binding Settings.IntroduceIncrementAndDecrement}" Content="Use increment and decrement operators"/>
+            <CheckBox Margin="0 5 0 0" IsChecked="{Binding Settings.MakeAssignmentExpressions}" Content="Use assignment expressions such as in while ((count = Do()) != 0) ;"/>
+            <CheckBox Margin="0 5 0 0" IsChecked="{Binding Settings.SortCustomAttributes}" Content="Sort custom attributes"/>
             <CheckBox Margin="0 5 0 0" IsChecked="{Binding Settings.UsingDeclarations}" Content="Add using declarations"/>
             <CheckBox Margin="0 5 0 0" IsChecked="{Binding Settings.UseDebugSymbols}" Content="Use variable names from debug symbols, if available"/>
             <CheckBox Margin="0 5 0 0" IsChecked="{Binding Settings.ShowXmlDocumentation}" Content="Show XML documentation in decompiled code"/>

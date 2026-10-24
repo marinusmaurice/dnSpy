@@ -90,6 +90,42 @@ namespace dnSpy.Decompiler.ILSpyModern.Core {
 				Description = "Use string interpolation",
 				Name = StringInterpolation_NAME,
 			};
+			yield return new DecompilerOption<bool>(DecompilerOptionConstants.AutomaticProperties_GUID, () => AutomaticProperties, a => AutomaticProperties = a) {
+				Description = "Decompile automatic properties",
+				Name = DecompilerOptionConstants.AutomaticProperties_NAME,
+			};
+			yield return new DecompilerOption<bool>(DecompilerOptionConstants.AutomaticEvents_GUID, () => AutomaticEvents, a => AutomaticEvents = a) {
+				Description = "Decompile automatic events",
+				Name = DecompilerOptionConstants.AutomaticEvents_NAME,
+			};
+			yield return new DecompilerOption<bool>(DecompilerOptionConstants.UsingStatement_GUID, () => UsingStatement, a => UsingStatement = a) {
+				Description = "Decompile using statements",
+				Name = DecompilerOptionConstants.UsingStatement_NAME,
+			};
+			yield return new DecompilerOption<bool>(DecompilerOptionConstants.ForEachStatement_GUID, () => ForEachStatement, a => ForEachStatement = a) {
+				Description = "Decompile foreach statements",
+				Name = DecompilerOptionConstants.ForEachStatement_NAME,
+			};
+			yield return new DecompilerOption<bool>(DecompilerOptionConstants.LockStatement_GUID, () => LockStatement, a => LockStatement = a) {
+				Description = "Decompile lock statements",
+				Name = DecompilerOptionConstants.LockStatement_NAME,
+			};
+			yield return new DecompilerOption<bool>(DecompilerOptionConstants.ObjectOrCollectionInitializers_GUID, () => ObjectOrCollectionInitializers, a => ObjectOrCollectionInitializers = a) {
+				Description = "Decompile object or collection initializers",
+				Name = DecompilerOptionConstants.ObjectOrCollectionInitializers_NAME,
+			};
+			yield return new DecompilerOption<bool>(DecompilerOptionConstants.IntroduceIncrementAndDecrement_GUID, () => IntroduceIncrementAndDecrement, a => IntroduceIncrementAndDecrement = a) {
+				Description = "Use increment and decrement operators",
+				Name = DecompilerOptionConstants.IntroduceIncrementAndDecrement_NAME,
+			};
+			yield return new DecompilerOption<bool>(DecompilerOptionConstants.MakeAssignmentExpressions_GUID, () => MakeAssignmentExpressions, a => MakeAssignmentExpressions = a) {
+				Description = "Use assignment expressions such as in while ((count = Do()) != 0) ;",
+				Name = DecompilerOptionConstants.MakeAssignmentExpressions_NAME,
+			};
+			yield return new DecompilerOption<bool>(DecompilerOptionConstants.SortCustomAttributes_GUID, () => SortCustomAttributes, a => SortCustomAttributes = a) {
+				Description = "Sort custom attributes",
+				Name = DecompilerOptionConstants.SortCustomAttributes_NAME,
+			};
 			yield return new DecompilerOption<bool>(DecompilerOptionConstants.UsingDeclarations_GUID, () => UsingDeclarations, a => UsingDeclarations = a) {
 				Description = "Add using declarations",
 				Name = DecompilerOptionConstants.UsingDeclarations_NAME,
@@ -157,6 +193,60 @@ namespace dnSpy.Decompiler.ILSpyModern.Core {
 			set => SetValue(ref stringInterpolation, value, nameof(StringInterpolation));
 		}
 		bool stringInterpolation = true;
+
+		public bool AutomaticProperties {
+			get => automaticProperties;
+			set => SetValue(ref automaticProperties, value, nameof(AutomaticProperties));
+		}
+		bool automaticProperties = true;
+
+		public bool AutomaticEvents {
+			get => automaticEvents;
+			set => SetValue(ref automaticEvents, value, nameof(AutomaticEvents));
+		}
+		bool automaticEvents = true;
+
+		public bool UsingStatement {
+			get => usingStatement;
+			set => SetValue(ref usingStatement, value, nameof(UsingStatement));
+		}
+		bool usingStatement = true;
+
+		public bool ForEachStatement {
+			get => forEachStatement;
+			set => SetValue(ref forEachStatement, value, nameof(ForEachStatement));
+		}
+		bool forEachStatement = true;
+
+		public bool LockStatement {
+			get => lockStatement;
+			set => SetValue(ref lockStatement, value, nameof(LockStatement));
+		}
+		bool lockStatement = true;
+
+		public bool ObjectOrCollectionInitializers {
+			get => objectOrCollectionInitializers;
+			set => SetValue(ref objectOrCollectionInitializers, value, nameof(ObjectOrCollectionInitializers));
+		}
+		bool objectOrCollectionInitializers = true;
+
+		public bool IntroduceIncrementAndDecrement {
+			get => introduceIncrementAndDecrement;
+			set => SetValue(ref introduceIncrementAndDecrement, value, nameof(IntroduceIncrementAndDecrement));
+		}
+		bool introduceIncrementAndDecrement = true;
+
+		public bool MakeAssignmentExpressions {
+			get => makeAssignmentExpressions;
+			set => SetValue(ref makeAssignmentExpressions, value, nameof(MakeAssignmentExpressions));
+		}
+		bool makeAssignmentExpressions = true;
+
+		public bool SortCustomAttributes {
+			get => sortCustomAttributes;
+			set => SetValue(ref sortCustomAttributes, value, nameof(SortCustomAttributes));
+		}
+		bool sortCustomAttributes = false;
 
 		public bool UsingDeclarations {
 			get => usingDeclarations;
@@ -267,6 +357,15 @@ namespace dnSpy.Decompiler.ILSpyModern.Core {
 			other.QueryExpressions = QueryExpressions;
 			other.SwitchExpressions = SwitchExpressions;
 			other.StringInterpolation = StringInterpolation;
+			other.AutomaticProperties = AutomaticProperties;
+			other.AutomaticEvents = AutomaticEvents;
+			other.UsingStatement = UsingStatement;
+			other.ForEachStatement = ForEachStatement;
+			other.LockStatement = LockStatement;
+			other.ObjectOrCollectionInitializers = ObjectOrCollectionInitializers;
+			other.IntroduceIncrementAndDecrement = IntroduceIncrementAndDecrement;
+			other.MakeAssignmentExpressions = MakeAssignmentExpressions;
+			other.SortCustomAttributes = SortCustomAttributes;
 			other.UsingDeclarations = UsingDeclarations;
 			other.UseDebugSymbols = UseDebugSymbols;
 			other.ShowXmlDocumentation = ShowXmlDocumentation;
@@ -283,12 +382,21 @@ namespace dnSpy.Decompiler.ILSpyModern.Core {
 				UsingDeclarations = UsingDeclarations,
 				UseDebugSymbols = UseDebugSymbols,
 				ShowXmlDocumentation = ShowXmlDocumentation,
+				SortCustomAttributes = SortCustomAttributes,
 			};
 			settings.ExpressionTrees &= ExpressionTrees;
 			settings.YieldReturn &= YieldReturn;
 			settings.AsyncAwait &= AsyncAwait;
 			settings.SwitchExpressions &= SwitchExpressions;
 			settings.StringInterpolation &= StringInterpolation;
+			settings.AutomaticProperties &= AutomaticProperties;
+			settings.AutomaticEvents &= AutomaticEvents;
+			settings.UsingStatement &= UsingStatement;
+			settings.ForEachStatement &= ForEachStatement;
+			settings.LockStatement &= LockStatement;
+			settings.ObjectOrCollectionInitializers &= ObjectOrCollectionInitializers;
+			settings.IntroduceIncrementAndDecrement &= IntroduceIncrementAndDecrement;
+			settings.MakeAssignmentExpressions &= MakeAssignmentExpressions;
 			// ILSpy's query expressions need lambdas
 			if (!AnonymousMethods) {
 				settings.AnonymousMethods = false;
@@ -308,6 +416,15 @@ namespace dnSpy.Decompiler.ILSpyModern.Core {
 			QueryExpressions == other.QueryExpressions &&
 			SwitchExpressions == other.SwitchExpressions &&
 			StringInterpolation == other.StringInterpolation &&
+			AutomaticProperties == other.AutomaticProperties &&
+			AutomaticEvents == other.AutomaticEvents &&
+			UsingStatement == other.UsingStatement &&
+			ForEachStatement == other.ForEachStatement &&
+			LockStatement == other.LockStatement &&
+			ObjectOrCollectionInitializers == other.ObjectOrCollectionInitializers &&
+			IntroduceIncrementAndDecrement == other.IntroduceIncrementAndDecrement &&
+			MakeAssignmentExpressions == other.MakeAssignmentExpressions &&
+			SortCustomAttributes == other.SortCustomAttributes &&
 			UsingDeclarations == other.UsingDeclarations &&
 			UseDebugSymbols == other.UseDebugSymbols &&
 			ShowXmlDocumentation == other.ShowXmlDocumentation &&
