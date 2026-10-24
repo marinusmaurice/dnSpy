@@ -54,8 +54,10 @@ namespace dnSpy.Decompiler.ILSpyModern.Core {
 					kickoffMethod = null;
 				var stateMachineKind = kickoffMethod is null ? StateMachineKind.None : function.IsAsync ? StateMachineKind.AsyncMethod : StateMachineKind.IteratorMethod;
 
-				var builder = new MethodDebugInfoBuilder(settingsVersion, stateMachineKind, method, kickoffMethod, CreateLocals(function, method, modules), CreateParameters(function, kickoffMethod ?? method, kickoffMethod is not null ? method.DeclaringType : null, modules), null);
+				var asyncInfo = stateMachineKind == StateMachineKind.AsyncMethod ? AsyncMethodDebugInfoCreator.TryCreate(method, kickoffMethod!) : null;
+				var builder = new MethodDebugInfoBuilder(settingsVersion, stateMachineKind, method, kickoffMethod, CreateLocals(function, method, modules), CreateParameters(function, kickoffMethod ?? method, kickoffMethod is not null ? method.DeclaringType : null, modules), asyncInfo);
 				uint codeSize = (uint)method.Body.GetCodeSize();
+				var statements = new List<SourceStatement>();
 				var covered = new List<(uint start, uint end)>();
 				foreach (var sp in kv.Value) {
 					if (sp.IsHidden || sp.Offset < 0 || sp.EndOffset <= sp.Offset || (uint)sp.EndOffset > codeSize)
@@ -64,11 +66,15 @@ namespace dnSpy.Decompiler.ILSpyModern.Core {
 					int end = writer.GetPosition(sp.EndLine, sp.EndColumn);
 					if (start < 0 || end < start)
 						continue;
-					builder.Add(new SourceStatement(ILSpan.FromBounds((uint)sp.Offset, (uint)sp.EndOffset), TextSpan.FromBounds(start, end)));
+					statements.Add(new SourceStatement(ILSpan.FromBounds((uint)sp.Offset, (uint)sp.EndOffset), TextSpan.FromBounds(start, end)));
 					covered.Add(((uint)sp.Offset, (uint)sp.EndOffset));
 				}
 				if (expressionBodies.TryGetValue(function, out var body))
-					AddExpressionBodyRanges(builder, function, body, covered, codeSize, writer);
+					AddExpressionBodyRanges(statements, function, body, covered, codeSize, writer);
+				if (asyncInfo is not null)
+					AsyncMethodDebugInfoCreator.AddAwaitStatements(statements, method, asyncInfo);
+				foreach (var statement in statements)
+					builder.Add(statement);
 				if (functionNodes.TryGetValue(function, out var functionNode)) {
 					int start = writer.GetPosition(functionNode.StartLocation.Line, functionNode.StartLocation.Column);
 					int end = writer.GetPosition(functionNode.EndLocation.Line, functionNode.EndLocation.Column);
@@ -95,7 +101,7 @@ namespace dnSpy.Decompiler.ILSpyModern.Core {
 		/// lambda's body is one statement, and if it contains branches (switch expressions, <c>?:</c>, <c>??</c>) most of its
 		/// IL isn't mapped. Maps the rest of the body's IL to the body too.
 		/// </summary>
-		static void AddExpressionBodyRanges(MethodDebugInfoBuilder builder, ILFunction function, Expression body, List<(uint start, uint end)> covered, uint codeSize, DecompilerOutputTokenWriter writer) {
+		static void AddExpressionBodyRanges(List<SourceStatement> statements, ILFunction function, Expression body, List<(uint start, uint end)> covered, uint codeSize, DecompilerOutputTokenWriter writer) {
 			int textStart = writer.GetPosition(body.StartLocation.Line, body.StartLocation.Column);
 			int textEnd = writer.GetPosition(body.EndLocation.Line, body.EndLocation.Column);
 			if (textStart < 0 || textEnd < textStart)
@@ -141,12 +147,12 @@ namespace dnSpy.Decompiler.ILSpyModern.Core {
 					// Only the parts that no other statement maps
 					foreach (var (s, e) in covered.Where(a => a.end > start && a.start < end).OrderBy(a => a.start)) {
 						if (s > start)
-							builder.Add(new SourceStatement(ILSpan.FromBounds(start, s), TextSpan.FromBounds(textStart, textEnd)));
+							statements.Add(new SourceStatement(ILSpan.FromBounds(start, s), TextSpan.FromBounds(textStart, textEnd)));
 						if (e > start)
 							start = e;
 					}
 					if (end > start)
-						builder.Add(new SourceStatement(ILSpan.FromBounds(start, end), TextSpan.FromBounds(textStart, textEnd)));
+						statements.Add(new SourceStatement(ILSpan.FromBounds(start, end), TextSpan.FromBounds(textStart, textEnd)));
 				}
 				curStart = curEnd = null;
 			}
