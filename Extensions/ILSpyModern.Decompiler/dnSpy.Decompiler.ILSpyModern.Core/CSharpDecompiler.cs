@@ -169,6 +169,8 @@ namespace dnSpy.Decompiler.ILSpyModern.Core {
 			decompiler.AstTransforms.Insert(usingsIndex, new DefaultCharSetTransform());
 			// Fixes field initializers that use a constructor parameter (CS0103), so it runs without the clean up option too
 			ParameterInitializerTransform.Insert(decompiler.AstTransforms);
+			// Lets ILSpy restore queries that pass range variables to `in` parameters (it writes code that doesn't compile otherwise)
+			LambdaParameterCopyTransform.Insert(decompiler.AstTransforms);
 			// Fixes code that doesn't compile (<>y__InlineArrayN locals), so it runs without the clean up option too
 			decompiler.AstTransforms.Add(new InlineArrayArgumentTransform());
 			// Run before ILSpy's last steps (parentheses are inserted after all transforms)
@@ -183,6 +185,8 @@ namespace dnSpy.Decompiler.ILSpyModern.Core {
 			// Fixes code that doesn't compile, so it runs without the clean up option too
 			decompiler.AstTransforms.Add(new NullableBoolToIntegerCastTransform());
 			decompiler.AstTransforms.Add(new OldRefSafetyRulesTransform());
+			decompiler.AstTransforms.Add(new ConstructorCallStatementTransform());
+			decompiler.AstTransforms.Add(new RangeVariableInArgumentTransform());
 			decompiler.AstTransforms.Add(new FixEmptyDirectionExpressionsTransform());
 			if (lastTransform is not null)
 				decompiler.AstTransforms.Add(lastTransform);

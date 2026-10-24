@@ -231,7 +231,7 @@ namespace dnSpy.Decompiler.ILSpyModern.Core {
 		}
 
 		// A local or by-value parameter that other code can't change: its address isn't taken and no lambda or local function uses it
-		static bool IsUnaliasedLocal(IdentifierExpression id, AstNode root) {
+		internal static bool IsUnaliasedLocal(IdentifierExpression id, AstNode root) {
 			if (!(id.GetILVariable() is ILVariable v))
 				return false;
 			if (v.AddressCount != 0 || v.Type.Kind == TypeKind.ByReference || (v.Kind != VariableKind.Local && v.Kind != VariableKind.Parameter && v.Kind != VariableKind.StackSlot))
