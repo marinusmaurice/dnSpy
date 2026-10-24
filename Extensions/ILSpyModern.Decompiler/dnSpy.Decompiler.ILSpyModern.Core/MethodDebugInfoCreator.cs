@@ -208,6 +208,12 @@ namespace dnSpy.Decompiler.ILSpyModern.Core {
 					AddRanges(inst);
 			}
 			ranges.Sort();
+			// All of a (non state machine) lambda method's IL is the body's, including IL that no instruction keeps
+			// after ILSpy's transforms (cached delegate initialization, the compares of a rebuilt switch expression)
+			if (function.MoveNextMethod is null && ranges.Count > 1) {
+				uint max = ranges.Max(a => a.end);
+				ranges = new List<(uint start, uint end)> { (ranges[0].start, max) };
+			}
 			uint? curStart = null, curEnd = null;
 			foreach (var (start, end) in ranges) {
 				if (curEnd is uint e && start <= e) {
