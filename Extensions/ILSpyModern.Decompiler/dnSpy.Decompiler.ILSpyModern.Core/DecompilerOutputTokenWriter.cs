@@ -80,6 +80,12 @@ namespace dnSpy.Decompiler.ILSpyModern.Core {
 				return;
 			}
 
+			var ns = GetNamespaceName(identifier);
+			if (ns is not null) {
+				output.Write(name, new NamespaceReference(null, ns), DecompilerReferenceFlags.None, BoxedTextColor.Namespace);
+				return;
+			}
+
 			var symbol = GetCurrentMemberReference();
 			if (symbol is not null) {
 				var def = ToDnlib(symbol);
@@ -100,6 +106,54 @@ namespace dnSpy.Decompiler.ILSpyModern.Core {
 			}
 
 			output.Write(name, GetColorFromRole(identifier));
+		}
+
+		/// <summary>
+		/// Gets the namespace that ends with this identifier: a part of a using's or a namespace
+		/// declaration's name, or a namespace in a qualified type name (<see cref="NamespaceResolveResult"/>)
+		/// </summary>
+		static string? GetNamespaceName(Identifier identifier) {
+			AstType? type = identifier.Parent switch {
+				SimpleType st when st.IdentifierToken == identifier => st,
+				MemberType mt when mt.MemberNameToken == identifier => mt,
+				_ => null,
+			};
+			if (type is null)
+				return null;
+			if (type.Annotation<NamespaceResolveResult>() is NamespaceResolveResult nrr)
+				return nrr.NamespaceName.Length == 0 ? null : nrr.NamespaceName;
+
+			AstNode top = type;
+			while (top.Parent is MemberType parent && parent.Target == top)
+				top = parent;
+			bool isNamespaceName = top.Parent switch {
+				UsingDeclaration ud => ud.Import == top,
+				NamespaceDeclaration nd => nd.NamespaceName == top,
+				_ => false,
+			};
+			if (!isNamespaceName)
+				return null;
+
+			var parts = new List<string>();
+			for (var t = type; ;) {
+				if (t is MemberType mt) {
+					parts.Add(mt.MemberName);
+					if (mt.IsDoubleColon)
+						break;
+					t = mt.Target;
+				}
+				else if (t is SimpleType st) {
+					// "global" in "global::X"
+					if (st.Parent is MemberType { IsDoubleColon: true } dc && dc.Target == st)
+						return null;
+					parts.Add(st.Identifier ?? string.Empty);
+					break;
+				}
+				else
+					return null;
+			}
+			parts.Reverse();
+			return string.Join(".", parts);
 		}
 
 		object GetColorFromRole(Identifier identifier) {
