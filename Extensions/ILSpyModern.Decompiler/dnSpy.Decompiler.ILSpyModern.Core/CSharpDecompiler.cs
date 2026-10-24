@@ -164,6 +164,7 @@ namespace dnSpy.Decompiler.ILSpyModern.Core {
 			// Run before ILSpy's last steps (parentheses are inserted after all transforms)
 			if (langSettings.CleanUpOutput) {
 				decompiler.AstTransforms.Add(new RemoveEmptyConstantIfTransform());
+				decompiler.AstTransforms.Add(new ConstrainedCallTransform());
 				decompiler.AstTransforms.Add(new ConditionalToSwitchExpressionTransform());
 				decompiler.AstTransforms.Add(new InlineLambdaTemporariesTransform());
 				decompiler.AstTransforms.Add(new RemoveImplicitDecimalCastsTransform());

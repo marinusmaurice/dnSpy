@@ -40,6 +40,7 @@ namespace dnSpy.Decompiler.ILSpyModern.Core {
 			}
 
 			var expressionBodies = GetExpressionBodies(syntaxTree);
+			var mergedStatements = syntaxTree.Descendants.OfType<Statement>().Where(a => a.Annotation<MergedStatementAnnotation>() is not null).ToArray();
 			var imports = GetImports(syntaxTree);
 
 			foreach (var kv in decompiler.CreateSequencePoints(syntaxTree)) {
@@ -74,6 +75,8 @@ namespace dnSpy.Decompiler.ILSpyModern.Core {
 					statements.Add(new SourceStatement(ILSpan.FromBounds((uint)sp.Offset, (uint)sp.EndOffset), TextSpan.FromBounds(start, end)));
 					covered.Add(((uint)sp.Offset, (uint)sp.EndOffset));
 				}
+				if (mergedStatements.Length != 0)
+					MapMergedStatements(statements, covered, function, mergedStatements, codeSize, writer);
 				if (expressionBodies.TryGetValue(function, out var body))
 					AddExpressionBodyRanges(statements, function, body, covered, codeSize, writer);
 				if (asyncInfo is not null)
@@ -90,6 +93,63 @@ namespace dnSpy.Decompiler.ILSpyModern.Core {
 				}
 				output.AddDebugInfo(builder.Create());
 			}
+		}
+
+		/// <summary>
+		/// Maps all IL from the first to the last IL byte of a merged statement's instructions to the statement,
+		/// and removes that IL from the other statements (ILSpy only used the statement's first IL range, and the
+		/// next statement may have been extended over the rest).
+		/// </summary>
+		static void MapMergedStatements(List<SourceStatement> statements, List<(uint start, uint end)> covered, ILFunction function, Statement[] mergedStatements, uint codeSize, DecompilerOutputTokenWriter writer) {
+			foreach (var statement in mergedStatements) {
+				uint min = uint.MaxValue, max = 0;
+				var seen = new HashSet<ILInstruction>();
+				foreach (var node in statement.DescendantsAndSelf) {
+					// Nested statements (eg. a lambda's) have their own sequence points
+					if (node is Statement && node != statement)
+						continue;
+					foreach (var inst in node.Annotations.OfType<ILInstruction>())
+						AddRange(inst);
+				}
+				if (min >= max || max > codeSize)
+					continue;
+				int textStart = writer.GetPosition(statement.StartLocation.Line, statement.StartLocation.Column);
+				int textEnd = writer.GetPosition(statement.EndLocation.Line, statement.EndLocation.Column);
+				if (textStart < 0 || textEnd < textStart)
+					continue;
+
+				for (int i = statements.Count - 1; i >= 0; i--) {
+					var span = statements[i].ILSpan;
+					if (span.End <= min || span.Start >= max)
+						continue;
+					var text = statements[i].TextSpan;
+					statements.RemoveAt(i);
+					if (span.Start < min)
+						statements.Add(new SourceStatement(ILSpan.FromBounds(span.Start, min), text));
+					if (span.End > max)
+						statements.Add(new SourceStatement(ILSpan.FromBounds(max, span.End), text));
+				}
+				statements.Add(new SourceStatement(ILSpan.FromBounds(min, max), TextSpan.FromBounds(textStart, textEnd)));
+
+				void AddRange(ILInstruction inst) {
+					if (!seen.Add(inst))
+						return;
+					if (!inst.ILRangeIsEmpty && !(inst is Block) && !(inst is BlockContainer) && inst.Parent?.Ancestors.OfType<ILFunction>().FirstOrDefault() == function) {
+						foreach (var range in inst.ILRanges) {
+							if (range.Start >= 0 && range.End > range.Start) {
+								min = System.Math.Min(min, (uint)range.Start);
+								max = System.Math.Max(max, (uint)range.End);
+							}
+						}
+					}
+					if (inst is ILFunction)
+						return;
+					foreach (var child in inst.Children)
+						AddRange(child);
+				}
+			}
+			covered.Clear();
+			covered.AddRange(statements.Select(a => (a.ILSpan.Start, a.ILSpan.End)));
 		}
 
 		static ImportInfo[] GetImports(SyntaxTree syntaxTree) {
