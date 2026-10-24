@@ -40,6 +40,7 @@ namespace dnSpy.Decompiler.ILSpyModern.Core {
 			}
 
 			var expressionBodies = GetExpressionBodies(syntaxTree);
+			var imports = GetImports(syntaxTree);
 
 			foreach (var kv in decompiler.CreateSequencePoints(syntaxTree)) {
 				var function = kv.Key;
@@ -56,6 +57,10 @@ namespace dnSpy.Decompiler.ILSpyModern.Core {
 
 				var asyncInfo = stateMachineKind == StateMachineKind.AsyncMethod ? AsyncMethodDebugInfoCreator.TryCreate(method, kickoffMethod!) : null;
 				var builder = new MethodDebugInfoBuilder(settingsVersion, stateMachineKind, method, kickoffMethod, CreateLocals(function, method, modules), CreateParameters(function, kickoffMethod ?? method, kickoffMethod is not null ? method.DeclaringType : null, modules), asyncInfo);
+				if (kickoffMethod is not null)
+					builder.CompilerName = GetCompilerName(method.DeclaringType);
+				// The expression evaluator uses them to resolve the type names in the decompiled code (like the old language)
+				builder.Scope.Imports.AddRange(imports);
 				uint codeSize = (uint)method.Body.GetCodeSize();
 				var statements = new List<SourceStatement>();
 				var covered = new List<(uint start, uint end)>();
@@ -85,6 +90,31 @@ namespace dnSpy.Decompiler.ILSpyModern.Core {
 				}
 				output.AddDebugInfo(builder.Create());
 			}
+		}
+
+		static ImportInfo[] GetImports(SyntaxTree syntaxTree) {
+			var namespaces = new List<string>();
+			foreach (var usingDecl in syntaxTree.Descendants.OfType<UsingDeclaration>()) {
+				var ns = usingDecl.Namespace;
+				if (!string.IsNullOrEmpty(ns) && !namespaces.Contains(ns))
+					namespaces.Add(ns);
+			}
+			return namespaces.Select(a => ImportInfo.CreateNamespace(a)).ToArray();
+		}
+
+		// Same rules as the old language: only state machine types tell which compiler was used. The expression
+		// evaluator needs it to find the hoisted locals' slots.
+		static string? GetCompilerName(TypeDef stateMachineType) {
+			var name = stateMachineType.Name.String;
+			if (name.StartsWith("VB$StateMachine_"))
+				return PredefinedCompilerNames.MicrosoftVisualBasic;
+			if (name.StartsWith("<")) {
+				if (name.Contains(">d__"))
+					return PredefinedCompilerNames.MicrosoftCSharp;
+				if (name.Contains(">c__Iterator") || name.Contains(">c__async"))
+					return PredefinedCompilerNames.MonoCSharp;
+			}
+			return null;
 		}
 
 		static Dictionary<ILFunction, Expression> GetExpressionBodies(SyntaxTree syntaxTree) {
