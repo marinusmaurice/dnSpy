@@ -106,6 +106,69 @@ namespace dnSpy.Decompiler.ILSpyModern.Core {
 	}
 
 	/// <summary>
+	/// ICSharpCode.Decompiler 11.1 writes a lifted <see cref="bool"/> → integer conversion (a no-op in IL) as a
+	/// cast, which doesn't compile (CS0030): <c>(int?)a?.B ?? -1</c> (source: <c>a is null ? -1 : a.B ? 1 : 0</c>).
+	/// Becomes <c>a?.B switch { true => 1, false => 0, null => -1 }</c>, or <c>null => (int?)null</c> without the <c>??</c>.
+	/// </summary>
+	sealed class NullableBoolToIntegerCastTransform : DepthFirstAstVisitor, IAstTransform {
+		public void Run(AstNode rootNode, TransformContext context) {
+			if (context.Settings.SwitchExpressions)
+				rootNode.AcceptVisitor(this);
+		}
+
+		public override void VisitCastExpression(CastExpression castExpression) {
+			base.VisitCastExpression(castExpression);
+			var targetType = castExpression.GetResolveResult().Type;
+			var inputType = castExpression.Expression.GetResolveResult().Type;
+			if (!NullableType.IsNullable(targetType) || !NullableType.IsNullable(inputType))
+				return;
+			if (!NullableType.GetUnderlyingType(inputType).IsKnownType(KnownTypeCode.Boolean))
+				return;
+			var underlyingType = NullableType.GetUnderlyingType(targetType);
+			// Other integer types: the 1 and 0 literals would be ints and change the expression's type
+			object one, zero;
+			switch (underlyingType.GetDefinition()?.KnownTypeCode) {
+			case KnownTypeCode.Int32:	one = 1; zero = 0; break;
+			case KnownTypeCode.UInt32:	one = 1U; zero = 0U; break;
+			case KnownTypeCode.Int64:	one = 1L; zero = 0L; break;
+			case KnownTypeCode.UInt64:	one = 1UL; zero = 0UL; break;
+			default:					return;
+			}
+			if (IsInExpressionTree(castExpression))
+				return;
+
+			Expression replaced = castExpression;
+			Expression nullBody;
+			if (castExpression.Parent is BinaryOperatorExpression coalesce && coalesce.Operator == BinaryOperatorType.NullCoalescing &&
+				coalesce.Left == castExpression && ConditionalToSwitchExpressionTransform.HasType(coalesce.Right, underlyingType)) {
+				replaced = coalesce;
+				nullBody = coalesce.Right!.Detach();
+			}
+			else
+				nullBody = new CastExpression(castExpression.Type.Clone(), new NullReferenceExpression());
+
+			var switchExpr = new SwitchExpression { Expression = castExpression.Expression.Detach() };
+			switchExpr.SwitchSections.Add(new SwitchExpressionSection { Pattern = new PrimitiveExpression(true), Body = new PrimitiveExpression(one) });
+			switchExpr.SwitchSections.Add(new SwitchExpressionSection { Pattern = new PrimitiveExpression(false), Body = new PrimitiveExpression(zero) });
+			switchExpr.SwitchSections.Add(new SwitchExpressionSection { Pattern = new NullReferenceExpression(), Body = nullBody });
+			foreach (var annotation in replaced.Annotations)
+				switchExpr.AddAnnotation(annotation);
+			// Keep the IL ranges of the conversion for the debugger's statement mapping
+			if (replaced != castExpression)
+				ConditionalToSwitchExpressionTransform.CopyILAnnotations(castExpression, switchExpr);
+			replaced.ReplaceWith(switchExpr);
+		}
+
+		internal static bool IsInExpressionTree(AstNode node) {
+			for (var n = node.Parent; n is not null; n = n.Parent) {
+				if (n.Annotation<ILFunction>() is ILFunction function && function.Kind == ILFunctionKind.ExpressionTree)
+					return true;
+			}
+			return false;
+		}
+	}
+
+	/// <summary>
 	/// Turns string concatenations of string operands with at least one literal back into
 	/// interpolated strings: <c>a + ":" + b</c> → <c>$"{a}:{b}"</c>. The compiler lowers such an
 	/// interpolated string to the same <c>string.Concat</c> call.
@@ -187,11 +250,7 @@ namespace dnSpy.Decompiler.ILSpyModern.Core {
 			if (!hasLiteral || !hasOther)
 				return false;
 			// Expression trees store string.Concat calls; an interpolated string could compile differently
-			for (var node = concat.Parent; node is not null; node = node.Parent) {
-				if (node.Annotation<ILFunction>() is ILFunction function && function.Kind == ILFunctionKind.ExpressionTree)
-					return false;
-			}
-			return true;
+			return !NullableBoolToIntegerCastTransform.IsInExpressionTree(concat);
 		}
 	}
 

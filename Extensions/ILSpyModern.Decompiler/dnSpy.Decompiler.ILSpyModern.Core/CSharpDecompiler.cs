@@ -176,6 +176,8 @@ namespace dnSpy.Decompiler.ILSpyModern.Core {
 				decompiler.AstTransforms.Add(new RemoveImplicitDecimalCastsTransform());
 				decompiler.AstTransforms.Add(new StringConcatToInterpolationTransform());
 			}
+			// Fixes code that doesn't compile, so it runs without the clean up option too
+			decompiler.AstTransforms.Add(new NullableBoolToIntegerCastTransform());
 			decompiler.AstTransforms.Add(new FixEmptyDirectionExpressionsTransform());
 			if (lastTransform is not null)
 				decompiler.AstTransforms.Add(lastTransform);
