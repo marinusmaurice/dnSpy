@@ -104,11 +104,58 @@ namespace dnSpy.Debugger.DotNet.CorDebug.Impl {
 		internal static bool IsDotNetBundleV2_or_AppHost(string filename) {
 			try {
 				var data = ReadBytes(filename, 512 * 1024);
-				return GetOffset(data, apphostSigV2) >= 0;
+				if (GetOffset(data, apphostSigV2) >= 0)
+					return true;
+				// Self-contained single-file hosts (.NET 6+) have the runtime linked in, so the signature
+				// can be several MB into the file (.NET 10 win-x64: ~8 MB). Search their data sections.
+				if (!PortableExecutableFileHelpers.IsPE(filename, out bool isExe, out bool hasDotNetMetadata) || !isExe || hasDotNetMetadata)
+					return false;
+				using (var file = File.OpenRead(filename)) {
+					foreach (var (offset, size) in GetPEDataSections(new BinaryReader(file))) {
+						file.Position = offset;
+						data = new byte[size];
+						if (file.Read(data, 0, data.Length) != data.Length)
+							return false;
+						if (GetOffset(data, apphostSigV2) >= 0)
+							return true;
+					}
+				}
 			}
 			catch {
 			}
 			return false;
+		}
+
+		// Raw data of the sections that aren't executable code
+		static List<(long offset, int size)> GetPEDataSections(BinaryReader exe) {
+			const uint IMAGE_SCN_MEM_EXECUTE = 0x20000000;
+			const int MaxSectionSize = 64 * 1024 * 1024;
+			var result = new List<(long offset, int size)>();
+			var f = exe.BaseStream;
+			if (exe.ReadUInt16() != 0x5A4D)
+				return result;
+			f.Position = 0x3C;
+			f.Position = exe.ReadUInt32();
+			if (exe.ReadUInt32() != 0x4550)
+				return result;
+			f.Position += 2;
+			int numSections = exe.ReadUInt16();
+			f.Position += 0x0C;
+			var sizeOfOptionalHeader = exe.ReadUInt16();
+			f.Position += 2 + sizeOfOptionalHeader;
+			for (int i = 0; i < numSections; i++) {
+				f.Position += 0x10;
+				var sizeOfRawData = exe.ReadUInt32();
+				var pointerToRawData = exe.ReadUInt32();
+				f.Position += 0x0C;
+				var characteristics = exe.ReadUInt32();
+				if ((characteristics & IMAGE_SCN_MEM_EXECUTE) != 0 || sizeOfRawData == 0 || sizeOfRawData > MaxSectionSize)
+					continue;
+				if ((ulong)pointerToRawData + sizeOfRawData > (ulong)f.Length)
+					continue;
+				result.Add((pointerToRawData, (int)sizeOfRawData));
+			}
+			return result;
 		}
 		// SHA256(".net core bundle"). The previous 8 bytes is 0 or offset of the bundle header-offset
 		static readonly byte[] apphostSigV2 = new byte[] {
