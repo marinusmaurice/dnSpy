@@ -16,6 +16,7 @@
 */
 
 using System;
+using System.Linq;
 using System.Threading.Tasks;
 using dnlib.DotNet;
 using dnSpy.Contracts.Decompiler;
@@ -59,10 +60,27 @@ namespace dnSpy.Decompiler.ILSpyModern.Core {
 				// dnlib's default resolver (used by dnSpy.Console) doesn't know where .NET (Core) assemblies are
 				return fallbackResolver.Value.Resolve(reference);
 			}
+			if (IsDotNetCoreModule(module) && IsNetFrameworkFacade(manifest)) {
+				// dnlib's default resolver finds the .NET Framework facades (eg. GAC System.Runtime 4.0) for a .NET (Core)
+				// module's System.* references. Its types then come from .NET Framework's mscorlib, which has no
+				// InlineArray/ReadOnlySpan, and ICSharpCode.Decompiler leaves arguments of params span calls empty.
+				if (fallbackResolver.Value.Resolve(reference) is MetadataFile file)
+					return file;
+			}
 			if (manifest == module)
 				return modules.GetMainModule(module).File;
 			return modules.GetReferencedModule(manifest).File;
 		}
+
+		static bool IsDotNetCoreModule(ModuleDef module) {
+			var corlib = module.CorLibTypes.AssemblyRef.Name;
+			return corlib == "System.Runtime" || corlib == "System.Private.CoreLib";
+		}
+
+		// Only type forwarders to .NET Framework's mscorlib
+		static bool IsNetFrameworkFacade(ModuleDef module) =>
+			module.ExportedTypes.Count != 0 && module.CorLibTypes.AssemblyRef.Name == "mscorlib" &&
+			module.Types.All(a => a.IsGlobalModuleType);
 
 		public MetadataFile? ResolveModule(MetadataFile mainModule, string moduleName) {
 			var asm = modules.TryGet(mainModule)?.Module.Assembly;
