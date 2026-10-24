@@ -462,6 +462,9 @@ namespace dnSpy.Decompiler.MSBuild {
 			// hide compiler-generated types (ShowMember) never get here.
 			if (type.Name.StartsWith("<") && type.CustomAttributes.IsDefined("System.Runtime.CompilerServices.CompilerGeneratedAttribute"))
 				return false;
+			// The C# 12+ compiler's <>y__InlineArrayN<T> (params spans, collection expressions) has no [CompilerGenerated]
+			if (type.DeclaringType is null && type.Name.StartsWith("<>y__InlineArray") && type.CustomAttributes.IsDefined("System.Runtime.CompilerServices.InlineArrayAttribute"))
+				return false;
 
 			// Types the C# compiler adds to the assembly if the framework doesn't have them, eg. EmbeddedAttribute,
 			// RefSafetyRulesAttribute, NullableAttribute. It adds them again when the project is compiled.

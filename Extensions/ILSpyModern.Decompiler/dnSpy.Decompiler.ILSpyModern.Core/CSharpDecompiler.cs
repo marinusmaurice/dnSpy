@@ -167,6 +167,8 @@ namespace dnSpy.Decompiler.ILSpyModern.Core {
 			while (usingsIndex < decompiler.AstTransforms.Count && !(decompiler.AstTransforms[usingsIndex] is IntroduceUsingDeclarations))
 				usingsIndex++;
 			decompiler.AstTransforms.Insert(usingsIndex, new DefaultCharSetTransform());
+			// Fixes code that doesn't compile (<>y__InlineArrayN locals), so it runs without the clean up option too
+			decompiler.AstTransforms.Add(new InlineArrayArgumentTransform());
 			// Run before ILSpy's last steps (parentheses are inserted after all transforms)
 			if (langSettings.CleanUpOutput) {
 				decompiler.AstTransforms.Add(new RemoveEmptyConstantIfTransform());
