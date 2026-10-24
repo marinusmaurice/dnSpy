@@ -4,6 +4,10 @@
 
     <DataTemplate DataType="{x:Type settings:CSharpDecompilerSettingsPage}">
         <StackPanel Margin="5">
+            <StackPanel Margin="0 0 0 5" Orientation="Horizontal">
+                <Label Padding="0 0 5 0" VerticalAlignment="Center" Target="{Binding ElementName=languageVersionComboBox}" Content="_Language version:"/>
+                <ComboBox Name="languageVersionComboBox" MinWidth="100" ItemsSource="{Binding LanguageVersions}" DisplayMemberPath="Name" SelectedValuePath="Value" SelectedValue="{Binding Settings.LanguageVersion}"/>
+            </StackPanel>
             <CheckBox Margin="0 0 0 0" IsChecked="{Binding Settings.AnonymousMethods}" Content="Decompile anonymous methods/lambdas"/>
             <CheckBox Margin="0 5 0 0" IsChecked="{Binding Settings.YieldReturn}" Content="Decompile enumerators (yield return)"/>
             <CheckBox Margin="0 5 0 0" IsChecked="{Binding Settings.AsyncAwait}" Content="Decompile async methods (async/await)"/>

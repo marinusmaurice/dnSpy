@@ -44,6 +44,7 @@ namespace dnSpy.Decompiler.ILSpyModern.Settings {
 			UseDebugSymbols = sect.Attribute<bool?>(nameof(UseDebugSymbols)) ?? UseDebugSymbols;
 			ShowXmlDocumentation = sect.Attribute<bool?>(nameof(ShowXmlDocumentation)) ?? ShowXmlDocumentation;
 			CleanUpOutput = sect.Attribute<bool?>(nameof(CleanUpOutput)) ?? CleanUpOutput;
+			LanguageVersion = sect.Attribute<string>(nameof(LanguageVersion)) ?? LanguageVersion;
 			disableSave = false;
 		}
 		readonly bool disableSave;
@@ -64,6 +65,7 @@ namespace dnSpy.Decompiler.ILSpyModern.Settings {
 			sect.Attribute(nameof(UseDebugSymbols), UseDebugSymbols);
 			sect.Attribute(nameof(ShowXmlDocumentation), ShowXmlDocumentation);
 			sect.Attribute(nameof(CleanUpOutput), CleanUpOutput);
+			sect.Attribute(nameof(LanguageVersion), LanguageVersion);
 		}
 	}
 }

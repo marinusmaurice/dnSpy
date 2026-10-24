@@ -60,6 +60,11 @@ namespace dnSpy.Decompiler.ILSpyModern.Settings {
 		public override string Title => LanguageConstants.CSharpNameUI;
 		public override object? UIObject => this;
 
+		/// <summary>
+		/// Items of the language version combo box
+		/// </summary>
+		public LanguageVersionVM[] LanguageVersions { get; } = CSharpDecompilerSettings.LanguageVersions.Select(a => new LanguageVersionVM(a)).ToArray();
+
 		public CSharpDecompilerSettingsPage(CSharpDecompilerSettings decompilerSettings) {
 			_global_decompilerSettings = decompilerSettings;
 			this.decompilerSettings = (CSharpDecompilerSettings)decompilerSettings.Clone();
@@ -80,6 +85,16 @@ namespace dnSpy.Decompiler.ILSpyModern.Settings {
 		}
 
 		public override string[]? GetSearchStrings() => decompilerSettings.Options.Select(a => a.Description).OfType<string>().ToArray();
+	}
+
+	sealed class LanguageVersionVM {
+		public string Value { get; }
+		public string Name { get; }
+
+		public LanguageVersionVM(string value) {
+			Value = value;
+			Name = value == CSharpDecompilerSettings.LatestLanguageVersion ? "Latest" : "C# " + value;
+		}
 	}
 
 	[ExportAppSettingsModifiedListener(Order = AppSettingsConstants.ORDER_LISTENER_DECOMPILER)]

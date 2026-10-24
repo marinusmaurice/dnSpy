@@ -35,6 +35,20 @@ namespace dnSpy.Decompiler.ILSpyModern.Core {
 		const string StringInterpolation_NAME = "interpolation";
 		static readonly Guid CleanUpOutput_GUID = new Guid("C7B2E9D4-1A3F-4C6E-B8D0-5E2A9F4C1B73");
 		const string CleanUpOutput_NAME = "dnspy-cleanup";
+		static readonly Guid LanguageVersion_GUID = new Guid("2F8E6A1C-4D3B-4B95-A7E2-9C0D5B3F6E18");
+		const string LanguageVersion_NAME = "csharp-version";
+
+		/// <summary>
+		/// Value of <see cref="LanguageVersion"/> that enables every feature ILSpy supports
+		/// </summary>
+		public const string LatestLanguageVersion = "latest";
+
+		/// <summary>
+		/// All values of <see cref="LanguageVersion"/>, oldest first, ending with <see cref="LatestLanguageVersion"/>
+		/// </summary>
+		public static IReadOnlyList<string> LanguageVersions { get; } = new[] {
+			"1", "2", "3", "4", "5", "6", "7", "7.1", "7.2", "7.3", "8.0", "9.0", "10.0", "11.0", "12.0", "13.0", "14.0", LatestLanguageVersion,
+		};
 
 		public override int Version => settingsVersion;
 		volatile int settingsVersion;
@@ -87,6 +101,10 @@ namespace dnSpy.Decompiler.ILSpyModern.Core {
 			yield return new DecompilerOption<bool>(DecompilerOptionConstants.ShowXmlDocumentation_GUID, () => ShowXmlDocumentation, a => ShowXmlDocumentation = a) {
 				Description = "Show XML documentation in decompiled code",
 				Name = DecompilerOptionConstants.ShowXmlDocumentation_NAME,
+			};
+			yield return new DecompilerOption<string>(LanguageVersion_GUID, () => LanguageVersion, a => LanguageVersion = a) {
+				Description = "C# language version (" + string.Join(", ", LanguageVersions) + ")",
+				Name = LanguageVersion_NAME,
 			};
 			yield return new DecompilerOption<bool>(CleanUpOutput_GUID, () => CleanUpOutput, a => CleanUpOutput = a) {
 				Description = "Clean up ILSpy's output (dnSpy: switch expressions, string interpolation, decimal casts, empty if statements, lambda temporaries)",
@@ -163,10 +181,58 @@ namespace dnSpy.Decompiler.ILSpyModern.Core {
 		}
 		bool cleanUpOutput = true;
 
+		/// <summary>
+		/// The newest C# version the output may use, one of <see cref="LanguageVersions"/>. Other values
+		/// (eg. "8" or "C#12") are converted to the matching value; unknown values become <see cref="LatestLanguageVersion"/>.
+		/// </summary>
+		public string LanguageVersion {
+			get => languageVersion;
+			set {
+				var newValue = NormalizeLanguageVersion(value);
+				if (languageVersion == newValue)
+					return;
+				languageVersion = newValue;
+				OnValueChanged(nameof(LanguageVersion));
+			}
+		}
+		string languageVersion = LatestLanguageVersion;
+
+		static string NormalizeLanguageVersion(string? value) {
+			var s = (value ?? string.Empty).Trim();
+			if (s.StartsWith("C#", StringComparison.OrdinalIgnoreCase))
+				s = s.Substring(2).Trim();
+			if (s.StartsWith("CSharp", StringComparison.OrdinalIgnoreCase))
+				s = s.Substring(6).Replace('_', '.').Trim();
+			foreach (var v in LanguageVersions) {
+				if (StringComparer.OrdinalIgnoreCase.Equals(v, s))
+					return v;
+			}
+			// "8" => "8.0", "7.0" => "7"
+			foreach (var v in LanguageVersions) {
+				if (v + ".0" == s || s + ".0" == v)
+					return v;
+			}
+			return LatestLanguageVersion;
+		}
+
+		static ICSharpCode.Decompiler.CSharp.LanguageVersion ToILSpyLanguageVersion(string value) {
+			if (value == LatestLanguageVersion)
+				return ICSharpCode.Decompiler.CSharp.LanguageVersion.Latest;
+			// ILSpy: CSharp7 = 7, CSharp7_3 = 703, CSharp8_0 = 800
+			var parts = value.Split('.');
+			int major = int.Parse(parts[0]);
+			int minor = parts.Length > 1 ? int.Parse(parts[1]) : 0;
+			return (ICSharpCode.Decompiler.CSharp.LanguageVersion)(major <= 7 && minor == 0 ? major : major * 100 + minor);
+		}
+
 		void SetValue(ref bool field, bool value, string propertyName) {
 			if (field == value)
 				return;
 			field = value;
+			OnValueChanged(propertyName);
+		}
+
+		void OnValueChanged(string propertyName) {
 			PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(propertyName));
 			settingsVersion++;
 			OnModified();
@@ -192,21 +258,23 @@ namespace dnSpy.Decompiler.ILSpyModern.Core {
 			other.UseDebugSymbols = UseDebugSymbols;
 			other.ShowXmlDocumentation = ShowXmlDocumentation;
 			other.CleanUpOutput = CleanUpOutput;
+			other.LanguageVersion = LanguageVersion;
 			return other;
 		}
 
 		internal ILSpyDecompilerSettings CreateILSpySettings() {
-			var settings = new ILSpyDecompilerSettings(ICSharpCode.Decompiler.CSharp.LanguageVersion.Latest) {
+			// The ctor disables the features that are newer than the language version, so only turn off more features here
+			var settings = new ILSpyDecompilerSettings(ToILSpyLanguageVersion(LanguageVersion)) {
 				ThrowOnAssemblyResolveErrors = false,
-				ExpressionTrees = ExpressionTrees,
-				YieldReturn = YieldReturn,
-				AsyncAwait = AsyncAwait,
-				SwitchExpressions = SwitchExpressions,
-				StringInterpolation = StringInterpolation,
 				UsingDeclarations = UsingDeclarations,
 				UseDebugSymbols = UseDebugSymbols,
 				ShowXmlDocumentation = ShowXmlDocumentation,
 			};
+			settings.ExpressionTrees &= ExpressionTrees;
+			settings.YieldReturn &= YieldReturn;
+			settings.AsyncAwait &= AsyncAwait;
+			settings.SwitchExpressions &= SwitchExpressions;
+			settings.StringInterpolation &= StringInterpolation;
 			// ILSpy's query expressions need lambdas
 			if (!AnonymousMethods) {
 				settings.AnonymousMethods = false;
@@ -229,13 +297,16 @@ namespace dnSpy.Decompiler.ILSpyModern.Core {
 			UsingDeclarations == other.UsingDeclarations &&
 			UseDebugSymbols == other.UseDebugSymbols &&
 			ShowXmlDocumentation == other.ShowXmlDocumentation &&
-			CleanUpOutput == other.CleanUpOutput;
+			CleanUpOutput == other.CleanUpOutput &&
+			LanguageVersion == other.LanguageVersion;
 
 		public override int GetHashCode() {
 			int h = 0;
-			foreach (var opt in options)
-				h = (h << 1) | ((bool)opt.Value! ? 1 : 0);
-			return h;
+			foreach (var opt in options) {
+				if (opt.Value is bool b)
+					h = (h << 1) | (b ? 1 : 0);
+			}
+			return h ^ LanguageVersion.GetHashCode();
 		}
 	}
 }
