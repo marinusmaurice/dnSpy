@@ -135,8 +135,9 @@ namespace dnSpy.Decompiler.ILSpyModern.Core {
 
 		// Export to Project's Properties\AssemblyInfo.cs. Without KeepAllAttributes, the attributes the compiler adds
 		// (TargetFramework, Debuggable, CompilationRelaxations, RefSafetyRules, etc.) are removed, like ILSpy's project export.
+		// Edit Assembly (KeepAllAttributes) only loses the ones reserved for the compiler (CS8335); it adds RefSafetyRules again.
 		void DecompileAssemblyInfo(DecompileAssemblyInfo info) =>
-			Decompile(info.Module, info.Output, info.Context, langSettings.CreateILSpySettings(), info.KeepAllAttributes ? null : new AssemblyInfoTransform(),
+			Decompile(info.Module, info.Output, info.Context, langSettings.CreateILSpySettings(), new AssemblyInfoTransform(!info.KeepAllAttributes),
 				(d, m) => d.DecompileModuleAndAssemblyAttributes());
 
 		void DecompileTypeMethods(DecompileTypeMethods info) {

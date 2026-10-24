@@ -216,6 +216,26 @@ namespace dnSpy.AsmEditor.Compiler {
 			}
 		}
 
+		// Attributes that can't be written in source code (CS8335, CS1112). The compiler only adds them when the
+		// compiled code needs them, so they'd be lost when only the assembly attributes are compiled (Edit Assembly).
+		static readonly string[] compilerOnlyModuleAttributes = new[] {
+			"System.Runtime.CompilerServices.RefSafetyRulesAttribute",
+			"System.Runtime.CompilerServices.NullablePublicOnlyAttribute",
+		};
+		static readonly string[] compilerOnlyAssemblyAttributes = new[] {
+			"System.Runtime.CompilerServices.ExtensionAttribute",
+		};
+
+		static void AddMissingCompilerOnlyAttributes(List<CustomAttribute> attributes, IHasCustomAttribute? target, string[] fullNames) {
+			if (target is null)
+				return;
+			foreach (var ca in target.CustomAttributes) {
+				var fullName = ca.TypeFullName;
+				if (Array.IndexOf(fullNames, fullName) >= 0 && !attributes.Any(a => a.TypeFullName == fullName))
+					attributes.Add(ca);
+			}
+		}
+
 		static void RemoveDuplicateSecurityPermissionAttributes(List<DeclSecurity> secAttrs) {
 			foreach (var declSec in secAttrs) {
 				if (declSec.Action != SecurityAction.RequestMinimum)
@@ -375,12 +395,14 @@ namespace dnSpy.AsmEditor.Compiler {
 				ImportCustomAttributes(attributes, sourceModule);
 				// The compiler adds [UnverifiableCode] causing a duplicate attribute
 				RemoveDuplicates(attributes, "System.Security.UnverifiableCodeAttribute");
+				AddMissingCompilerOnlyAttributes(attributes, targetModule, compilerOnlyModuleAttributes);
 				NewModuleCustomAttributes = attributes.ToArray();
 				var asm = sourceModule.Assembly;
 				if (asm is not null) {
 					NewAssemblyVersion = asm.Version;
 					attributes.Clear();
 					ImportCustomAttributes(attributes, asm);
+					AddMissingCompilerOnlyAttributes(attributes, targetModule.Assembly, compilerOnlyAssemblyAttributes);
 					NewAssemblyCustomAttributes = attributes.ToArray();
 				}
 			}

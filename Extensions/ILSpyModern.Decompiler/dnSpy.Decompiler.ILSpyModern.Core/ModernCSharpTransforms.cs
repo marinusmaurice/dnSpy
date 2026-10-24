@@ -197,7 +197,8 @@ namespace dnSpy.Decompiler.ILSpyModern.Core {
 
 	/// <summary>
 	/// Export to Project's AssemblyInfo file: ILSpy's <see cref="RemoveCompilerGeneratedAssemblyAttributes"/>, and the
-	/// attributes that are reserved for the compiler (CS8335), which the compiler adds again
+	/// attributes that are reserved for the compiler (CS8335), which the compiler adds again. Edit Assembly
+	/// (<c>KeepAllAttributes</c>) keeps everything but the reserved attributes, since they don't compile.
 	/// </summary>
 	sealed class AssemblyInfoTransform : IAstTransform {
 		static readonly HashSet<string> reservedAttributes = new HashSet<string> {
@@ -205,11 +206,19 @@ namespace dnSpy.Decompiler.ILSpyModern.Core {
 			"System.Runtime.CompilerServices.NullablePublicOnlyAttribute",
 		};
 
+		readonly bool removeCompilerGeneratedAttributes;
+
+		public AssemblyInfoTransform(bool removeCompilerGeneratedAttributes) =>
+			this.removeCompilerGeneratedAttributes = removeCompilerGeneratedAttributes;
+
 		public void Run(AstNode rootNode, TransformContext context) {
-			new RemoveCompilerGeneratedAssemblyAttributes().Run(rootNode, context);
+			if (removeCompilerGeneratedAttributes)
+				new RemoveCompilerGeneratedAssemblyAttributes().Run(rootNode, context);
 			foreach (var section in rootNode.Children.OfType<AttributeSection>().ToArray()) {
 				foreach (var attr in section.Attributes.ToArray()) {
-					if (attr.Type.GetSymbol() is IType type && reservedAttributes.Contains(type.FullName))
+					// The type can be unresolved (an embedded attribute type of a .NET (Core) assembly), the ctor isn't
+					var type = attr.Type.GetSymbol() as IType ?? (attr.GetSymbol() as IMethod)?.DeclaringType;
+					if (type is not null && reservedAttributes.Contains(type.FullName))
 						attr.Remove();
 				}
 				if (section.Attributes.Count == 0)
