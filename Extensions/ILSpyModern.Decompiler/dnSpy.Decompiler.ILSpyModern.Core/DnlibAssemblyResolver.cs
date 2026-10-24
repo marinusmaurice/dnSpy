@@ -1,4 +1,4 @@
-/*
+﻿/*
     This file is part of dnSpy
 
     dnSpy is free software: you can redistribute it and/or modify
@@ -16,6 +16,8 @@
 */
 
 using System;
+using System.Collections.Generic;
+using System.IO;
 using System.Linq;
 using System.Threading.Tasks;
 using dnlib.DotNet;
@@ -39,7 +41,9 @@ namespace dnSpy.Decompiler.ILSpyModern.Core {
 			this.ctx = ctx;
 			fallbackResolver = new Lazy<UniversalAssemblyResolver>(() => {
 				var mainFile = modules.GetMainModule(module).File;
-				return new UniversalAssemblyResolver(module.Location, false, mainFile.DetectTargetFrameworkId());
+				// The runtime pack (eg. Microsoft.WindowsDesktop.App) is searched first. Without it, WindowsBase resolves
+				// to the Microsoft.NETCore.App facade, which doesn't have the WPF types.
+				return new UniversalAssemblyResolver(module.Location, false, mainFile.DetectTargetFrameworkId(), mainFile.DetectRuntimePack());
 			});
 		}
 
@@ -60,10 +64,11 @@ namespace dnSpy.Decompiler.ILSpyModern.Core {
 				// dnlib's default resolver (used by dnSpy.Console) doesn't know where .NET (Core) assemblies are
 				return fallbackResolver.Value.Resolve(reference);
 			}
-			if (IsDotNetCoreModule(module) && IsNetFrameworkFacade(manifest)) {
+			if (IsDotNetCoreModule(module) && (IsNetFrameworkFacade(manifest) || IsInstalledNetFrameworkAssembly(manifest))) {
 				// dnlib's default resolver finds the .NET Framework facades (eg. GAC System.Runtime 4.0) for a .NET (Core)
 				// module's System.* references. Its types then come from .NET Framework's mscorlib, which has no
 				// InlineArray/ReadOnlySpan, and ICSharpCode.Decompiler leaves arguments of params span calls empty.
+				// Same with the GAC's WPF/WinForms assemblies: their types don't match the module's System.Runtime types.
 				if (fallbackResolver.Value.Resolve(reference) is MetadataFile file)
 					return file;
 			}
@@ -81,6 +86,32 @@ namespace dnSpy.Decompiler.ILSpyModern.Core {
 		static bool IsNetFrameworkFacade(ModuleDef module) =>
 			module.ExportedTypes.Count != 0 && module.CorLibTypes.AssemblyRef.Name == "mscorlib" &&
 			module.Types.All(a => a.IsGlobalModuleType);
+
+		// A .NET Framework assembly from the GAC, the framework dir or the reference assemblies, not an app's own file
+		static bool IsInstalledNetFrameworkAssembly(ModuleDef module) {
+			if (module.CorLibTypes.AssemblyRef.Name != "mscorlib")
+				return false;
+			var location = module.Location;
+			if (string.IsNullOrEmpty(location))
+				return false;
+			return netFrameworkDirs.Any(a => location.StartsWith(a, StringComparison.OrdinalIgnoreCase));
+		}
+		static readonly string[] netFrameworkDirs = GetNetFrameworkDirs();
+
+		static string[] GetNetFrameworkDirs() {
+			var dirs = new List<string>();
+			var windir = Environment.GetFolderPath(Environment.SpecialFolder.Windows);
+			if (!string.IsNullOrEmpty(windir)) {
+				dirs.Add(Path.Combine(windir, "Microsoft.NET") + Path.DirectorySeparatorChar);
+				dirs.Add(Path.Combine(windir, "assembly") + Path.DirectorySeparatorChar);
+			}
+			foreach (var folder in new[] { Environment.SpecialFolder.ProgramFilesX86, Environment.SpecialFolder.ProgramFiles }) {
+				var dir = Environment.GetFolderPath(folder);
+				if (!string.IsNullOrEmpty(dir))
+					dirs.Add(Path.Combine(dir, "Reference Assemblies", "Microsoft", "Framework") + Path.DirectorySeparatorChar);
+			}
+			return dirs.ToArray();
+		}
 
 		public MetadataFile? ResolveModule(MetadataFile mainModule, string moduleName) {
 			var asm = modules.TryGet(mainModule)?.Module.Assembly;
