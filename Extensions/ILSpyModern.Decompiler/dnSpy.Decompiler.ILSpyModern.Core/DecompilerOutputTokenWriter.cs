@@ -304,9 +304,15 @@ namespace dnSpy.Decompiler.ILSpyModern.Core {
 		public override void NewLine() => WriteLine();
 
 		public override void WriteComment(CommentType commentType, string content) {
+			if (commentType == CommentType.Documentation) {
+				output.Write("///", BoxedTextColor.XmlDocCommentDelimiter);
+				output.WriteXmlDoc(content);
+				WriteLine();
+				return;
+			}
 			var text = Format(w => w.WriteComment(commentType, content));
 			output.Write(text.TrimEnd('\r', '\n'), BoxedTextColor.Comment);
-			if (commentType == CommentType.SingleLine || commentType == CommentType.Documentation)
+			if (commentType == CommentType.SingleLine)
 				WriteLine();
 		}
 

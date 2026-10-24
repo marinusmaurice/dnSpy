@@ -42,6 +42,7 @@ namespace dnSpy.Decompiler.ILSpyModern.Settings {
 			StringInterpolation = sect.Attribute<bool?>(nameof(StringInterpolation)) ?? StringInterpolation;
 			UsingDeclarations = sect.Attribute<bool?>(nameof(UsingDeclarations)) ?? UsingDeclarations;
 			UseDebugSymbols = sect.Attribute<bool?>(nameof(UseDebugSymbols)) ?? UseDebugSymbols;
+			ShowXmlDocumentation = sect.Attribute<bool?>(nameof(ShowXmlDocumentation)) ?? ShowXmlDocumentation;
 			CleanUpOutput = sect.Attribute<bool?>(nameof(CleanUpOutput)) ?? CleanUpOutput;
 			disableSave = false;
 		}
@@ -61,6 +62,7 @@ namespace dnSpy.Decompiler.ILSpyModern.Settings {
 			sect.Attribute(nameof(StringInterpolation), StringInterpolation);
 			sect.Attribute(nameof(UsingDeclarations), UsingDeclarations);
 			sect.Attribute(nameof(UseDebugSymbols), UseDebugSymbols);
+			sect.Attribute(nameof(ShowXmlDocumentation), ShowXmlDocumentation);
 			sect.Attribute(nameof(CleanUpOutput), CleanUpOutput);
 		}
 	}

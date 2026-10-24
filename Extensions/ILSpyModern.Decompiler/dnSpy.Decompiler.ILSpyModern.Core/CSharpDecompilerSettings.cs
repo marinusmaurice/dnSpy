@@ -84,6 +84,10 @@ namespace dnSpy.Decompiler.ILSpyModern.Core {
 				Description = "Use variable names from debug symbols, if available",
 				Name = DecompilerOptionConstants.UseDebugSymbols_NAME,
 			};
+			yield return new DecompilerOption<bool>(DecompilerOptionConstants.ShowXmlDocumentation_GUID, () => ShowXmlDocumentation, a => ShowXmlDocumentation = a) {
+				Description = "Show XML documentation in decompiled code",
+				Name = DecompilerOptionConstants.ShowXmlDocumentation_NAME,
+			};
 			yield return new DecompilerOption<bool>(CleanUpOutput_GUID, () => CleanUpOutput, a => CleanUpOutput = a) {
 				Description = "Clean up ILSpy's output (dnSpy: switch expressions, string interpolation, decimal casts, empty if statements, lambda temporaries)",
 				Name = CleanUpOutput_NAME,
@@ -144,6 +148,12 @@ namespace dnSpy.Decompiler.ILSpyModern.Core {
 		}
 		bool useDebugSymbols = true;
 
+		public bool ShowXmlDocumentation {
+			get => showXmlDocumentation;
+			set => SetValue(ref showXmlDocumentation, value, nameof(ShowXmlDocumentation));
+		}
+		bool showXmlDocumentation = true;
+
 		/// <summary>
 		/// Run dnSpy's own AST transforms after ILSpy's (they're what makes the output closer to the original source)
 		/// </summary>
@@ -180,6 +190,7 @@ namespace dnSpy.Decompiler.ILSpyModern.Core {
 			other.StringInterpolation = StringInterpolation;
 			other.UsingDeclarations = UsingDeclarations;
 			other.UseDebugSymbols = UseDebugSymbols;
+			other.ShowXmlDocumentation = ShowXmlDocumentation;
 			other.CleanUpOutput = CleanUpOutput;
 			return other;
 		}
@@ -194,6 +205,7 @@ namespace dnSpy.Decompiler.ILSpyModern.Core {
 				StringInterpolation = StringInterpolation,
 				UsingDeclarations = UsingDeclarations,
 				UseDebugSymbols = UseDebugSymbols,
+				ShowXmlDocumentation = ShowXmlDocumentation,
 			};
 			// ILSpy's query expressions need lambdas
 			if (!AnonymousMethods) {
@@ -216,6 +228,7 @@ namespace dnSpy.Decompiler.ILSpyModern.Core {
 			StringInterpolation == other.StringInterpolation &&
 			UsingDeclarations == other.UsingDeclarations &&
 			UseDebugSymbols == other.UseDebugSymbols &&
+			ShowXmlDocumentation == other.ShowXmlDocumentation &&
 			CleanUpOutput == other.CleanUpOutput;
 
 		public override int GetHashCode() {

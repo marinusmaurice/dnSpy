@@ -136,6 +136,8 @@ namespace dnSpy.Decompiler.ILSpyModern.Core {
 				CancellationToken = ctx.CancellationToken,
 				DebugInfoProvider = new DnlibDebugInfoProvider(mainModule),
 			};
+			if (settings.ShowXmlDocumentation)
+				decompiler.DocumentationProvider = new DnlibDocumentationProvider(modules);
 			// Run before ILSpy's last steps (parentheses are inserted after all transforms)
 			if (langSettings.CleanUpOutput) {
 				decompiler.AstTransforms.Add(new RemoveEmptyConstantIfTransform());
