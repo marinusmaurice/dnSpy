@@ -162,6 +162,11 @@ namespace dnSpy.Decompiler.ILSpyModern.Core {
 			};
 			if (settings.ShowXmlDocumentation)
 				decompiler.DocumentationProvider = new DnlibDocumentationProvider(modules);
+			// Can add a StructLayout attribute, so it must run before the using declarations are added
+			int usingsIndex = 0;
+			while (usingsIndex < decompiler.AstTransforms.Count && !(decompiler.AstTransforms[usingsIndex] is IntroduceUsingDeclarations))
+				usingsIndex++;
+			decompiler.AstTransforms.Insert(usingsIndex, new DefaultCharSetTransform());
 			// Run before ILSpy's last steps (parentheses are inserted after all transforms)
 			if (langSettings.CleanUpOutput) {
 				decompiler.AstTransforms.Add(new RemoveEmptyConstantIfTransform());
