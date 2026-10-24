@@ -590,6 +590,8 @@ namespace dnSpy.Documents.Tabs {
 		public void RefreshModifiedDocument(IDsDocument document) {
 			var documentsHash = GetModifiedDocuments(document);
 			decompilationCache.Clear(documentsHash!);
+			// Before the tabs are decompiled again (on another thread) so decompilers can clear their caches
+			DocumentModified?.Invoke(this, new DocumentModifiedEventArgs(documentsHash.ToArray()));
 
 			var tabs = new List<IDocumentTab>();
 			foreach (var tab in VisibleFirstTabs) {
@@ -598,8 +600,6 @@ namespace dnSpy.Documents.Tabs {
 			}
 			if (tabs.Count > 0)
 				Refresh(tabs);
-
-			DocumentModified?.Invoke(this, new DocumentModifiedEventArgs(documentsHash.ToArray()));
 		}
 		public event EventHandler<DocumentModifiedEventArgs>? DocumentModified;
 
