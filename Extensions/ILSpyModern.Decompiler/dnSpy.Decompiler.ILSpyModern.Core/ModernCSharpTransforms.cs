@@ -194,4 +194,27 @@ namespace dnSpy.Decompiler.ILSpyModern.Core {
 			return true;
 		}
 	}
+
+	/// <summary>
+	/// Export to Project's AssemblyInfo file: ILSpy's <see cref="RemoveCompilerGeneratedAssemblyAttributes"/>, and the
+	/// attributes that are reserved for the compiler (CS8335), which the compiler adds again
+	/// </summary>
+	sealed class AssemblyInfoTransform : IAstTransform {
+		static readonly HashSet<string> reservedAttributes = new HashSet<string> {
+			"System.Runtime.CompilerServices.RefSafetyRulesAttribute",
+			"System.Runtime.CompilerServices.NullablePublicOnlyAttribute",
+		};
+
+		public void Run(AstNode rootNode, TransformContext context) {
+			new RemoveCompilerGeneratedAssemblyAttributes().Run(rootNode, context);
+			foreach (var section in rootNode.Children.OfType<AttributeSection>().ToArray()) {
+				foreach (var attr in section.Attributes.ToArray()) {
+					if (attr.Type.GetSymbol() is IType type && reservedAttributes.Contains(type.FullName))
+						attr.Remove();
+				}
+				if (section.Attributes.Count == 0)
+					section.Remove();
+			}
+		}
+	}
 }

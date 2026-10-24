@@ -63,6 +63,7 @@ namespace dnSpy.Decompiler.ILSpyModern.Core {
 		public override Guid GenericGuid => DecompilerConstants.LANGUAGE_CSHARP;
 		public override Guid UniqueGuid => LANGUAGE_CSHARP_ILSPY_MODERN;
 		public override string FileExtension => ".cs";
+		public override string? ProjectFileExtension => ".csproj";
 
 		public override void Decompile(MethodDef method, IDecompilerOutput output, DecompilationContext ctx) {
 			WriteCommentLineDeclaringType(output, method);
@@ -101,6 +102,8 @@ namespace dnSpy.Decompiler.ILSpyModern.Core {
 
 		public override bool CanDecompile(DecompilationType decompilationType) {
 			switch (decompilationType) {
+			case DecompilationType.PartialType:
+			case DecompilationType.AssemblyInfo:
 			case DecompilationType.TypeMethods:
 				return true;
 			}
@@ -109,12 +112,32 @@ namespace dnSpy.Decompiler.ILSpyModern.Core {
 
 		public override void Decompile(DecompilationType decompilationType, object data) {
 			switch (decompilationType) {
+			case DecompilationType.PartialType:
+				DecompilePartialType((DecompilePartialType)data);
+				return;
+			case DecompilationType.AssemblyInfo:
+				DecompileAssemblyInfo((DecompileAssemblyInfo)data);
+				return;
 			case DecompilationType.TypeMethods:
 				DecompileTypeMethods((DecompileTypeMethods)data);
 				return;
 			}
 			base.Decompile(decompilationType, data);
 		}
+
+		void DecompilePartialType(DecompilePartialType info) {
+			var settings = langSettings.CreateILSpySettings();
+			DecompilePartialTypeTransform.UpdateSettings(settings, info);
+			var modules = info.Context.GetOrCreate<ConvertedModules>();
+			Decompile(info.Type.Module, info.Output, info.Context, settings, new DecompilePartialTypeTransform(info, modules),
+				(d, m) => d.DecompileTypes(new[] { (TypeDefinitionHandle)m.GetHandle(info.Type) }));
+		}
+
+		// Export to Project's Properties\AssemblyInfo.cs. Without KeepAllAttributes, the attributes the compiler adds
+		// (TargetFramework, Debuggable, CompilationRelaxations, RefSafetyRules, etc.) are removed, like ILSpy's project export.
+		void DecompileAssemblyInfo(DecompileAssemblyInfo info) =>
+			Decompile(info.Module, info.Output, info.Context, langSettings.CreateILSpySettings(), info.KeepAllAttributes ? null : new AssemblyInfoTransform(),
+				(d, m) => d.DecompileModuleAndAssemblyAttributes());
 
 		void DecompileTypeMethods(DecompileTypeMethods info) {
 			var settings = langSettings.CreateILSpySettings();

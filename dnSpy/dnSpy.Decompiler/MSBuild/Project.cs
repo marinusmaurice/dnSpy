@@ -458,6 +458,11 @@ namespace dnSpy.Decompiler.MSBuild {
 			if (type.Namespace == "XamlGeneratedNamespace" && type.Name == "GeneratedInternalTypeHelper")
 				return false;
 
+			// Eg. <PrivateImplementationDetails>: not valid C#, and the compiler creates it again. Languages that
+			// hide compiler-generated types (ShowMember) never get here.
+			if (type.Name.StartsWith("<") && type.CustomAttributes.IsDefined("System.Runtime.CompilerServices.CompilerGeneratedAttribute"))
+				return false;
+
 			// Types the C# compiler adds to the assembly if the framework doesn't have them, eg. EmbeddedAttribute,
 			// RefSafetyRulesAttribute, NullableAttribute. It adds them again when the project is compiled.
 			if (type.CustomAttributes.IsDefined("Microsoft.CodeAnalysis.EmbeddedAttribute") &&
