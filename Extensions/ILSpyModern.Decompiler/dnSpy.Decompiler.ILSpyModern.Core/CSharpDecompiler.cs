@@ -178,6 +178,7 @@ namespace dnSpy.Decompiler.ILSpyModern.Core {
 			}
 			// Fixes code that doesn't compile, so it runs without the clean up option too
 			decompiler.AstTransforms.Add(new NullableBoolToIntegerCastTransform());
+			decompiler.AstTransforms.Add(new OldRefSafetyRulesTransform());
 			decompiler.AstTransforms.Add(new FixEmptyDirectionExpressionsTransform());
 			if (lastTransform is not null)
 				decompiler.AstTransforms.Add(lastTransform);
