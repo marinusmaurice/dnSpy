@@ -91,6 +91,88 @@ namespace dnSpy.Decompiler.ILSpyModern.Core {
 	}
 
 	/// <summary>
+	/// Removes the <c>? true : false</c> that ICSharpCode.Decompiler 11.1 writes for <c>or</c> patterns
+	/// (<c>o is B or C</c> → <c>(o is B || o is C) ? true : false</c>): <c>cond ? true : false</c> → <c>cond</c>
+	/// and <c>cond ? false : true</c> → <c>!cond</c>. Only when the condition and the result are both <see cref="bool"/>,
+	/// and not in expression trees, where the conditional is part of the tree.
+	/// Also removes the constant operands ILSpy leaves in conditions: <c>a || 1 == 0</c> → <c>a</c>, <c>a &amp;&amp; 1 == 1</c> → <c>a</c>.
+	/// </summary>
+	sealed class SimplifyBoolExpressionsTransform : DepthFirstAstVisitor, IAstTransform {
+		public void Run(AstNode rootNode, TransformContext context) => rootNode.AcceptVisitor(this);
+
+		public override void VisitBinaryOperatorExpression(BinaryOperatorExpression binaryOperatorExpression) {
+			base.VisitBinaryOperatorExpression(binaryOperatorExpression);
+			bool identity;
+			if (binaryOperatorExpression.Operator == BinaryOperatorType.ConditionalOr)
+				identity = false;
+			else if (binaryOperatorExpression.Operator == BinaryOperatorType.ConditionalAnd)
+				identity = true;
+			else
+				return;
+			if (NullableBoolToIntegerCastTransform.IsInExpressionTree(binaryOperatorExpression))
+				return;
+			// Only the identity operand can go: `a || false` is `a`, but `a || true` must still evaluate `a`
+			Expression kept;
+			if (IsConstantComparison(binaryOperatorExpression.Right, identity))
+				kept = binaryOperatorExpression.Left;
+			else if (IsConstantComparison(binaryOperatorExpression.Left, identity))
+				kept = binaryOperatorExpression.Right;
+			else
+				return;
+			if (!kept.GetResolveResult().Type.IsKnownType(KnownTypeCode.Boolean))
+				return;
+			kept.Detach();
+			ConditionalToSwitchExpressionTransform.CopyILAnnotations(binaryOperatorExpression, kept);
+			binaryOperatorExpression.ReplaceWith(kept);
+		}
+
+		// `1 == 0` or `1 == 1` (two integer literals), as ILSpy writes them
+		static bool IsConstantComparison(Expression expr, bool value) {
+			if (!(ConditionalToSwitchExpressionTransform.Unwrap(expr) is BinaryOperatorExpression binary))
+				return false;
+			if (binary.Operator != BinaryOperatorType.Equality && binary.Operator != BinaryOperatorType.InEquality)
+				return false;
+			if (!(ConditionalToSwitchExpressionTransform.Unwrap(binary.Left) is PrimitiveExpression left && left.Value is int leftValue))
+				return false;
+			if (!(ConditionalToSwitchExpressionTransform.Unwrap(binary.Right) is PrimitiveExpression right && right.Value is int rightValue))
+				return false;
+			bool result = (leftValue == rightValue) == (binary.Operator == BinaryOperatorType.Equality);
+			return result == value;
+		}
+
+		public override void VisitConditionalExpression(ConditionalExpression conditionalExpression) {
+			base.VisitConditionalExpression(conditionalExpression);
+			if (!(conditionalExpression.TrueExpression is PrimitiveExpression trueExpr && trueExpr.Value is bool trueValue))
+				return;
+			if (!(conditionalExpression.FalseExpression is PrimitiveExpression falseExpr && falseExpr.Value is bool falseValue) || trueValue == falseValue)
+				return;
+			if (!conditionalExpression.GetResolveResult().Type.IsKnownType(KnownTypeCode.Boolean))
+				return;
+			var conditionRR = conditionalExpression.Condition.GetResolveResult();
+			if (!conditionRR.Type.IsKnownType(KnownTypeCode.Boolean))
+				return;
+			if (NullableBoolToIntegerCastTransform.IsInExpressionTree(conditionalExpression))
+				return;
+
+			var condition = conditionalExpression.Condition.Detach();
+			Expression replacement;
+			if (trueValue)
+				replacement = condition;
+			else if (condition is UnaryOperatorExpression not && not.Operator == UnaryOperatorType.Not) {
+				replacement = not.Expression.Detach();
+				ConditionalToSwitchExpressionTransform.CopyILAnnotations(not, replacement);
+			}
+			else {
+				replacement = new UnaryOperatorExpression(UnaryOperatorType.Not, condition);
+				replacement.AddAnnotation(new OperatorResolveResult(conditionRR.Type, System.Linq.Expressions.ExpressionType.Not, conditionRR));
+			}
+			// Keep the IL ranges of the conditional for the debugger's statement mapping
+			ConditionalToSwitchExpressionTransform.CopyILAnnotations(conditionalExpression, replacement);
+			conditionalExpression.ReplaceWith(replacement);
+		}
+	}
+
+	/// <summary>
 	/// ICSharpCode.Decompiler 11.1 can create an <c>out</c>/<c>ref</c>/<c>in</c> argument without an
 	/// expression, and its output visitor then throws a <see cref="System.NullReferenceException"/> for the
 	/// whole type. Seen with the <c>InlineArrayAsReadOnlySpan</c> helper (<c>params ReadOnlySpan&lt;T&gt;</c>
