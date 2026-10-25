@@ -217,11 +217,26 @@ namespace dnSpy.Decompiler.ILSpyModern.Core {
 					// Assigning a local happens after its value is evaluated
 					if (parent is AssignmentExpression assignment && sibling == assignment.Left && sibling is IdentifierExpression { } local && local.GetILVariable() is not null)
 						continue;
+					// So does assigning a field or property: only its receiver is evaluated before the value
+					if (parent is AssignmentExpression { Operator: AssignmentOperatorType.Assign } assignment2 && sibling == assignment2.Left && IsPureAssignmentTarget(sibling, elementsArePure, root))
+						continue;
 					if (sibling is Expression expr && !IsPure(expr, allowVariables: elementsArePure, root))
 						return false;
 				}
 			}
 			return true;
+		}
+
+		// A field or property (not an indexer) whose receiver is implicit (`this` or static) or pure
+		static bool IsPureAssignmentTarget(AstNode target, bool allowVariables, AstNode root) {
+			switch (target) {
+			case IdentifierExpression id:
+				return id.GetSymbol() is IField or IProperty { IsIndexer: false };
+			case MemberReferenceExpression member:
+				return member.GetSymbol() is IField or IProperty { IsIndexer: false } && IsPure(member.Target, allowVariables, root);
+			default:
+				return false;
+			}
 		}
 
 		static AstNode GetRoot(AstNode node) {

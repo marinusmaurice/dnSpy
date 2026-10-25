@@ -38,7 +38,12 @@ namespace dnSpy.Decompiler.MSBuild {
 		public static bool IsWinForm(TypeDef type) => IsType(type, "System.Windows.Forms.Form");
 		public static bool IsSystemWindowsApplication(TypeDef type) => IsType(type, "System.Windows.Application");
 		public static bool IsStartUpClass(TypeDef type) => type.Module.EntryPoint is not null && type.Module.EntryPoint.DeclaringType == type;
-		public static bool IsUnsafe(ModuleDef module) => module.CustomAttributes.IsDefined("System.Security.UnverifiableCodeAttribute");
+		// [SkipLocalsInit] also needs /unsafe (CS0227), and newer compilers or the trimmer don't always leave [UnverifiableCode]
+		public static bool IsUnsafe(ModuleDef module) =>
+			module.CustomAttributes.IsDefined("System.Security.UnverifiableCodeAttribute") ||
+			module.CustomAttributes.IsDefined(SkipLocalsInitAttribute) ||
+			module.GetTypes().Any(a => a.CustomAttributes.IsDefined(SkipLocalsInitAttribute) || a.Methods.Any(b => b.CustomAttributes.IsDefined(SkipLocalsInitAttribute)));
+		const string SkipLocalsInitAttribute = "System.Runtime.CompilerServices.SkipLocalsInitAttribute";
 		public static IEnumerable<FieldDef> GetFields(MethodDef method) => GetDefs(method).OfType<FieldDef>();
 
 		public static IEnumerable<IMemberDef> GetDefs(MethodDef method) {

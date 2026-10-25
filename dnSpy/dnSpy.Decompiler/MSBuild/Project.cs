@@ -87,6 +87,7 @@ namespace dnSpy.Decompiler.MSBuild {
 		public void CreateProjectFiles(DecompileContext ctx) {
 			var filenameCreator = new FilenameCreator(Directory, DefaultNamespace);
 			var resourceNameCreator = new ResourceNameCreator(Options.Module, filenameCreator);
+			ProjectExport.MarkContext(Options.DecompilationContext);
 
 			AllowUnsafeBlocks = DotNetUtils.IsUnsafe(Options.Module);
 			InitializeSplashScreen();

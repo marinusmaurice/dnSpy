@@ -20,6 +20,7 @@ using System.Collections.Generic;
 using System.Reflection.Metadata;
 using dnlib.DotNet;
 using dnSpy.Contracts.Decompiler;
+using dnSpy.Decompiler.MSBuild;
 using ICSharpCode.Decompiler.CSharp.OutputVisitor;
 using ICSharpCode.Decompiler.CSharp.Syntax;
 using ICSharpCode.Decompiler.CSharp.Transforms;
@@ -167,6 +168,8 @@ namespace dnSpy.Decompiler.ILSpyModern.Core {
 			while (usingsIndex < decompiler.AstTransforms.Count && !(decompiler.AstTransforms[usingsIndex] is IntroduceUsingDeclarations))
 				usingsIndex++;
 			decompiler.AstTransforms.Insert(usingsIndex, new DefaultCharSetTransform());
+			// Adds the backing field with its [CompilerGenerated] attribute, which needs its using declaration
+			decompiler.AstTransforms.Insert(usingsIndex, new SetterOnlyAutoPropertyTransform());
 			// Fixes field initializers that use a constructor parameter (CS0103), so it runs without the clean up option too
 			ParameterInitializerTransform.Insert(decompiler.AstTransforms);
 			// Lets ILSpy restore queries that pass range variables to `in` parameters (it writes code that doesn't compile otherwise)
@@ -191,6 +194,12 @@ namespace dnSpy.Decompiler.ILSpyModern.Core {
 			decompiler.AstTransforms.Add(new FixEmptyDirectionExpressionsTransform());
 			if (lastTransform is not null)
 				decompiler.AstTransforms.Add(lastTransform);
+			// Names the compiler generated (eg. a backing field left without its property by the trimmer, file-local types)
+			// don't compile. Only in Export to Project (like ILSpy's), other views show the names in the metadata.
+			if (ProjectExport.IsProjectExport(ctx)) {
+				decompiler.AstTransforms.Add(new GeneratedRegexAttributeTransform());
+				decompiler.AstTransforms.Add(new EscapeInvalidIdentifiers());
+			}
 			var syntaxTree = decompile(decompiler, mainModule);
 			if (!MemberOrderTransform.IsILSpyOrder(langSettings))
 				MemberOrderTransform.Run(syntaxTree, modules, langSettings);
