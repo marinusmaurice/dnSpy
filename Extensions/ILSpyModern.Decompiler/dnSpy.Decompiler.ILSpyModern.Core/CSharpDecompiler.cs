@@ -200,6 +200,8 @@ namespace dnSpy.Decompiler.ILSpyModern.Core {
 			// Names the compiler generated (eg. a backing field left without its property by the trimmer, file-local types)
 			// don't compile. Only in Export to Project (like ILSpy's), other views show the names in the metadata.
 			if (ProjectExport.IsProjectExport(ctx)) {
+				// The SDK-style project references the whole framework, which can make short type names ambiguous (CS0104)
+				decompiler.AstTransforms.Add(new FrameworkTypeNameConflictTransform());
 				decompiler.AstTransforms.Add(new GeneratedRegexAttributeTransform());
 				decompiler.AstTransforms.Add(new EscapeInvalidIdentifiers());
 			}
