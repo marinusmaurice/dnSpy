@@ -286,7 +286,7 @@ namespace dnSpy.Decompiler.MSBuild {
 				writer.WriteElementString("AllowUnsafeBlocks", "true");
 			var noWarnList = GetNoWarnList();
 			if (noWarnList is not null)
-				writer.WriteElementString("NoWarn", noWarnList);
+				writer.WriteElementString("NoWarn", "$(NoWarn);" + noWarnList);
 			if (project.ApplicationManifest is not null)
 				writer.WriteElementString("ApplicationManifest", GetRelativePath(project.ApplicationManifest.Filename));
 			if (project.ApplicationIcon is not null)
@@ -513,10 +513,13 @@ namespace dnSpy.Decompiler.MSBuild {
 		}
 
 		string? GetNoWarnList() {
+			var list = new List<string>();
 			if (project.Options.Decompiler.GenericGuid == DecompilerConstants.LANGUAGE_VISUALBASIC)
-				return "41999,42016,42017,42018,42019,42020,42021,42022,42032,42036,42314";
-			return null;
+				list.Add("41999,42016,42017,42018,42019,42020,42021,42022,42032,42036,42314");
+			list.AddRange(experimentalDiagnosticIds ??= DotNetUtils.GetExperimentalDiagnosticIds(project.Module));
+			return list.Count == 0 ? null : string.Join(",", list);
 		}
+		List<string>? experimentalDiagnosticIds;
 
 		string GetRootNamespace() {
 			if (!string.IsNullOrEmpty(project.DefaultNamespace))

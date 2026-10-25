@@ -401,6 +401,7 @@ namespace dnSpy.Decompiler.ILSpyModern.Core {
 	/// <summary>
 	/// ILSpy's output visitor with two fixes for switch expressions: relational patterns get a space
 	/// (<c>&lt; 4</c>, ILSpy writes <c>&lt;4</c>) and arms don't end with a space after the comma.
+	/// Also adds the parentheses ILSpy leaves out after <c>throw</c> in a throw expression.
 	/// </summary>
 	sealed class ModernCSharpOutputVisitor : CSharpOutputVisitor {
 		public ModernCSharpOutputVisitor(TokenWriter writer, CSharpFormattingOptions formattingPolicy) : base(writer, formattingPolicy) { }
@@ -436,6 +437,22 @@ namespace dnSpy.Decompiler.ILSpyModern.Core {
 			}
 			CloseBrace(policy.ArrayInitializerBraceStyle);
 			EndNode(switchExpression);
+		}
+
+		// The operand of a throw expression is a null coalescing expression, but ILSpy doesn't add parentheses:
+		// x ?? throw (c ? a : b) was written as x ?? throw c ? a : b, which is (x ?? throw c) ? a : b (CS0029)
+		public override void VisitThrowExpression(ThrowExpression throwExpression) {
+			if (throwExpression.Expression is not (ConditionalExpression or AssignmentExpression or LambdaExpression)) {
+				base.VisitThrowExpression(throwExpression);
+				return;
+			}
+			StartNode(throwExpression);
+			WriteKeyword("throw");
+			Space();
+			LPar();
+			throwExpression.Expression.AcceptVisitor(this);
+			RPar();
+			EndNode(throwExpression);
 		}
 	}
 
