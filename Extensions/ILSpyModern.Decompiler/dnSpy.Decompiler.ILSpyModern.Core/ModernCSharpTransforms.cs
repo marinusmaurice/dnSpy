@@ -324,6 +324,61 @@ namespace dnSpy.Decompiler.ILSpyModern.Core {
 	/// whole type. Seen with the <c>InlineArrayAsReadOnlySpan</c> helper (<c>params ReadOnlySpan&lt;T&gt;</c>
 	/// calls) when <c>System.*</c> references resolve to .NET Framework facades. Writes an error comment instead.
 	/// </summary>
+	/// <summary>
+	/// ICSharpCode.Decompiler 11.1 writes a tuple whose fields are set one by one (<c>(int, string) t = default; t.Item1 = a; ...</c>)
+	/// as <c>new (int, string) { Item1 = a, Item2 = b }</c>, which doesn't compile (CS8181/CS0119, eg. in Roslyn).
+	/// Becomes <c>(a, b)</c> when all fields are set in order and each value already has the field's type, so the
+	/// tuple's type can't change; otherwise <c>new ValueTuple&lt;int, string&gt; { Item1 = a, ... }</c>, which keeps the order.
+	/// Must run before <see cref="IntroduceUsingDeclarations"/>, since it can add a <c>ValueTuple</c> type.
+	/// </summary>
+	sealed class TupleObjectInitializerTransform : IAstTransform {
+		public void Run(AstNode rootNode, TransformContext context) {
+			foreach (var oce in rootNode.Descendants.OfType<ObjectCreateExpression>().ToArray()) {
+				if (!(oce.Type is TupleAstType) || oce.Arguments.Count != 0 || oce.Initializer.Elements.Count == 0)
+					continue;
+				if (!(oce.GetResolveResult().Type is TupleType tupleType))
+					continue;
+				var elements = oce.Initializer.Elements.ToArray();
+				if (!elements.All(a => a is NamedExpression named && IsTupleField(named.Name)))
+					continue;
+				if (CanUseTupleLiteral(tupleType, elements)) {
+					var tuple = new TupleExpression();
+					foreach (NamedExpression named in elements) {
+						var value = named.Expression.Detach();
+						// Keep the IL ranges of the field stores for the debugger's statement mapping
+						foreach (var inst in named.Annotations.OfType<ILInstruction>())
+							value.AddAnnotation(inst);
+						tuple.Elements.Add(value);
+					}
+					tuple.CopyAnnotationsFrom(oce);
+					oce.ReplaceWith(tuple);
+				}
+				else
+					oce.Type = context.TypeSystemAstBuilder.ConvertType(tupleType.UnderlyingType);
+			}
+		}
+
+		// Item8 and later are fields of Rest
+		static bool IsTupleField(string name) =>
+			name == "Rest" || (name.Length == 5 && name.StartsWith("Item", System.StringComparison.Ordinal) && name[4] >= '1' && name[4] <= '7');
+
+		static bool CanUseTupleLiteral(TupleType tupleType, Expression[] elements) {
+			var types = tupleType.ElementTypes;
+			if (types.Length != elements.Length || types.Length > 7)
+				return false;
+			for (int i = 0; i < elements.Length; i++) {
+				var named = (NamedExpression)elements[i];
+				if (named.Name != "Item" + (i + 1).ToString(System.Globalization.CultureInfo.InvariantCulture))
+					return false;
+				var valueType = named.Expression.GetResolveResult().Type;
+				if (valueType.Kind == TypeKind.Unknown || valueType.Kind == TypeKind.Null ||
+					!valueType.ChangeNullability(Nullability.Oblivious).Equals(types[i].ChangeNullability(Nullability.Oblivious)))
+					return false;
+			}
+			return true;
+		}
+	}
+
 	sealed class FixEmptyDirectionExpressionsTransform : IAstTransform {
 		public void Run(AstNode rootNode, TransformContext context) {
 			foreach (var direction in rootNode.Descendants.OfType<DirectionExpression>().ToArray()) {

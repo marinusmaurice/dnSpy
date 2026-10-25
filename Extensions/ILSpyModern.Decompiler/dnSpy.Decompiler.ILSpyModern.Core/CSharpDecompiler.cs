@@ -172,6 +172,8 @@ namespace dnSpy.Decompiler.ILSpyModern.Core {
 			decompiler.AstTransforms.Insert(usingsIndex, new SetterOnlyAutoPropertyTransform());
 			// Fixes ref locals without an initializer (CS8174) with Unsafe.NullRef<T>(), which needs its using declaration
 			decompiler.AstTransforms.Insert(usingsIndex, new RefLocalInitializerTransform());
+			// Fixes `new (A, B) { Item1 = ... }` (CS8181), which can need a using declaration for ValueTuple
+			decompiler.AstTransforms.Insert(usingsIndex, new TupleObjectInitializerTransform());
 			// Fixes field initializers that use a constructor parameter (CS0103), so it runs without the clean up option too
 			ParameterInitializerTransform.Insert(decompiler.AstTransforms);
 			// Lets ILSpy restore queries that pass range variables to `in` parameters (it writes code that doesn't compile otherwise)
