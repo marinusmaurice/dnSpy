@@ -195,6 +195,7 @@ namespace dnSpy.Decompiler.ILSpyModern.Core {
 			decompiler.AstTransforms.Add(new NullableBoolToIntegerCastTransform());
 			decompiler.AstTransforms.Add(new OldRefSafetyRulesTransform());
 			decompiler.AstTransforms.Add(new ScopedLocalTransform());
+			decompiler.AstTransforms.Add(new StackAllocPointerLocalTransform());
 			decompiler.AstTransforms.Add(new ConstructorCallStatementTransform());
 			decompiler.AstTransforms.Add(new RangeVariableInArgumentTransform());
 			decompiler.AstTransforms.Add(new FixEmptyDirectionExpressionsTransform());
