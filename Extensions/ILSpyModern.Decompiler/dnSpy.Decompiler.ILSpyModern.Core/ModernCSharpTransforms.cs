@@ -173,6 +173,152 @@ namespace dnSpy.Decompiler.ILSpyModern.Core {
 	}
 
 	/// <summary>
+	/// Removes the <see cref="bool"/> temporaries ICSharpCode.Decompiler 11.1 leaves when an <c>or</c> pattern is an
+	/// operand of <c>&amp;&amp;</c> or <c>||</c> (source: <c>(o is B or C) &amp;&amp; x is 3 or 4</c>):
+	/// <code>
+	/// bool flag = o is B || o is C;
+	/// bool flag2 = flag;
+	/// if (flag2) { bool flag3 = (uint)(x - 3) &lt;= 1u; flag2 = flag3; }
+	/// return flag2;
+	/// </code>
+	/// becomes <c>return (o is B || o is C) &amp;&amp; (uint)(x - 3) &lt;= 1u;</c> (<c>if (!flag2)</c> gives <c>||</c>).
+	/// Only variables with generated names (not from debug symbols) that are used nowhere else, and only when the
+	/// values are evaluated in the same order and under the same conditions.
+	/// </summary>
+	sealed class InlineBoolTemporariesTransform : IAstTransform {
+		public void Run(AstNode rootNode, TransformContext context) {
+			var uses = new Dictionary<ILVariable, int>();
+			foreach (var id in rootNode.Descendants.OfType<IdentifierExpression>()) {
+				if (id.GetILVariable() is ILVariable v)
+					uses[v] = uses.TryGetValue(v, out int n) ? n + 1 : 1;
+			}
+			if (uses.Count == 0)
+				return;
+			foreach (var block in rootNode.Descendants.OfType<BlockStatement>().ToArray()) {
+				if (NullableBoolToIntegerCastTransform.IsInExpressionTree(block))
+					continue;
+				bool changed;
+				do {
+					changed = false;
+					var statements = block.Statements.ToArray();
+					for (int i = 0; i + 1 < statements.Length && !changed; i++)
+						changed = TryInlineCopy(statements[i], statements[i + 1], uses) || TryShortCircuit(statements[i], statements[i + 1], uses) || TryInlineIntoReturn(statements[i], statements[i + 1], uses);
+				} while (changed);
+			}
+		}
+
+		static int GetUses(Dictionary<ILVariable, int> uses, ILVariable v) => uses.TryGetValue(v, out int n) ? n : 0;
+
+		// `bool b = E;` with a generated name
+		static VariableInitializer? GetTemporary(Statement statement) {
+			if (!(statement is VariableDeclarationStatement decl) || decl.Modifiers != Modifiers.None || decl.Variables.Count != 1)
+				return null;
+			var init = decl.Variables.Single();
+			if (init.Initializer is null ||!(init.GetILVariable() is ILVariable v) || !v.HasGeneratedName || !v.Type.IsKnownType(KnownTypeCode.Boolean))
+				return null;
+			if (!ConditionalToSwitchExpressionTransform.HasType(init.Initializer, v.Type))
+				return null;
+			return init;
+		}
+
+		static bool IsVariable(Expression? expr, ILVariable v) => ConditionalToSwitchExpressionTransform.Unwrap(expr) is IdentifierExpression id && id.GetILVariable() == v;
+
+		// Moves the IL of the removed nodes to the value so the debugger's statement mapping keeps it
+		static void CopyAllILAnnotations(AstNode from, AstNode to) {
+			foreach (var node in from.DescendantsAndSelf)
+				ConditionalToSwitchExpressionTransform.CopyILAnnotations(node, to);
+		}
+
+		// bool a = E; bool b = a; → bool b = E;
+		static bool TryInlineCopy(Statement first, Statement second, Dictionary<ILVariable, int> uses) {
+			if (!(GetTemporary(first) is VariableInitializer a) || !(GetTemporary(second) is VariableInitializer b))
+				return false;
+			var aVar = a.GetILVariable()!;
+			if (!IsVariable(b.Initializer, aVar) || GetUses(uses, aVar) != 1)
+				return false;
+			var value = a.Initializer!.Detach();
+			CopyAllILAnnotations(first, value);
+			CopyAllILAnnotations(b.Initializer!, value);
+			b.Initializer = value;
+			first.Remove();
+			uses.Remove(aVar);
+			second.AddAnnotation(MergedStatementAnnotation.Instance);
+			return true;
+		}
+
+		// bool b = E1; if (b) { bool c = E2; b = c; } → bool b = E1 && E2;
+		static bool TryShortCircuit(Statement first, Statement second, Dictionary<ILVariable, int> uses) {
+			if (!(GetTemporary(first) is VariableInitializer b) || !(second is IfElseStatement ifElse) || ifElse.FalseStatement is not null)
+				return false;
+			var bVar = b.GetILVariable()!;
+			BinaryOperatorType op;
+			var condition = ConditionalToSwitchExpressionTransform.Unwrap(ifElse.Condition);
+			if (IsVariable(condition, bVar))
+				op = BinaryOperatorType.ConditionalAnd;
+			else if (condition is UnaryOperatorExpression { Operator: UnaryOperatorType.Not } not && IsVariable(not.Expression, bVar))
+				op = BinaryOperatorType.ConditionalOr;
+			else
+				return false;
+			var body = ifElse.TrueStatement is BlockStatement block ? block.Statements.ToArray() : new[] { ifElse.TrueStatement };
+			if (body.Length == 0 || body.Length > 2)
+				return false;
+			if (!(body[body.Length - 1] is ExpressionStatement { Expression: AssignmentExpression { Operator: AssignmentOperatorType.Assign } assign }) || !IsVariable(assign.Left, bVar))
+				return false;
+			ILVariable? cVar = null;
+			Expression value;
+			if (body.Length == 2) {
+				if (!(GetTemporary(body[0]) is VariableInitializer c))
+					return false;
+				cVar = c.GetILVariable()!;
+				if (!IsVariable(assign.Right, cVar) || GetUses(uses, cVar) != 1)
+					return false;
+				value = c.Initializer!;
+			}
+			else
+				value = assign.Right;
+			if (!value.GetResolveResult().Type.IsKnownType(KnownTypeCode.Boolean) || value.DescendantsAndSelf.OfType<IdentifierExpression>().Any(a => a.GetILVariable() == bVar))
+				return false;
+			// A pattern or out variable declared in the if statement would get the outer block's scope
+			if (value.DescendantsAndSelf.OfType<VariableDesignation>().Any())
+				return false;
+
+			value.Detach();
+			var left = b.Initializer!.Detach();
+			var boolType = bVar.Type;
+			var result = new BinaryOperatorExpression(left, op, value);
+			result.AddAnnotation(new OperatorResolveResult(boolType, op == BinaryOperatorType.ConditionalAnd ? System.Linq.Expressions.ExpressionType.AndAlso : System.Linq.Expressions.ExpressionType.OrElse, left.GetResolveResult(), value.GetResolveResult()));
+			CopyAllILAnnotations(second, result);
+			b.Initializer = result;
+			second.Remove();
+			uses[bVar] = GetUses(uses, bVar) - 2;
+			if (cVar is not null)
+				uses.Remove(cVar);
+			first.AddAnnotation(MergedStatementAnnotation.Instance);
+			return true;
+		}
+
+		// bool b = E; return b; → return E;
+		static bool TryInlineIntoReturn(Statement first, Statement second, Dictionary<ILVariable, int> uses) {
+			if (!(GetTemporary(first) is VariableInitializer b) || !(second is ReturnStatement ret))
+				return false;
+			var bVar = b.GetILVariable()!;
+			if (!IsVariable(ret.Expression, bVar) || GetUses(uses, bVar) != 1)
+				return false;
+			// The return type must be bool too, else the conversion would happen elsewhere
+			if (!ConditionalToSwitchExpressionTransform.HasType(ret.Expression, bVar.Type))
+				return false;
+			var value = b.Initializer!.Detach();
+			CopyAllILAnnotations(first, value);
+			CopyAllILAnnotations(ret.Expression!, value);
+			ret.Expression = value;
+			first.Remove();
+			uses.Remove(bVar);
+			second.AddAnnotation(MergedStatementAnnotation.Instance);
+			return true;
+		}
+	}
+
+	/// <summary>
 	/// ICSharpCode.Decompiler 11.1 can create an <c>out</c>/<c>ref</c>/<c>in</c> argument without an
 	/// expression, and its output visitor then throws a <see cref="System.NullReferenceException"/> for the
 	/// whole type. Seen with the <c>InlineArrayAsReadOnlySpan</c> helper (<c>params ReadOnlySpan&lt;T&gt;</c>

@@ -185,6 +185,7 @@ namespace dnSpy.Decompiler.ILSpyModern.Core {
 				decompiler.AstTransforms.Add(new ConditionalToSwitchExpressionTransform());
 				decompiler.AstTransforms.Add(new InlineLambdaTemporariesTransform());
 				decompiler.AstTransforms.Add(new SimplifyBoolExpressionsTransform());
+				decompiler.AstTransforms.Add(new InlineBoolTemporariesTransform());
 				decompiler.AstTransforms.Add(new RemoveImplicitDecimalCastsTransform());
 				decompiler.AstTransforms.Add(new StringConcatToInterpolationTransform());
 			}
