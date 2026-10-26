@@ -54,6 +54,9 @@ namespace dnSpy.Contracts.Decompiler {
 		/// <summary>C# language (ILSpy)</summary>
 		public static readonly Guid LANGUAGE_CSHARP_ILSPY = new Guid("4162DADA-67C3-4DE4-A5F3-6552C8353ECE");
 
+		/// <summary>C# language (ILSpy 11, ICSharpCode.Decompiler from NuGet). The default language.</summary>
+		public static readonly Guid LANGUAGE_CSHARP_ILSPY_MODERN = new Guid("8E0CBE51-4A6E-4C8C-9B3E-2D6D6C1F8A11");
+
 		/// <summary>Visual Basic language</summary>
 		public static readonly Guid LANGUAGE_VISUALBASIC = new Guid("B6849618-8239-4FBB-8DFF-D45EB023C193");
 

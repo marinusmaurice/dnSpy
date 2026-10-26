@@ -88,7 +88,7 @@ namespace dnSpy.Console.Properties {
         }
         
         /// <summary>
-        ///   Looks up a localized string similar to set language, default is C#. Guids can be used..
+        ///   Looks up a localized string similar to set language, default is C# (ILSpy 11). Guids can be used..
         /// </summary>
         internal static string CmdLineDescription_Language {
             get {

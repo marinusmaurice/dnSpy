@@ -47,7 +47,7 @@ namespace dnSpy.Decompiler.ILSpyModern.Core {
 	/// </summary>
 	sealed class CSharpDecompiler : DecompilerBase {
 		/// <summary>Guid of this language (use it with dnSpy.Console's -l option)</summary>
-		public static readonly Guid LANGUAGE_CSHARP_ILSPY_MODERN = new Guid("8E0CBE51-4A6E-4C8C-9B3E-2D6D6C1F8A11");
+		public static readonly Guid LANGUAGE_CSHARP_ILSPY_MODERN = DecompilerConstants.LANGUAGE_CSHARP_ILSPY_MODERN;
 
 		readonly CSharpDecompilerSettings langSettings;
 

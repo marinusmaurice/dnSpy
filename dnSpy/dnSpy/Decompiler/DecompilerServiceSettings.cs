@@ -39,7 +39,7 @@ namespace dnSpy.Decompiler {
 				}
 			}
 		}
-		Guid languageGuid = DecompilerConstants.LANGUAGE_CSHARP;
+		Guid languageGuid = DecompilerConstants.LANGUAGE_CSHARP_ILSPY_MODERN;
 	}
 
 	[Export, Export(typeof(IDecompilerServiceSettings))]
@@ -54,12 +54,26 @@ namespace dnSpy.Decompiler {
 
 			var sect = settingsService.GetOrCreateSection(SETTINGS_GUID);
 			LanguageGuid = sect.Attribute<Guid?>(nameof(LanguageGuid)) ?? LanguageGuid;
+			// C# (ILSpy 11) became the default. Switch settings saved with the old C# language once,
+			// later choices are kept.
+			defaultLanguageVersion = sect.Attribute<int?>(nameof(DefaultLanguageVersion)) ?? 0;
+			if (defaultLanguageVersion < DefaultLanguageVersion) {
+				if (LanguageGuid == DecompilerConstants.LANGUAGE_CSHARP || LanguageGuid == DecompilerConstants.LANGUAGE_CSHARP_ILSPY)
+					LanguageGuid = DecompilerConstants.LANGUAGE_CSHARP_ILSPY_MODERN;
+				defaultLanguageVersion = DefaultLanguageVersion;
+				Save();
+			}
 			PropertyChanged += DecompilerServiceSettingsImpl_PropertyChanged;
 		}
+		const int DefaultLanguageVersion = 1;
+		int defaultLanguageVersion;
 
-		void DecompilerServiceSettingsImpl_PropertyChanged(object? sender, PropertyChangedEventArgs e) {
+		void DecompilerServiceSettingsImpl_PropertyChanged(object? sender, PropertyChangedEventArgs e) => Save();
+
+		void Save() {
 			var sect = settingsService.RecreateSection(SETTINGS_GUID);
 			sect.Attribute(nameof(LanguageGuid), LanguageGuid);
+			sect.Attribute(nameof(DefaultLanguageVersion), defaultLanguageVersion);
 		}
 	}
 }

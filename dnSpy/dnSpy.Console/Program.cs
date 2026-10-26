@@ -184,7 +184,7 @@ namespace dnSpy_Console {
 		readonly List<string> asmPaths;
 		readonly List<string> userGacPaths;
 		readonly List<string> gacFiles;
-		string language = DecompilerConstants.LANGUAGE_CSHARP.ToString();
+		string language = DecompilerConstants.LANGUAGE_CSHARP_ILSPY_MODERN.ToString();
 		readonly DecompilationContext decompilationContext;
 		readonly ModuleContext moduleContext;
 		readonly AssemblyResolver assemblyResolver;
@@ -268,6 +268,9 @@ namespace dnSpy_Console {
 				ParseCommandLine(args);
 				if (allLanguages.Length == 0)
 					throw new ErrorException(dnSpy_Console_Resources.NoLanguagesFound);
+				// Default language's extension isn't available: use the old C# language
+				if (GetLanguageOrNull() is null && language == DecompilerConstants.LANGUAGE_CSHARP_ILSPY_MODERN.ToString())
+					language = DecompilerConstants.LANGUAGE_CSHARP.ToString();
 				if (GetLanguageOrNull() is null)
 					throw new ErrorException(string.Format(dnSpy_Console_Resources.LanguageXDoesNotExist, language));
 				Decompile();

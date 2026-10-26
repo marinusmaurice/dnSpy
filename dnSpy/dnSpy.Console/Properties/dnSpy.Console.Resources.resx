@@ -223,7 +223,7 @@
     <value>decompile an assembly from the GAC. Use full assembly name to use an exact version.</value>
   </data>
   <data name="CmdLineDescription_Language" xml:space="preserve">
-    <value>set language, default is C#. Guids can be used.</value>
+    <value>set language, default is C# (ILSpy 11). Guids can be used.</value>
   </data>
   <data name="CmdLineDescription_MDToken" xml:space="preserve">
     <value>decompile the member with metadata token N to stdout</value>
