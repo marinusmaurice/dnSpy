@@ -40,11 +40,15 @@ Requirements:
 - About 10 GB of free disk space to build everything
 
 ```PS
-git clone --recursive <this repo>
+git clone --recursive https://github.com/marinusmaurice/dnSpy.git
 cd dnSpy
 ./build.ps1                 # everything: net48, .NET x86, .NET x64
 ./build.ps1 netframework    # or just one of: netframework, net-x86, net-x64
 ```
+
+Use `--recursive` (or run `git submodule update --init --recursive` after cloning): the ILSpy, Roslyn expression compiler, Mono debugger, TreeView and images code are submodules. After pulling, run `git submodule update --init --recursive` again (or once: `git config submodule.recurse true`).
+
+If the clone or checkout fails with "Filename too long", clone into a shorter folder (eg. `C:\src\dnSpy`) or run `git config --global core.longpaths true` first. Some files are deep in the tree and Windows limits paths to 260 characters by default.
 
 Run it from a *Developer PowerShell for VS* (or put VS's `MSBuild\Current\Bin\amd64` on `PATH`). `./build.ps1 -NoMsbuild` builds with `dotnet` only, which drops the COM reference; it hasn't been re-verified since the .NET 10 update.
 
