@@ -2,7 +2,7 @@
 
 dnSpy is a debugger and .NET assembly editor. You can use it to edit and debug assemblies even if you don't have any source code available.
 
-> **dnSpy 7.0 (beta).** This fork updates dnSpy 6.1.8 (last upstream release, 2020) to current .NET while staying backward compatible: existing extensions (`dnSpy.Contracts.*`) and settings keep working, and the .NET Framework 4.8 build is kept next to the .NET 10 build. See [docs/MODERNIZATION_PLAN.md](docs/MODERNIZATION_PLAN.md) for the phases, what's done and the test log.
+> **dnSpy 7.0 (beta).** This fork updates dnSpy 6.1.8 (last upstream release, 2020) to current .NET while staying backward compatible: existing extensions (`dnSpy.Contracts.*`) and settings keep working, and the .NET Framework 4.8 build is kept next to the .NET 10 build. See [docs/MODERNIZATION_PLAN.md](docs/MODERNIZATION_PLAN.md) for the phases, what's done and the test log. Planned features and fixes are in [docs/TODO.md](docs/TODO.md).
 
 Main features:
 
