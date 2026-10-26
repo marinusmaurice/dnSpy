@@ -179,5 +179,5 @@ Each item is its own commit; build and smoke-test after each.
 
 ## Questions for the owner
 
-- Phase 5 uses ICSharpCode.Decompiler **11.1** (latest stable) rather than 9.x, and the language is called "C# (ILSpy 11)" (the name follows the package's major version). Say if you want 9.x pinned instead.
-- The new package is renamed at build time to `dnSpy.ICSharpCode.Decompiler` so the old ILSpy 2.3 fork keeps its `ICSharpCode.Decompiler` identity (third-party extensions may use it). The alternative is renaming the old fork instead. Keep it this way?
+- ✅ Answered 2026-10-26: use the **latest** ICSharpCode.Decompiler (11.1 now, and follow new stable releases), not 9.x. Language name "C# (ILSpy 11)" follows the major version.
+- ✅ Answered 2026-10-26: keep it. The new package stays renamed to `dnSpy.ICSharpCode.Decompiler`, and the old ILSpy 2.3 fork keeps its `ICSharpCode.Decompiler` identity (third-party extensions may use it).
