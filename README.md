@@ -2,7 +2,7 @@
 
 dnSpy is a debugger and .NET assembly editor. You can use it to edit and debug assemblies even if you don't have any source code available.
 
-> **Modernization in progress.** This branch updates dnSpy 6.1.8 (last upstream release, 2020) to current .NET while staying backward compatible: existing extensions (`dnSpy.Contracts.*`) and settings keep working, and the .NET Framework 4.8 build is kept next to the .NET 10 build. See [docs/MODERNIZATION_PLAN.md](docs/MODERNIZATION_PLAN.md) for the phases, what's done and the test log.
+> **dnSpy 7.0 (beta).** This fork updates dnSpy 6.1.8 (last upstream release, 2020) to current .NET while staying backward compatible: existing extensions (`dnSpy.Contracts.*`) and settings keep working, and the .NET Framework 4.8 build is kept next to the .NET 10 build. See [docs/MODERNIZATION_PLAN.md](docs/MODERNIZATION_PLAN.md) for the phases, what's done and the test log.
 
 Main features:
 
@@ -18,7 +18,7 @@ See below for more features
 
 ## Binaries
 
-Builds of this branch come from the GitHub Actions workflow (`.github/workflows/build.yml`). The last upstream release (6.1.8, .NET Framework 4.8 / .NET 5) is at https://github.com/dnSpy/dnSpy/releases
+Download the latest release from https://github.com/marinusmaurice/dnSpy/releases (7.0.0-beta.1 is a pre-release: please report problems). Releases are built by the GitHub Actions workflow (`.github/workflows/build.yml`) when a `v*` tag is pushed; tags with a `-` (eg. `v7.0.0-beta.1`) are published as pre-releases. The last upstream release (6.1.8, .NET Framework 4.8 / .NET 5) is at https://github.com/dnSpy/dnSpy/releases
 
 There are three builds:
 

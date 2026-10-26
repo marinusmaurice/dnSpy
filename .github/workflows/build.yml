@@ -4,6 +4,9 @@ on:
   push:
     branches:
       - '**'
+    # With only a branch filter, pushing a tag wouldn't start a build (and the release step below)
+    tags:
+      - 'v*'
   workflow_dispatch:
   pull_request:
     branches:
@@ -15,6 +18,9 @@ jobs:
   build:
     name: Build
     runs-on: windows-latest
+    # The release step needs to create the release; the default token is read-only
+    permissions:
+      contents: write
 
     steps:
       - uses: actions/checkout@v4
@@ -95,8 +101,15 @@ jobs:
             C:\builtfiles\dnSpy-netframework.zip
             C:\builtfiles\dnSpy-net-win32.zip
             C:\builtfiles\dnSpy-net-win64.zip
+          # Tags like v7.0.0-beta.1 are published as pre-releases
+          prerelease: ${{ contains(github.ref_name, '-') }}
           body: |
-            If your antivirus software complains, it's a false positive and you should contact them. I can't fix their buggy software.
+            dnSpy for .NET Framework 4.8 and .NET 10. See the README for what changed since 6.1.8.
+
+            - `dnSpy-netframework.zip`: needs .NET Framework 4.8 (dnSpy.exe = 64-bit, dnSpy-x86.exe = 32-bit)
+            - `dnSpy-net-win64.zip` / `dnSpy-net-win32.zip`: self-contained .NET 10, no runtime install needed
+
+            If your antivirus software complains, it's a false positive.
         if: startsWith(github.ref, 'refs/tags/')
         env:
           GITHUB_TOKEN: ${{secrets.GITHUB_TOKEN}}
