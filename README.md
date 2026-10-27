@@ -18,7 +18,7 @@ See below for more features
 
 ## Binaries
 
-Download the latest release from https://github.com/marinusmaurice/dnSpy/releases (7.0.0-beta.1 is a pre-release: please report problems). Releases are built by the GitHub Actions workflow (`.github/workflows/build.yml`) when a `v*` tag is pushed; tags with a `-` (eg. `v7.0.0-beta.1`) are published as pre-releases. The last upstream release (6.1.8, .NET Framework 4.8 / .NET 5) is at https://github.com/dnSpy/dnSpy/releases
+Download the latest release from https://github.com/marinusmaurice/dnSpy/releases (7.0.0-beta.2 is a pre-release: please report problems). Releases are built by the GitHub Actions workflow (`.github/workflows/build.yml`) when a `v*` tag is pushed; tags with a `-` (eg. `v7.0.0-beta.1`) are published as pre-releases. The last upstream release (6.1.8, .NET Framework 4.8 / .NET 5) is at https://github.com/dnSpy/dnSpy/releases
 
 There are three builds:
 

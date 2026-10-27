@@ -32,7 +32,7 @@
     <!-- Update app.config whenever this value changes -->
     <DnSpyAssemblyVersion>7.0.0.0</DnSpyAssemblyVersion>
     <!-- This is shown in the title bar -->
-    <DnSpyAssemblyInformationalVersion>v7.0.0-beta.1</DnSpyAssemblyInformationalVersion>
+    <DnSpyAssemblyInformationalVersion>v7.0.0-beta.2</DnSpyAssemblyInformationalVersion>
     <DnSpyAssemblyCopyright>Copyright (C) 2014-2020 de4dot@gmail.com</DnSpyAssemblyCopyright>
 
     <!-- AD0001: buggy Roslyn analyzer(s) crash, disable that warning -->
