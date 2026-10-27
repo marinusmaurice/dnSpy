@@ -178,6 +178,10 @@ namespace dnSpy.Decompiler.ILSpyModern.Core {
 			ParameterInitializerTransform.Insert(decompiler.AstTransforms);
 			// Lets ILSpy restore queries that pass range variables to `in` parameters (it writes code that doesn't compile otherwise)
 			LambdaParameterCopyTransform.Insert(decompiler.AstTransforms);
+			// Lets ILSpy restore `let` clauses whose value needed temporaries (eg. a switch expression in a Debug build);
+			// ILSpy left a Select call and <>h__TransparentIdentifierN names otherwise
+			if (langSettings.CleanUpOutput)
+				InlineLambdaTemporariesTransform.InsertBeforeQueryExpressions(decompiler.AstTransforms);
 			// Fixes code that doesn't compile (<>y__InlineArrayN locals), so it runs without the clean up option too
 			decompiler.AstTransforms.Add(new InlineArrayArgumentTransform());
 			// Fixes code that doesn't compile (<>z__ReadOnlyArray etc. from collection expressions)

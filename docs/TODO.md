@@ -23,7 +23,8 @@ Size: **S** = hours, **M** = a day or two, **L** = several days, **XL** = weeks.
 - [ ] ★ **M** Fix `out var` in Watch ("Internal debugger error"): implement the EE variable intrinsics (`CreateVariable`, `GetVariableAddress`, `GetObjectByAlias`) in dnSpy's interpreter. Also enables `int x = 1` statements, i.e. a real Immediate window.
 - [ ] ★ **S** Promote 7.0.0-beta.1 to 7.0.0 final: set `DnSpyAssemblyInformationalVersion` to `v7.0.0`, push tag `v7.0.0`.
 - [ ] **M** C# (ILSpy 11) gaps: decompile a whole namespace, `using` aliases, BAML (XAML) through the new engine, the last 4 errors in the Roslyn export test.
-- [ ] **M** Restore `let` clauses instead of `<>h__TransparentIdentifier` chains (last item on the "better than ILSpy" list in `Test/DecompilerStress/README.md`).
+- [x] **M** Restore `let` clauses instead of `<>h__TransparentIdentifier` chains (Debug builds; done 2026-10-27, regression test `Test/DecompilerStress/check.ps1` runs in CI).
+- [ ] **S** Report the `let` + switch expression bug upstream to ILSpy (icsharpcode/ILSpy: issue or pull request with the DecompilerStress sections 4 and 11), so dnSpy can drop its workaround once a fixed package ships.
 - [ ] **M** Remove the old ILSpy 2.3 decompiler and its submodules (ICSharpCode.Decompiler 2.3, NRefactory) after a release or two with both.
 
 ## 2. Decompiler
@@ -34,7 +35,7 @@ Size: **S** = hours, **M** = a day or two, **L** = several days, **XL** = weeks.
 - [ ] **M** ReadyToRun / NativeAOT viewer: show the precompiled native code next to the IL.
 - [ ] **M** Single-file bundles: open a .NET 6+ single-file `.exe` and browse the DLLs inside.
 - [ ] **S–M** Xamarin/MAUI Android: unpack compressed `XALZ` assemblies from APKs.
-- [ ] ★ **M** Decompiler regression suite: split `Test/DecompilerStress` into many small cases, compare output in CI.
+- [ ] ★ **M** Decompiler regression suite: split `Test/DecompilerStress` into many small cases, compare output in CI. (Started: `check.ps1` runs in CI and checks the benchmark's Debug and Release builds.)
 - [ ] **S** C# language version picker in the toolbar.
 - [ ] **M** Source Link and symbol servers: fetch real source and PDBs (Microsoft/NuGet symbol servers), fall back to decompiling.
 

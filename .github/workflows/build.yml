@@ -40,6 +40,9 @@ jobs:
           .\build.ps1 netframework
           New-Item -ItemType Directory -Path C:\builtfiles -Force > $null
           Compress-Archive -Path dnSpy\dnSpy\bin\Release\net48\* -DestinationPath C:\builtfiles\dnSpy-netframework.zip
+          # Decompiler regression test (Debug and Release builds of Test/DecompilerStress)
+          .\Test\DecompilerStress\check.ps1 -Console dnSpy\dnSpy\bin\Release\net48\dnSpy.Console.exe
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
           .\clean-all.cmd
 
       - name: Build dnSpy (.NET x86)

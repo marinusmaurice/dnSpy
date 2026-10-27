@@ -33,7 +33,9 @@ namespace dnSpy.Decompiler.ILSpyModern.Core {
 	/// Debug builds (the compiler emits an unreachable branch there). The condition is a constant, so nothing is lost.
 	/// </summary>
 	sealed class RemoveEmptyConstantIfTransform : IAstTransform {
-		public void Run(AstNode rootNode, TransformContext context) {
+		public void Run(AstNode rootNode, TransformContext context) => Remove(rootNode);
+
+		internal static void Remove(AstNode rootNode) {
 			foreach (var ifElse in rootNode.Descendants.OfType<IfElseStatement>().ToArray()) {
 				if (!(ifElse.Parent is BlockStatement) || !IsEmpty(ifElse.TrueStatement) || !IsEmpty(ifElse.FalseStatement))
 					continue;
@@ -44,7 +46,9 @@ namespace dnSpy.Decompiler.ILSpyModern.Core {
 			}
 		}
 
-		static bool IsEmpty(Statement? statement) => statement is null || (statement is BlockStatement block && block.Statements.Count == 0);
+		// Before ILSpy's NormalizeBlockStatements, the branch is still an empty statement (`if (1 == 0) ;`)
+		static bool IsEmpty(Statement? statement) =>
+			statement is null || statement is EmptyStatement || (statement is BlockStatement block && block.Statements.Count == 0);
 	}
 
 	/// <summary>
@@ -66,11 +70,14 @@ namespace dnSpy.Decompiler.ILSpyModern.Core {
 		public void Run(AstNode rootNode, TransformContext context) {
 			if (!context.Settings.SwitchExpressions)
 				return;
-			foreach (var block in rootNode.Descendants.OfType<BlockStatement>().ToArray()) {
-				var statements = block.Statements.ToArray();
-				for (int i = 1; i < statements.Length; i++)
-					TryTransform(block, statements[i - 1], statements[i]);
-			}
+			foreach (var block in rootNode.Descendants.OfType<BlockStatement>().ToArray())
+				Transform(block);
+		}
+
+		internal static void Transform(BlockStatement block) {
+			var statements = block.Statements.ToArray();
+			for (int i = 1; i < statements.Length; i++)
+				TryTransform(block, statements[i - 1], statements[i]);
 		}
 
 		static void TryTransform(BlockStatement block, Statement tempStatement, Statement statement) {
@@ -78,7 +85,7 @@ namespace dnSpy.Decompiler.ILSpyModern.Core {
 				return;
 			if (!temp.HasGeneratedName || !IsSupportedType(temp.Type) || !HasType(tempInit.Initializer, temp.Type))
 				return;
-			if (!(GetSingleVariable(statement) is VariableInitializer init) || !(Unwrap(init.Initializer) is ConditionalExpression conditional))
+			if (!(FindChain(statement) is Expression chain) || !(Unwrap(chain) is ConditionalExpression conditional))
 				return;
 
 			var builder = new ArmBuilder(temp);
@@ -115,8 +122,37 @@ namespace dnSpy.Decompiler.ILSpyModern.Core {
 					continue;
 				CopyILAnnotations(node, switchExpr);
 			}
-			init.Initializer!.ReplaceWith(switchExpr);
+			chain.ReplaceWith(switchExpr);
 			tempStatement.Remove();
+		}
+
+		/// <summary>
+		/// The conditional chain: a variable's initializer, or a member of the anonymous object that a statement returns
+		/// (lambdas in queries: <c>return new { t = t, size = (q &gt;= 4) ? "Many" : ... };</c>). Members before it may only
+		/// read unchanged parameters, since they're now evaluated before the temporary's value.
+		/// </summary>
+		static Expression? FindChain(Statement statement) {
+			if (GetSingleVariable(statement) is VariableInitializer init)
+				return Unwrap(init.Initializer) is ConditionalExpression ? init.Initializer : null;
+			if (!(statement is ReturnStatement ret) || !(Unwrap(ret.Expression) is AnonymousTypeCreateExpression anonymous))
+				return null;
+			foreach (var initializer in anonymous.Initializers) {
+				var value = initializer is NamedExpression named ? named.Expression : initializer;
+				if (Unwrap(value) is ConditionalExpression)
+					return value;
+				if (!IsUnchangedParameter(value))
+					return null;
+			}
+			return null;
+		}
+
+		/// <summary>
+		/// A parameter that is never assigned or passed by reference: reading it earlier or later gives the same value
+		/// </summary>
+		internal static bool IsUnchangedParameter(Expression? expr) {
+			if (!(Unwrap(expr) is IdentifierExpression id) || !(id.GetILVariable() is ILVariable v))
+				return false;
+			return v.Kind == VariableKind.Parameter && v.StoreCount == 1 && v.AddressCount == 0 && v.Type.Kind != TypeKind.ByReference;
 		}
 
 		static VariableInitializer? GetSingleVariable(Statement statement) {
@@ -468,19 +504,48 @@ namespace dnSpy.Decompiler.ILSpyModern.Core {
 	/// <c>g =&gt; { string region = g.Key; int units = g.Sum(); return new { Region = region, Units = units, X = 1 }; }</c>
 	/// becomes <c>g =&gt; new { Region = g.Key, Units = g.Sum(), X = 1 }</c>. The compiler creates such temporaries
 	/// when a switch expression is evaluated in the middle of an expression. The values are evaluated in the same order.
+	/// Members before or between the inlined ones may only read lambda parameters that the lambda doesn't change
+	/// (eg. the transparent identifier in <c>new { &lt;&gt;h__TransparentIdentifier2, segment }</c>).
+	/// <para>
+	/// In Debug builds the compiler also stores a switch expression's value in a temporary first, and emits an
+	/// unreachable branch that ILSpy writes as <c>if (1 == 0) { }</c>; both are removed from the lambda first:
+	/// <c>{ int tier = c.Tier; string segment = tier switch { ... }; return new { t, segment }; }</c> becomes
+	/// <c>new { t, segment = c.Tier switch { ... } }</c>.
+	/// </para>
+	/// <para>
+	/// Also inserted before <see cref="IntroduceQueryExpressions"/>, which only turns lambdas with an expression body
+	/// into query clauses: a <c>let</c> whose value needed temporaries stayed a <c>Select</c> call, and the rest of the
+	/// query kept the compiler's <c>&lt;&gt;h__TransparentIdentifierN</c> names.
+	/// </para>
 	/// </summary>
 	sealed class InlineLambdaTemporariesTransform : IAstTransform {
+		public static void InsertBeforeQueryExpressions(IList<IAstTransform> transforms) {
+			int index = 0;
+			while (index < transforms.Count && !(transforms[index] is IntroduceQueryExpressions))
+				index++;
+			if (index < transforms.Count)
+				transforms.Insert(index, new InlineLambdaTemporariesTransform());
+		}
+
 		public void Run(AstNode rootNode, TransformContext context) {
 			// Inner lambdas first
 			foreach (var lambda in rootNode.Descendants.OfType<LambdaExpression>().Reverse().ToArray())
-				TryTransform(lambda);
+				TryTransform(lambda, context.Settings.SwitchExpressions);
 		}
 
-		static void TryTransform(LambdaExpression lambda) {
+		static void TryTransform(LambdaExpression lambda, bool switchExpressions) {
 			if (!(lambda.Body is BlockStatement block))
 				return;
+			RemoveEmptyConstantIfTransform.Remove(block);
+			InlineParameterCopies(block);
+			// Before ILSpy's IntroduceQueryExpressions, the conditional chains (switch expressions with relational
+			// patterns) haven't been turned into switch expressions yet
+			if (switchExpressions)
+				ConditionalToSwitchExpressionTransform.Transform(block);
+			InlineSwitchExpressionTemporaries(block);
+
 			var statements = block.Statements.ToArray();
-			if (statements.Length < 2 || !(statements[statements.Length - 1] is ReturnStatement ret))
+			if (statements.Length < 1 || !(statements[statements.Length - 1] is ReturnStatement ret))
 				return;
 			if (!(ret.Expression is Expression retExpr) || !(ConditionalToSwitchExpressionTransform.Unwrap(retExpr) is AnonymousTypeCreateExpression anonymous))
 				return;
@@ -488,7 +553,8 @@ namespace dnSpy.Decompiler.ILSpyModern.Core {
 			if (initializers.Length < statements.Length - 1)
 				return;
 
-			var temps = new List<(VariableInitializer init, IdentifierExpression use)>();
+			var temps = new List<(VariableInitializer init, Expression initializer, IdentifierExpression use)>();
+			int next = 0;
 			for (int i = 0; i < statements.Length - 1; i++) {
 				if (!(statements[i] is VariableDeclarationStatement decl) || decl.Modifiers != Modifiers.None || decl.Variables.Count != 1)
 					return;
@@ -498,25 +564,118 @@ namespace dnSpy.Decompiler.ILSpyModern.Core {
 				// The anonymous type's property type must not change
 				if (!ConditionalToSwitchExpressionTransform.HasType(init.Initializer, temp.Type))
 					return;
-				var value = initializers[i] is NamedExpression named ? named.Expression : initializers[i];
-				if (!(ConditionalToSwitchExpressionTransform.Unwrap(value) is IdentifierExpression use) || use.GetILVariable() != temp)
-					return;
 				if (block.Descendants.OfType<IdentifierExpression>().Count(a => a.GetILVariable() == temp) != 1)
 					return;
-				temps.Add((init, use));
+				// The member that uses the temporary. Members before it are now evaluated before the temporaries' values.
+				IdentifierExpression? use = null;
+				for (; next < initializers.Length; next++) {
+					use = GetTemporaryUse(initializers[next], temp);
+					if (use is not null)
+						break;
+					var other = initializers[next] is NamedExpression otherNamed ? otherNamed.Expression : initializers[next];
+					if (!ConditionalToSwitchExpressionTransform.IsUnchangedParameter(other))
+						return;
+				}
+				if (use is null)
+					return;
+				temps.Add((init, initializers[next], use));
+				next++;
 			}
 
-			foreach (var (init, use) in temps) {
+			foreach (var (init, initializer, use) in temps) {
 				var value = init.Initializer!.Detach();
 				ConditionalToSwitchExpressionTransform.CopyILAnnotations(init, value);
 				ConditionalToSwitchExpressionTransform.CopyILAnnotations(init.Parent!, value);
 				// ILSpy's sequence points only use the first contiguous IL range, so the loads must be kept too
 				ConditionalToSwitchExpressionTransform.CopyILAnnotations(use, value);
-				use.ReplaceWith(value);
+				if (initializer is NamedExpression)
+					use.ReplaceWith(value);
+				else {
+					// `new { segment }`: the property is named after the temporary, so it must keep that name
+					var named = new NamedExpression(use.Identifier, value);
+					ConditionalToSwitchExpressionTransform.CopyILAnnotations(initializer, named);
+					initializer.ReplaceWith(named);
+				}
 			}
 			var body = retExpr.Detach();
 			ConditionalToSwitchExpressionTransform.CopyILAnnotations(ret, body);
 			lambda.Body = body;
+		}
+
+		// Locals and values the compiler spilled from the evaluation stack (ILSpy declares both as locals)
+		static bool IsTemporary(ILVariable v) => v.Kind == VariableKind.Local || v.Kind == VariableKind.StackSlot;
+
+		static IdentifierExpression? GetTemporaryUse(Expression initializer, ILVariable temp) {
+			var value = initializer is NamedExpression named ? named.Expression : initializer;
+			return ConditionalToSwitchExpressionTransform.Unwrap(value) is IdentifierExpression use && use.GetILVariable() == temp ? use : null;
+		}
+
+		/// <summary>
+		/// <c>var anon = t;</c> (a copy of an unchanged parameter, used once) is removed and the use reads the parameter.
+		/// The compiler makes such copies of a query's transparent identifier when a later member of the anonymous object
+		/// needs statements (<c>return new { t = anon, size = ... };</c>).
+		/// </summary>
+		static void InlineParameterCopies(BlockStatement block) {
+			foreach (var statement in block.Statements.ToArray()) {
+				if (!(statement is VariableDeclarationStatement { Modifiers: Modifiers.None } decl) || decl.Variables.Count != 1)
+					continue;
+				var init = decl.Variables.Single();
+				if (!(init.GetILVariable() is ILVariable copy) || !copy.HasGeneratedName)
+					continue;
+				if (!IsTemporary(copy) || copy.StoreCount != 1 || copy.AddressCount != 0 || copy.Type.Kind == TypeKind.ByReference)
+					continue;
+				if (!ConditionalToSwitchExpressionTransform.IsUnchangedParameter(init.Initializer) || !ConditionalToSwitchExpressionTransform.HasType(init.Initializer, copy.Type))
+					continue;
+				var uses = block.Descendants.OfType<IdentifierExpression>().Where(a => a.GetILVariable() == copy).ToArray();
+				if (uses.Length != 1)
+					continue;
+				var source = (IdentifierExpression)ConditionalToSwitchExpressionTransform.Unwrap(init.Initializer)!;
+				var id = new IdentifierExpression(source.Identifier);
+				foreach (var rr in source.Annotations.OfType<ILVariableResolveResult>())
+					id.AddAnnotation(rr);
+				// Keep the IL ranges for the debugger's statement mapping
+				foreach (var node in decl.DescendantsAndSelf)
+					ConditionalToSwitchExpressionTransform.CopyILAnnotations(node, id);
+				ConditionalToSwitchExpressionTransform.CopyILAnnotations(uses[0], id);
+				uses[0].ReplaceWith(id);
+				decl.Remove();
+			}
+		}
+
+		/// <summary>
+		/// <c>T temp = value; R x = temp switch { ... };</c> → <c>R x = value switch { ... };</c> when the temporary has a
+		/// generated name and is only used as the switch expression's governing expression.
+		/// </summary>
+		static void InlineSwitchExpressionTemporaries(BlockStatement block) {
+			var statements = block.Statements.ToArray();
+			for (int i = 1; i < statements.Length; i++) {
+				var tempStatement = statements[i - 1];
+				if (!(tempStatement is VariableDeclarationStatement { Modifiers: Modifiers.None } tempDecl) || tempDecl.Variables.Count != 1)
+					continue;
+				var tempInit = tempDecl.Variables.Single();
+				if (tempInit.Initializer is null || !(tempInit.GetILVariable() is ILVariable temp) || !temp.HasGeneratedName)
+					continue;
+				if (!IsTemporary(temp) || temp.StoreCount != 1 || temp.AddressCount != 0)
+					continue;
+				if (!ConditionalToSwitchExpressionTransform.HasType(tempInit.Initializer, temp.Type))
+					continue;
+				if (!(statements[i] is VariableDeclarationStatement decl) || decl.Variables.Count != 1)
+					continue;
+				var init = decl.Variables.Single();
+				if (!(ConditionalToSwitchExpressionTransform.Unwrap(init.Initializer) is SwitchExpression switchExpr))
+					continue;
+				if (!(ConditionalToSwitchExpressionTransform.Unwrap(switchExpr.Expression) is IdentifierExpression use) || use.GetILVariable() != temp)
+					continue;
+				if (block.Descendants.OfType<IdentifierExpression>().Count(a => a.GetILVariable() == temp) != 1)
+					continue;
+
+				var value = tempInit.Initializer.Detach();
+				ConditionalToSwitchExpressionTransform.CopyILAnnotations(tempStatement, value);
+				ConditionalToSwitchExpressionTransform.CopyILAnnotations(tempInit, value);
+				ConditionalToSwitchExpressionTransform.CopyILAnnotations(use, value);
+				switchExpr.Expression.ReplaceWith(value);
+				tempStatement.Remove();
+			}
 		}
 	}
 }

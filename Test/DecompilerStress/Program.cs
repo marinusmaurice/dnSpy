@@ -356,6 +356,29 @@ namespace DecompilerStress
                     $"{property.Name} : {property.PropertyType.Name} = {value}");
             }
 
+            // 11. `let` clauses whose value is a switch expression. In Debug builds the compiler stores the switch's
+            // value in a temporary first, which used to leave <>h__TransparentIdentifier names in the decompiled query.
+            var segments =
+                (from o in orders
+                 join p in products on o.ProductId equals p.Id
+                 let size = o.Quantity switch
+                 {
+                     1 => "Single",
+                     < 4 => "Few",
+                     _ => "Many"
+                 }
+                 let band = p.Price switch
+                 {
+                     < 100m => "Cheap",
+                     < 1000m => "Mid",
+                     _ => "Premium"
+                 }
+                 where band != "Cheap"
+                 orderby size, o.Id
+                 select new { o.Id, Product = p.Name, size, band }).ToList();
+
+            Dump("11. Switch expressions in let clauses", segments);
+
             Console.WriteLine("\nAll tests completed.");
         }
 
