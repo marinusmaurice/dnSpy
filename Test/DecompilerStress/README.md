@@ -5,6 +5,7 @@
 | File | What it is |
 |---|---|
 | `check.ps1` | Automated regression test (runs in CI): see below. |
+| `check-publish.ps1` | Release smoke test (runs in CI on the three release builds): `-PublishDir <folder with dnSpy.exe and bin\>` checks that C# (ILSpy 11) is in the build, then runs `check.ps1` with that build's own dnSpy.Console. |
 | `ilspy-reference.cs.txt` | ILSpy's output for sections 1–10 (provided by the repo owner). This is the target: dnSpy should be at least this good. |
 | `dnspy-baseline.cs.txt` | dnSpy's output before the new decompiler (ILSpy 2.3-based). Async methods aren't decompiled, and extension methods are shown as static calls. |
 

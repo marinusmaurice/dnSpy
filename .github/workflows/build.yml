@@ -38,10 +38,11 @@ jobs:
           $msbuildPath = Split-Path (& "${env:ProgramFiles(x86)}\Microsoft Visual Studio\Installer\vswhere.exe" -latest -requires Microsoft.Component.MSBuild -find MSBuild\Current\Bin\amd64\MSBuild.exe | Select-Object -First 1) -Parent
           $env:PATH = $msbuildPath + ';' + $env:PATH
           .\build.ps1 netframework
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
           New-Item -ItemType Directory -Path C:\builtfiles -Force > $null
           Compress-Archive -Path dnSpy\dnSpy\bin\Release\net48\* -DestinationPath C:\builtfiles\dnSpy-netframework.zip
-          # Decompiler regression test (Debug and Release builds of Test/DecompilerStress)
-          .\Test\DecompilerStress\check.ps1 -Console dnSpy\dnSpy\bin\Release\net48\dnSpy.Console.exe
+          # Release smoke test + decompiler regression test (Debug and Release builds of Test/DecompilerStress)
+          .\Test\DecompilerStress\check-publish.ps1 -PublishDir dnSpy\dnSpy\bin\Release\net48
           if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
           .\clean-all.cmd
 
@@ -51,6 +52,10 @@ jobs:
           $msbuildPath = Split-Path (& "${env:ProgramFiles(x86)}\Microsoft Visual Studio\Installer\vswhere.exe" -latest -requires Microsoft.Component.MSBuild -find MSBuild\Current\Bin\amd64\MSBuild.exe | Select-Object -First 1) -Parent
           $env:PATH = $msbuildPath + ';' + $env:PATH
           .\build.ps1 net-x86
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+          # Release smoke test: the self-contained build must contain C# (ILSpy 11) and its console must pass the decompiler check
+          .\Test\DecompilerStress\check-publish.ps1 -PublishDir dnSpy\dnSpy\bin\Release\net10.0-windows\win-x86\publish
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
           New-Item -ItemType Directory -Path C:\builtfiles -Force > $null
           Compress-Archive -Path dnSpy\dnSpy\bin\Release\net10.0-windows\win-x86\publish\* -DestinationPath C:\builtfiles\dnSpy-net-win32.zip
           .\clean-all.cmd
@@ -61,6 +66,10 @@ jobs:
           $msbuildPath = Split-Path (& "${env:ProgramFiles(x86)}\Microsoft Visual Studio\Installer\vswhere.exe" -latest -requires Microsoft.Component.MSBuild -find MSBuild\Current\Bin\amd64\MSBuild.exe | Select-Object -First 1) -Parent
           $env:PATH = $msbuildPath + ';' + $env:PATH
           .\build.ps1 net-x64
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+          # Release smoke test: the self-contained build must contain C# (ILSpy 11) and its console must pass the decompiler check
+          .\Test\DecompilerStress\check-publish.ps1 -PublishDir dnSpy\dnSpy\bin\Release\net10.0-windows\win-x64\publish
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
           New-Item -ItemType Directory -Path C:\builtfiles -Force > $null
           Compress-Archive -Path dnSpy\dnSpy\bin\Release\net10.0-windows\win-x64\publish\* -DestinationPath C:\builtfiles\dnSpy-net-win64.zip
           .\clean-all.cmd

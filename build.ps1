@@ -31,7 +31,7 @@ function Build-NetFramework {
 		if ($LASTEXITCODE) { exit $LASTEXITCODE }
 	}
 	else {
-		msbuild -v:m -m -restore -t:Build -p:Configuration=$configuration -p:TargetFramework=$netframework_tfm
+		msbuild -nr:false -v:m -m -restore -t:Build -p:Configuration=$configuration -p:TargetFramework=$netframework_tfm
 		if ($LASTEXITCODE) { exit $LASTEXITCODE }
 	}
 
@@ -62,7 +62,7 @@ function Build-Net {
 		if ($LASTEXITCODE) { exit $LASTEXITCODE }
 	}
 	else {
-		msbuild -v:m -m -restore -t:Publish -p:Configuration=$configuration -p:TargetFramework=$net_tfm -p:RuntimeIdentifier=$rid -p:DnSpySelfContained=True
+		msbuild -nr:false -v:m -m -restore -t:Publish -p:Configuration=$configuration -p:TargetFramework=$net_tfm -p:RuntimeIdentifier=$rid -p:DnSpySelfContained=True
 		if ($LASTEXITCODE) { exit $LASTEXITCODE }
 	}
 
@@ -89,7 +89,7 @@ if ($buildNetX86 -or $buildNetX64) {
 		if ($LASTEXITCODE) { exit $LASTEXITCODE }
 	}
 	else {
-		msbuild -v:m -m -restore -t:Build -p:Configuration=$configuration -p:TargetFramework=$netframework_tfm $apphostpatcher_dir\AppHostPatcher.csproj
+		msbuild -nr:false -v:m -m -restore -t:Build -p:Configuration=$configuration -p:TargetFramework=$netframework_tfm $apphostpatcher_dir\AppHostPatcher.csproj
 		if ($LASTEXITCODE) { exit $LASTEXITCODE }
 	}
 }
