@@ -20,6 +20,7 @@ using System.Collections.Generic;
 using System.ComponentModel;
 using System.Linq;
 using dnSpy.Contracts.Decompiler;
+using dnSpy.Decompiler.ILSpyModern.Core.Properties;
 using dnSpy.Decompiler.Settings;
 using ILSpyDecompilerSettings = ICSharpCode.Decompiler.DecompilerSettings;
 
@@ -63,103 +64,103 @@ namespace dnSpy.Decompiler.ILSpyModern.Core {
 
 		IEnumerable<IDecompilerOption> CreateOptions() {
 			yield return new DecompilerOption<bool>(DecompilerOptionConstants.AnonymousMethods_GUID, () => AnonymousMethods, a => AnonymousMethods = a) {
-				Description = "Decompile anonymous methods/lambdas",
+				Description = dnSpy_Decompiler_ILSpyModern_Core_Resources.DecompilerSettings_DecompileAnonMethods,
 				Name = DecompilerOptionConstants.AnonymousMethods_NAME,
 			};
 			yield return new DecompilerOption<bool>(DecompilerOptionConstants.ExpressionTrees_GUID, () => ExpressionTrees, a => ExpressionTrees = a) {
-				Description = "Decompile expression trees",
+				Description = dnSpy_Decompiler_ILSpyModern_Core_Resources.DecompilerSettings_DecompileExprTrees,
 				Name = DecompilerOptionConstants.ExpressionTrees_NAME,
 			};
 			yield return new DecompilerOption<bool>(DecompilerOptionConstants.YieldReturn_GUID, () => YieldReturn, a => YieldReturn = a) {
-				Description = "Decompile enumerators (yield return)",
+				Description = dnSpy_Decompiler_ILSpyModern_Core_Resources.DecompilerSettings_DecompileEnumerators,
 				Name = DecompilerOptionConstants.YieldReturn_NAME,
 			};
 			yield return new DecompilerOption<bool>(DecompilerOptionConstants.AsyncAwait_GUID, () => AsyncAwait, a => AsyncAwait = a) {
-				Description = "Decompile async methods (async/await)",
+				Description = dnSpy_Decompiler_ILSpyModern_Core_Resources.DecompilerSettings_DecompileAsyncMethods,
 				Name = DecompilerOptionConstants.AsyncAwait_NAME,
 			};
 			yield return new DecompilerOption<bool>(DecompilerOptionConstants.QueryExpressions_GUID, () => QueryExpressions, a => QueryExpressions = a) {
-				Description = "Decompile query expressions",
+				Description = dnSpy_Decompiler_ILSpyModern_Core_Resources.DecompilerSettings_DecompileQueryExpr,
 				Name = DecompilerOptionConstants.QueryExpressions_NAME,
 			};
 			yield return new DecompilerOption<bool>(SwitchExpressions_GUID, () => SwitchExpressions, a => SwitchExpressions = a) {
-				Description = "Decompile switch expressions",
+				Description = dnSpy_Decompiler_ILSpyModern_Core_Resources.DecompilerSettings_DecompileSwitchExpressions,
 				Name = SwitchExpressions_NAME,
 			};
 			yield return new DecompilerOption<bool>(StringInterpolation_GUID, () => StringInterpolation, a => StringInterpolation = a) {
-				Description = "Use string interpolation",
+				Description = dnSpy_Decompiler_ILSpyModern_Core_Resources.DecompilerSettings_UseStringInterpolation,
 				Name = StringInterpolation_NAME,
 			};
 			yield return new DecompilerOption<bool>(DecompilerOptionConstants.AutomaticProperties_GUID, () => AutomaticProperties, a => AutomaticProperties = a) {
-				Description = "Decompile automatic properties",
+				Description = dnSpy_Decompiler_ILSpyModern_Core_Resources.DecompilerSettings_DecompileAutoProps,
 				Name = DecompilerOptionConstants.AutomaticProperties_NAME,
 			};
 			yield return new DecompilerOption<bool>(DecompilerOptionConstants.AutomaticEvents_GUID, () => AutomaticEvents, a => AutomaticEvents = a) {
-				Description = "Decompile automatic events",
+				Description = dnSpy_Decompiler_ILSpyModern_Core_Resources.DecompilerSettings_DecompileAutoEvents,
 				Name = DecompilerOptionConstants.AutomaticEvents_NAME,
 			};
 			yield return new DecompilerOption<bool>(DecompilerOptionConstants.UsingStatement_GUID, () => UsingStatement, a => UsingStatement = a) {
-				Description = "Decompile using statements",
+				Description = dnSpy_Decompiler_ILSpyModern_Core_Resources.DecompilerSettings_DecompileUsingStatements,
 				Name = DecompilerOptionConstants.UsingStatement_NAME,
 			};
 			yield return new DecompilerOption<bool>(DecompilerOptionConstants.ForEachStatement_GUID, () => ForEachStatement, a => ForEachStatement = a) {
-				Description = "Decompile foreach statements",
+				Description = dnSpy_Decompiler_ILSpyModern_Core_Resources.DecompilerSettings_DecompileForeachStatements,
 				Name = DecompilerOptionConstants.ForEachStatement_NAME,
 			};
 			yield return new DecompilerOption<bool>(DecompilerOptionConstants.LockStatement_GUID, () => LockStatement, a => LockStatement = a) {
-				Description = "Decompile lock statements",
+				Description = dnSpy_Decompiler_ILSpyModern_Core_Resources.DecompilerSettings_DecompileLockStatements,
 				Name = DecompilerOptionConstants.LockStatement_NAME,
 			};
 			yield return new DecompilerOption<bool>(DecompilerOptionConstants.ObjectOrCollectionInitializers_GUID, () => ObjectOrCollectionInitializers, a => ObjectOrCollectionInitializers = a) {
-				Description = "Decompile object or collection initializers",
+				Description = dnSpy_Decompiler_ILSpyModern_Core_Resources.DecompilerSettings_ObjectOrCollectionInitializers,
 				Name = DecompilerOptionConstants.ObjectOrCollectionInitializers_NAME,
 			};
 			yield return new DecompilerOption<bool>(DecompilerOptionConstants.IntroduceIncrementAndDecrement_GUID, () => IntroduceIncrementAndDecrement, a => IntroduceIncrementAndDecrement = a) {
-				Description = "Use increment and decrement operators",
+				Description = dnSpy_Decompiler_ILSpyModern_Core_Resources.DecompilerSettings_IntroduceIncrementAndDecrement,
 				Name = DecompilerOptionConstants.IntroduceIncrementAndDecrement_NAME,
 			};
 			yield return new DecompilerOption<bool>(DecompilerOptionConstants.MakeAssignmentExpressions_GUID, () => MakeAssignmentExpressions, a => MakeAssignmentExpressions = a) {
-				Description = "Use assignment expressions such as in while ((count = Do()) != 0) ;",
+				Description = dnSpy_Decompiler_ILSpyModern_Core_Resources.DecompilerSettings_MakeAssignmentExpressions,
 				Name = DecompilerOptionConstants.MakeAssignmentExpressions_NAME,
 			};
 			yield return new DecompilerOption<bool>(DecompilerOptionConstants.SortCustomAttributes_GUID, () => SortCustomAttributes, a => SortCustomAttributes = a) {
-				Description = "Sort custom attributes",
+				Description = dnSpy_Decompiler_ILSpyModern_Core_Resources.DecompilerSettings_SortCustomAttributes,
 				Name = DecompilerOptionConstants.SortCustomAttributes_NAME,
 			};
 			yield return new DecompilerOption<string>(DecompilerOptionConstants.MemberOrder_GUID, () => MemberOrder, a => MemberOrder = a) {
-				Description = "Decompilation order (t = nested types, f = fields, p = properties, e = events, m = methods)",
+				Description = dnSpy_Decompiler_ILSpyModern_Core_Resources.DecompilerSettings_DecompilationOrder + " (" + dnSpy_Decompiler_ILSpyModern_Core_Resources.DecompilerSettings_MemberOrderKinds + ")",
 				Name = DecompilerOptionConstants.MemberOrder_NAME,
 			};
 			yield return new DecompilerOption<bool>(DecompilerOptionConstants.SortMembers_GUID, () => SortMembers, a => SortMembers = a) {
-				Description = "Sort methods, fields, properties, events and types",
+				Description = dnSpy_Decompiler_ILSpyModern_Core_Resources.DecompilerSettings_SortMethods,
 				Name = DecompilerOptionConstants.SortMembers_NAME,
 			};
 			yield return new DecompilerOption<bool>(DecompilerOptionConstants.UseSourceCodeOrder_GUID, () => UseSourceCodeOrder, a => UseSourceCodeOrder = a) {
-				Description = "Order members in source code order",
+				Description = dnSpy_Decompiler_ILSpyModern_Core_Resources.DecompilerSettings_UseSourceCodeOrder,
 				Name = DecompilerOptionConstants.UseSourceCodeOrder_NAME,
 			};
 			yield return new DecompilerOption<bool>(DecompilerOptionConstants.UsingDeclarations_GUID, () => UsingDeclarations, a => UsingDeclarations = a) {
-				Description = "Add using declarations",
+				Description = dnSpy_Decompiler_ILSpyModern_Core_Resources.DecompilerSettings_AddUsingDeclarations,
 				Name = DecompilerOptionConstants.UsingDeclarations_NAME,
 			};
 			yield return new DecompilerOption<bool>(DecompilerOptionConstants.UseDebugSymbols_GUID, () => UseDebugSymbols, a => UseDebugSymbols = a) {
-				Description = "Use variable names from debug symbols, if available",
+				Description = dnSpy_Decompiler_ILSpyModern_Core_Resources.DecompilerSettings_UseLocalNameFromSyms,
 				Name = DecompilerOptionConstants.UseDebugSymbols_NAME,
 			};
 			yield return new DecompilerOption<bool>(DecompilerOptionConstants.ShowXmlDocumentation_GUID, () => ShowXmlDocumentation, a => ShowXmlDocumentation = a) {
-				Description = "Show XML documentation in decompiled code",
+				Description = dnSpy_Decompiler_ILSpyModern_Core_Resources.DecompilerSettings_ShowXMLDocComments,
 				Name = DecompilerOptionConstants.ShowXmlDocumentation_NAME,
 			};
 			yield return new DecompilerOption<bool>(DecompilerOptionConstants.ShowTokenAndRvaComments_GUID, () => ShowTokenAndRvaComments, a => ShowTokenAndRvaComments = a) {
-				Description = "Show tokens, RVAs and file offsets in comments",
+				Description = dnSpy_Decompiler_ILSpyModern_Core_Resources.DecompilerSettings_ShowTokensRvasOffsets,
 				Name = DecompilerOptionConstants.ShowTokenAndRvaComments_NAME,
 			};
 			yield return new DecompilerOption<string>(LanguageVersion_GUID, () => LanguageVersion, a => LanguageVersion = a) {
-				Description = "C# language version (" + string.Join(", ", LanguageVersions) + ")",
+				Description = string.Format(dnSpy_Decompiler_ILSpyModern_Core_Resources.DecompilerSettings_LanguageVersion, string.Join(", ", LanguageVersions)),
 				Name = LanguageVersion_NAME,
 			};
 			yield return new DecompilerOption<bool>(CleanUpOutput_GUID, () => CleanUpOutput, a => CleanUpOutput = a) {
-				Description = "Clean up ILSpy's output (dnSpy: switch expressions, string interpolation, decimal casts, empty if statements, lambda temporaries)",
+				Description = dnSpy_Decompiler_ILSpyModern_Core_Resources.DecompilerSettings_CleanUpOutput,
 				Name = CleanUpOutput_NAME,
 			};
 		}

@@ -23,6 +23,7 @@ using dnSpy.Contracts.Decompiler;
 using dnSpy.Contracts.Documents.Tabs;
 using dnSpy.Contracts.Settings.Dialog;
 using dnSpy.Decompiler.ILSpyModern.Core;
+using dnSpy.Decompiler.ILSpyModern.Core.Properties;
 
 namespace dnSpy.Decompiler.ILSpyModern.Settings {
 	static class SettingsConstants {
@@ -69,11 +70,11 @@ namespace dnSpy.Decompiler.ILSpyModern.Settings {
 		/// Items of the member order combo boxes
 		/// </summary>
 		public MemberKindVM[] MemberKinds { get; } = new[] {
-			new MemberKindVM('m', "Methods"),
-			new MemberKindVM('p', "Properties"),
-			new MemberKindVM('e', "Events"),
-			new MemberKindVM('f', "Fields"),
-			new MemberKindVM('t', "Nested Types"),
+			new MemberKindVM('m', dnSpy_Decompiler_ILSpyModern_Core_Resources.DecompilationOrder_Methods),
+			new MemberKindVM('p', dnSpy_Decompiler_ILSpyModern_Core_Resources.DecompilationOrder_Properties),
+			new MemberKindVM('e', dnSpy_Decompiler_ILSpyModern_Core_Resources.DecompilationOrder_Events),
+			new MemberKindVM('f', dnSpy_Decompiler_ILSpyModern_Core_Resources.DecompilationOrder_Fields),
+			new MemberKindVM('t', dnSpy_Decompiler_ILSpyModern_Core_Resources.DecompilationOrder_NestedTypes),
 		};
 
 		// Like the old C# page: selecting a kind that's already used elsewhere swaps the two
@@ -137,7 +138,7 @@ namespace dnSpy.Decompiler.ILSpyModern.Settings {
 
 		public LanguageVersionVM(string value) {
 			Value = value;
-			Name = value == CSharpDecompilerSettings.LatestLanguageVersion ? "Latest" : "C# " + value;
+			Name = value == CSharpDecompilerSettings.LatestLanguageVersion ? dnSpy_Decompiler_ILSpyModern_Core_Resources.Settings_LatestLanguageVersion : "C# " + value;
 		}
 	}
 

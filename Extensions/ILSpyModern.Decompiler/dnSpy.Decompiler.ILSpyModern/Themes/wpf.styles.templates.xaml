@@ -1,37 +1,40 @@
 <ResourceDictionary xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
                     xmlns:settings="clr-namespace:dnSpy.Decompiler.ILSpyModern.Settings"
+                    xmlns:p="clr-namespace:dnSpy.Decompiler.ILSpyModern.Core.Properties;assembly=dnSpy.Decompiler.ILSpyModern.Core"
                     xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
 
     <DataTemplate DataType="{x:Type settings:CSharpDecompilerSettingsPage}">
         <StackPanel Margin="5">
             <StackPanel Margin="0 0 0 5" Orientation="Horizontal">
-                <Label Padding="0 0 5 0" VerticalAlignment="Center" Target="{Binding ElementName=languageVersionComboBox}" Content="_Language version:"/>
+                <Label Padding="0 0 5 0" VerticalAlignment="Center" Target="{Binding ElementName=languageVersionComboBox}" Content="{x:Static p:dnSpy_Decompiler_ILSpyModern_Core_Resources.Settings_LanguageVersionLabel}"/>
                 <ComboBox Name="languageVersionComboBox" MinWidth="100" ItemsSource="{Binding LanguageVersions}" DisplayMemberPath="Name" SelectedValuePath="Value" SelectedValue="{Binding Settings.LanguageVersion}"/>
             </StackPanel>
-            <CheckBox Margin="0 0 0 0" IsChecked="{Binding Settings.AnonymousMethods}" Content="Decompile anonymous methods/lambdas"/>
-            <CheckBox Margin="0 5 0 0" IsChecked="{Binding Settings.YieldReturn}" Content="Decompile enumerators (yield return)"/>
-            <CheckBox Margin="0 5 0 0" IsChecked="{Binding Settings.AsyncAwait}" Content="Decompile async methods (async/await)"/>
-            <CheckBox Margin="0 5 0 0" IsChecked="{Binding Settings.QueryExpressions}" IsEnabled="{Binding Settings.AnonymousMethods}" Content="Decompile query expressions"/>
-            <CheckBox Margin="0 5 0 0" IsChecked="{Binding Settings.ExpressionTrees}" Content="Decompile expression trees"/>
-            <CheckBox Margin="0 5 0 0" IsChecked="{Binding Settings.SwitchExpressions}" Content="Decompile switch expressions"/>
-            <CheckBox Margin="0 5 0 0" IsChecked="{Binding Settings.StringInterpolation}" Content="Use string interpolation"/>
-            <CheckBox Margin="0 5 0 0" IsChecked="{Binding Settings.AutomaticProperties}" Content="Decompile automatic properties"/>
-            <CheckBox Margin="0 5 0 0" IsChecked="{Binding Settings.AutomaticEvents}" Content="Decompile automatic events"/>
-            <CheckBox Margin="0 5 0 0" IsChecked="{Binding Settings.UsingStatement}" Content="Decompile using statements"/>
-            <CheckBox Margin="0 5 0 0" IsChecked="{Binding Settings.ForEachStatement}" Content="Decompile foreach statements"/>
-            <CheckBox Margin="0 5 0 0" IsChecked="{Binding Settings.LockStatement}" Content="Decompile lock statements"/>
-            <CheckBox Margin="0 5 0 0" IsChecked="{Binding Settings.ObjectOrCollectionInitializers}" Content="Decompile object or collection initializers"/>
-            <CheckBox Margin="0 5 0 0" IsChecked="{Binding Settings.IntroduceIncrementAndDecrement}" Content="Use increment and decrement operators"/>
-            <CheckBox Margin="0 5 0 0" IsChecked="{Binding Settings.MakeAssignmentExpressions}" Content="Use assignment expressions such as in while ((count = Do()) != 0) ;"/>
-            <CheckBox Margin="0 5 0 0" IsChecked="{Binding Settings.SortCustomAttributes}" Content="Sort custom attributes"/>
-            <CheckBox Margin="0 5 0 0" IsChecked="{Binding Settings.UsingDeclarations}" Content="Add using declarations"/>
-            <CheckBox Margin="0 5 0 0" IsChecked="{Binding Settings.UseDebugSymbols}" Content="Use variable names from debug symbols, if available"/>
-            <CheckBox Margin="0 5 0 0" IsChecked="{Binding Settings.ShowXmlDocumentation}" Content="Show XML documentation in decompiled code"/>
-            <CheckBox Margin="0 5 0 0" IsChecked="{Binding Settings.ShowTokenAndRvaComments}" Content="Show tokens, RVAs and file offsets in comments"/>
-            <CheckBox Margin="0 5 0 0" IsChecked="{Binding Settings.CleanUpOutput}" Content="Clean up ILSpy's output (switch expressions, string interpolation, decimal casts, empty if statements)"/>
-            <CheckBox Margin="0 5 0 0" IsChecked="{Binding Settings.SortMembers}" Content="Sort methods, fields, properties, events and types"/>
-            <CheckBox Margin="0 5 0 0" IsChecked="{Binding Settings.UseSourceCodeOrder}" Content="Order members in source code order"/>
-            <GroupBox Margin="0 5 0 0" Header="Decompilation order">
+            <CheckBox Margin="0 0 0 0" IsChecked="{Binding Settings.AnonymousMethods}" Content="{x:Static p:dnSpy_Decompiler_ILSpyModern_Core_Resources.DecompilerSettings_DecompileAnonMethods}"/>
+            <CheckBox Margin="0 5 0 0" IsChecked="{Binding Settings.YieldReturn}" Content="{x:Static p:dnSpy_Decompiler_ILSpyModern_Core_Resources.DecompilerSettings_DecompileEnumerators}"/>
+            <CheckBox Margin="0 5 0 0" IsChecked="{Binding Settings.AsyncAwait}" Content="{x:Static p:dnSpy_Decompiler_ILSpyModern_Core_Resources.DecompilerSettings_DecompileAsyncMethods}"/>
+            <CheckBox Margin="0 5 0 0" IsChecked="{Binding Settings.QueryExpressions}" IsEnabled="{Binding Settings.AnonymousMethods}" Content="{x:Static p:dnSpy_Decompiler_ILSpyModern_Core_Resources.DecompilerSettings_DecompileQueryExpr}"/>
+            <CheckBox Margin="0 5 0 0" IsChecked="{Binding Settings.ExpressionTrees}" Content="{x:Static p:dnSpy_Decompiler_ILSpyModern_Core_Resources.DecompilerSettings_DecompileExprTrees}"/>
+            <CheckBox Margin="0 5 0 0" IsChecked="{Binding Settings.SwitchExpressions}" Content="{x:Static p:dnSpy_Decompiler_ILSpyModern_Core_Resources.DecompilerSettings_DecompileSwitchExpressions}"/>
+            <CheckBox Margin="0 5 0 0" IsChecked="{Binding Settings.StringInterpolation}" Content="{x:Static p:dnSpy_Decompiler_ILSpyModern_Core_Resources.DecompilerSettings_UseStringInterpolation}"/>
+            <CheckBox Margin="0 5 0 0" IsChecked="{Binding Settings.AutomaticProperties}" Content="{x:Static p:dnSpy_Decompiler_ILSpyModern_Core_Resources.DecompilerSettings_DecompileAutoProps}"/>
+            <CheckBox Margin="0 5 0 0" IsChecked="{Binding Settings.AutomaticEvents}" Content="{x:Static p:dnSpy_Decompiler_ILSpyModern_Core_Resources.DecompilerSettings_DecompileAutoEvents}"/>
+            <CheckBox Margin="0 5 0 0" IsChecked="{Binding Settings.UsingStatement}" Content="{x:Static p:dnSpy_Decompiler_ILSpyModern_Core_Resources.DecompilerSettings_DecompileUsingStatements}"/>
+            <CheckBox Margin="0 5 0 0" IsChecked="{Binding Settings.ForEachStatement}" Content="{x:Static p:dnSpy_Decompiler_ILSpyModern_Core_Resources.DecompilerSettings_DecompileForeachStatements}"/>
+            <CheckBox Margin="0 5 0 0" IsChecked="{Binding Settings.LockStatement}" Content="{x:Static p:dnSpy_Decompiler_ILSpyModern_Core_Resources.DecompilerSettings_DecompileLockStatements}"/>
+            <CheckBox Margin="0 5 0 0" IsChecked="{Binding Settings.ObjectOrCollectionInitializers}" Content="{x:Static p:dnSpy_Decompiler_ILSpyModern_Core_Resources.DecompilerSettings_ObjectOrCollectionInitializers}"/>
+            <CheckBox Margin="0 5 0 0" IsChecked="{Binding Settings.IntroduceIncrementAndDecrement}" Content="{x:Static p:dnSpy_Decompiler_ILSpyModern_Core_Resources.DecompilerSettings_IntroduceIncrementAndDecrement}"/>
+            <CheckBox Margin="0 5 0 0" IsChecked="{Binding Settings.MakeAssignmentExpressions}" Content="{x:Static p:dnSpy_Decompiler_ILSpyModern_Core_Resources.DecompilerSettings_MakeAssignmentExpressions}"/>
+            <CheckBox Margin="0 5 0 0" IsChecked="{Binding Settings.SortCustomAttributes}" Content="{x:Static p:dnSpy_Decompiler_ILSpyModern_Core_Resources.DecompilerSettings_SortCustomAttributes}"/>
+            <CheckBox Margin="0 5 0 0" IsChecked="{Binding Settings.UsingDeclarations}" Content="{x:Static p:dnSpy_Decompiler_ILSpyModern_Core_Resources.DecompilerSettings_AddUsingDeclarations}"/>
+            <CheckBox Margin="0 5 0 0" IsChecked="{Binding Settings.UseDebugSymbols}" Content="{x:Static p:dnSpy_Decompiler_ILSpyModern_Core_Resources.DecompilerSettings_UseLocalNameFromSyms}"/>
+            <CheckBox Margin="0 5 0 0" IsChecked="{Binding Settings.ShowXmlDocumentation}" Content="{x:Static p:dnSpy_Decompiler_ILSpyModern_Core_Resources.DecompilerSettings_ShowXMLDocComments}"/>
+            <CheckBox Margin="0 5 0 0" IsChecked="{Binding Settings.ShowTokenAndRvaComments}" Content="{x:Static p:dnSpy_Decompiler_ILSpyModern_Core_Resources.DecompilerSettings_ShowTokensRvasOffsets}"/>
+            <CheckBox Margin="0 5 0 0" IsChecked="{Binding Settings.CleanUpOutput}">
+                <TextBlock TextWrapping="Wrap" Text="{x:Static p:dnSpy_Decompiler_ILSpyModern_Core_Resources.DecompilerSettings_CleanUpOutput}"/>
+            </CheckBox>
+            <CheckBox Margin="0 5 0 0" IsChecked="{Binding Settings.SortMembers}" Content="{x:Static p:dnSpy_Decompiler_ILSpyModern_Core_Resources.DecompilerSettings_SortMethods}"/>
+            <CheckBox Margin="0 5 0 0" IsChecked="{Binding Settings.UseSourceCodeOrder}" Content="{x:Static p:dnSpy_Decompiler_ILSpyModern_Core_Resources.DecompilerSettings_UseSourceCodeOrder}"/>
+            <GroupBox Margin="0 5 0 0" Header="{x:Static p:dnSpy_Decompiler_ILSpyModern_Core_Resources.DecompilerSettings_DecompilationOrder}">
                 <StackPanel>
                     <ComboBox Margin="0 5 0 0" ItemsSource="{Binding MemberKinds}" SelectedItem="{Binding MemberOrder0}" DisplayMemberPath="Text"/>
                     <ComboBox Margin="0 5 0 0" ItemsSource="{Binding MemberKinds}" SelectedItem="{Binding MemberOrder1}" DisplayMemberPath="Text"/>

@@ -17,6 +17,21 @@
     <ProjectReference Include="..\..\..\dnSpy\dnSpy.Decompiler\dnSpy.Decompiler.csproj" />
   </ItemGroup>
 
+  <ItemGroup>
+    <Compile Update="Properties\dnSpy.Decompiler.ILSpyModern.Core.Resources.Designer.cs">
+      <DesignTime>True</DesignTime>
+      <AutoGen>True</AutoGen>
+      <DependentUpon>dnSpy.Decompiler.ILSpyModern.Core.Resources.resx</DependentUpon>
+    </Compile>
+  </ItemGroup>
+
+  <ItemGroup>
+    <EmbeddedResource Update="Properties\dnSpy.Decompiler.ILSpyModern.Core.Resources.resx">
+      <Generator>PublicResXFileCodeGenerator</Generator>
+      <LastGenOutput>dnSpy.Decompiler.ILSpyModern.Core.Resources.Designer.cs</LastGenOutput>
+    </EmbeddedResource>
+  </ItemGroup>
+
   <Import Project="..\RenamedICSharpCodeDecompiler.targets" />
 
 </Project>

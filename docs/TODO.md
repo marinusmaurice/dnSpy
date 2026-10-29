@@ -26,8 +26,9 @@ Each item gets its own branch from `master`, named after its target version (eg.
 - [x] **M** C# (ILSpy 11) Export to Project: the last 4 errors in the Roslyn (Microsoft.CodeAnalysis.dll) export test (7.0.2.0: 0 errors; regression test `Test/ExportCases` in `check.ps1`).
 - [x] **M** C# (ILSpy 11): span collection expressions whose elements are `?:`/`??` expressions, in code ICSharpCode.Decompiler duplicates around `fixed` statements (the elements are written through `ref` locals to the `<>y__InlineArrayN` elements), exported as code that doesn't compile (7.0.3.0; `Test/ExportCases`).
 - [ ] **S** Exporting a VB WPF app as a C# project doesn't build: ILSpy writes C# stubs for VB's renamed `Connect`/`InitializeComponent` interface methods, which the WPF build generates again.
-- [ ] **S** Translations for the new strings (C# (ILSpy 11) settings page, console help).
-- [ ] **S** Per-monitor DPI / 4K scaling check.
+- [x] **S** Translations for the new strings (C# (ILSpy 11) settings page, console help) (7.0.6.0). 26 of the 33 strings reuse the old C# language's translations; the 7 new ones (switch expressions, string interpolation, language version, clean up, the member order letters, the language version label, "Latest") were translated without a native speaker's review.
+- [ ] **S** Have native speakers review the 7 new C# (ILSpy 11) strings in `Extensions/ILSpyModern.Decompiler/dnSpy.Decompiler.ILSpyModern.Core/Properties/*.resx` (cs, de, es-ES, fa, fr, hu, it, pt-BR, pt-PT, ru, tr, uk, zh-CN).
+- [x] **S** Per-monitor DPI / 4K scaling check (7.0.6.0, configuration only): all three builds' executables (.NET x64 publish, .NET Framework `dnSpy.exe` and `dnSpy-x86.exe`) embed `app.manifest` with `PerMonitorV2`; the text editor, hex editor and tabs handle DPI changes (`DpiService`); the C# (ILSpy 11) settings page has no fixed sizes (one `MinWidth` in DIPs). Not checked visually: Windows display scaling wasn't changed on the test machine. To check by hand: run at 150%/200% and on two monitors with different scaling, drag the window between them, and look at the menus, tool windows, the Options dialog and the code view.
 
 ## Rebuild releases (7.0.0.z)
 
