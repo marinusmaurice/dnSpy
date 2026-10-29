@@ -33,8 +33,12 @@ namespace dnSpy.Decompiler.MSBuild {
 			var opts = new DecompilePartialType(output, decompilationContext, Type);
 			foreach (var d in GetDefsToRemove())
 				opts.Definitions.Add(d);
-			opts.InterfacesToRemove.Add(new TypeRefUser(Type.Module, "System.Windows.Markup", "IComponentConnector", new AssemblyNameInfo("WindowsBase, Version=3.0.0.0, Culture=neutral, PublicKeyToken=31bf3856ad364e35").ToAssemblyRef()));
-			opts.InterfacesToRemove.Add(new TypeRefUser(Type.Module, "System.Windows.Markup", "IComponentConnector", new AssemblyNameInfo("System.Xaml, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089").ToAssemblyRef()));
+			// The XAML compiler adds them to the generated code (.g.cs) again. IStyleConnector is used when templates or
+			// styles have events.
+			foreach (var name in new[] { "IComponentConnector", "IStyleConnector" }) {
+				opts.InterfacesToRemove.Add(new TypeRefUser(Type.Module, "System.Windows.Markup", name, new AssemblyNameInfo("WindowsBase, Version=3.0.0.0, Culture=neutral, PublicKeyToken=31bf3856ad364e35").ToAssemblyRef()));
+				opts.InterfacesToRemove.Add(new TypeRefUser(Type.Module, "System.Windows.Markup", name, new AssemblyNameInfo("System.Xaml, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089").ToAssemblyRef()));
+			}
 			decompiler.Decompile(DecompilationType.PartialType, opts);
 		}
 
@@ -52,11 +56,13 @@ namespace dnSpy.Decompiler.MSBuild {
 				}
 			}
 
-			var connMeth = FindConnectMethod();
-			if (connMeth is not null) {
+			foreach (var (connMeth, isComponentConnector) in FindConnectMethods()) {
 				yield return connMeth;
-				foreach (var f in DotNetUtils.GetFields(connMeth))
-					yield return f;
+				// IComponentConnector.Connect stores the x:Name fields, which are generated again too
+				if (isComponentConnector) {
+					foreach (var f in DotNetUtils.GetFields(connMeth))
+						yield return f;
+				}
 			}
 
 			var delMeth = FindCreateDelegateMethod();
@@ -76,15 +82,20 @@ namespace dnSpy.Decompiler.MSBuild {
 			return null;
 		}
 
-		MethodDef? FindConnectMethod() {
+		// IComponentConnector.Connect and IStyleConnector.Connect
+		IEnumerable<(MethodDef method, bool isComponentConnector)> FindConnectMethods() {
+			bool foundComponentConnector = false;
 			foreach (var md in Type.Methods) {
-				if (IsConnect(md))
-					return md;
+				if (IsConnect(md, "System.Windows.Markup.IStyleConnector", false))
+					yield return (md, false);
+				else if (!foundComponentConnector && IsConnect(md, "System.Windows.Markup.IComponentConnector", true)) {
+					foundComponentConnector = true;
+					yield return (md, true);
+				}
 			}
-			return null;
 		}
 
-		static bool IsConnect(MethodDef md) {
+		static bool IsConnect(MethodDef md, string interfaceName, bool matchName) {
 			if (md is null || md.IsStatic || md.Parameters.Count != 3)
 				return false;
 			if (md.ReturnType.RemovePinnedAndModifiers().GetElementType() != ElementType.Void)
@@ -101,14 +112,15 @@ namespace dnSpy.Decompiler.MSBuild {
 			foreach (var o in md.Overrides) {
 				if (o.MethodDeclaration is null || o.MethodDeclaration.DeclaringType is null)
 					continue;
-				if (o.MethodDeclaration.DeclaringType.FullName != "System.Windows.Markup.IComponentConnector")
+				if (o.MethodDeclaration.DeclaringType.FullName != interfaceName)
 					continue;
 				if (o.MethodDeclaration.Name != "Connect")
 					continue;
 				return true;
 			}
 
-			return md.Name == "Connect";
+			// A public Connect method (VB, older compilers) is IComponentConnector's
+			return matchName && md.Overrides.Count == 0 && md.Name == "Connect";
 		}
 
 		// Finds 'internal Delegate _CreateDelegate(Type delegateType, string handler)' which is

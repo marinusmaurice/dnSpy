@@ -109,6 +109,10 @@ namespace dnSpy.Decompiler.MSBuild {
 				if (!fwkInfo.IsDotNetFramework)
 					writer.WriteElementString("TargetFrameworkIdentifier", fwkInfo.Framework);
 				writer.WriteElementString("FileAlignment", GetFileAlignment());
+				// .NET Framework projects default to C# 7.3, but the decompiled code can use newer C# (eg. file-scoped
+				// namespaces with C# (ILSpy 11)). VS 2015's compiler doesn't know 'latest'.
+				if (projectVersion >= ProjectVersion.VS2017)
+					writer.WriteElementString("LangVersion", "latest");
 				if (project.ProjectTypeGuids.Count != 0) {
 					var text = string.Join(";", project.ProjectTypeGuids.Select(a => a.ToString("B").ToUpperInvariant()).ToArray());
 					writer.WriteElementString("ProjectTypeGuids", text);

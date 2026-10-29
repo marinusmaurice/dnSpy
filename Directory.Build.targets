@@ -1,4 +1,9 @@
 <Project>
+  <!-- dnSpy's projects set Version to DnSpyAssemblyVersion; the file version is the release (DnSpyFileVersion) -->
+  <PropertyGroup Condition=" '$(DnSpyFileVersion)' != '' and '$(Version)' == '$(DnSpyAssemblyVersion)' ">
+    <AssemblyVersion>$(DnSpyAssemblyVersion)</AssemblyVersion>
+    <FileVersion>$(DnSpyFileVersion)</FileVersion>
+  </PropertyGroup>
   <ItemGroup>
     <!-- Remove unwanted files, eg. resources of unused files, unused native files -->
     <GarbageFile Include="cs\Microsoft.CodeAnalysis.Workspaces.Desktop.resources.dll" />

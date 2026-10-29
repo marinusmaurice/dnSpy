@@ -1,0 +1,16 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <!--
+    BAML decompiler test app (see ../DecompilerStress/README.md): every kind of XAML event and x:Name the compiler moves
+    to the code-behind's Connect methods. ../DecompilerStress/check.ps1 exports it with dnSpy.Console, builds the export
+    and checks that the same handlers are wired up.
+  -->
+  <PropertyGroup>
+    <OutputType>WinExe</OutputType>
+    <TargetFrameworks>net10.0-windows;net48</TargetFrameworks>
+    <UseWPF>true</UseWPF>
+    <LangVersion>latest</LangVersion>
+    <Nullable>disable</Nullable>
+  </PropertyGroup>
+
+</Project>
