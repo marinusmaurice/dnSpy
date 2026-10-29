@@ -84,6 +84,11 @@ namespace dnSpy.Decompiler.ILSpyModern.Core {
 				return false;
 			if (!(invocation.GetSymbol() is IMethod { IsConstructor: true } method))
 				return false;
+			if (OnlyCopiesParameters(statements, index, invocation)) {
+				// The copies stay in the body, after the call
+				SetInitializer(ctor, ctorMethod, method, invocation, callStatement);
+				return true;
+			}
 
 			var temps = new List<Temporary>();
 			var tempOfVariable = new Dictionary<ILVariable, Temporary>();
@@ -247,6 +252,13 @@ namespace dnSpy.Decompiler.ILSpyModern.Core {
 				}
 			}
 
+			SetInitializer(ctor, ctorMethod, method, invocation, callStatement);
+			foreach (var temp in temps)
+				temp.Declaration.Remove();
+			return true;
+		}
+
+		static void SetInitializer(ConstructorDeclaration ctor, IMethod ctorMethod, IMethod method, InvocationExpression invocation, ExpressionStatement callStatement) {
 			var initializer = new ConstructorInitializer {
 				ConstructorInitializerType = method.DeclaringTypeDefinition == ctorMethod.DeclaringTypeDefinition ? ConstructorInitializerType.This : ConstructorInitializerType.Base,
 			};
@@ -255,9 +267,41 @@ namespace dnSpy.Decompiler.ILSpyModern.Core {
 				initializer.AddAnnotation(annotation);
 			ConditionalToSwitchExpressionTransform.CopyILAnnotations(callStatement, initializer);
 			ctor.Initializer = initializer;
-			foreach (var temp in temps)
-				temp.Declaration.Remove();
 			callStatement.Remove();
+		}
+
+		/// <summary>
+		/// The locals before the call are copies of by-value parameters or constants (eg. parameters a lambda in the body
+		/// captures), and the call doesn't use them or <c>this</c>: the call can run first, the copies see the same values
+		/// <code>
+		/// CommonPEModuleBuilder moduleBuilder2 = moduleBuilder;
+		/// base..ctor();
+		/// </code>
+		/// </summary>
+		static bool OnlyCopiesParameters(List<Statement> statements, int index, InvocationExpression invocation) {
+			var copies = new HashSet<ILVariable>();
+			for (int i = 0; i < index; i++) {
+				var decl = (VariableDeclarationStatement)statements[i];
+				if (decl.Variables.Count != 1 || decl.Modifiers != Modifiers.None || decl.Type is ComposedType { HasRefSpecifier: true })
+					return false;
+				var init = decl.Variables.Single();
+				if (!(init.GetILVariable() is ILVariable v))
+					return false;
+				bool isParameterCopy = init.Initializer is IdentifierExpression source && source.GetILVariable() is ILVariable p &&
+					p.Kind == VariableKind.Parameter && p.Type.Kind != TypeKind.ByReference;
+				if (!isParameterCopy && !(init.Initializer is PrimitiveExpression))
+					return false;
+				copies.Add(v);
+			}
+			foreach (var node in invocation.Arguments.SelectMany(a => a.DescendantsAndSelf)) {
+				if (node is IdentifierExpression id && id.GetILVariable() is ILVariable v && copies.Contains(v))
+					return false;
+				// The arguments of a constructor initializer can't use `this`
+				if (node is ThisReferenceExpression || node is BaseReferenceExpression)
+					return false;
+				if (node.GetResolveResult() is MemberResolveResult { TargetResult: ThisResolveResult } mrr && !mrr.Member.IsStatic)
+					return false;
+			}
 			return true;
 		}
 

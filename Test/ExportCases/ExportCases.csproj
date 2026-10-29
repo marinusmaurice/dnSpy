@@ -1,0 +1,17 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+
+  <!--
+    Export to Project test program (see ../DecompilerStress/README.md): code shapes that C# (ILSpy 11) used to export as
+    code that doesn't compile. ../DecompilerStress/check.ps1 exports it with dnSpy.Console, builds the export and checks
+    that it prints the same as the original.
+  -->
+  <PropertyGroup>
+    <OutputType>Exe</OutputType>
+    <!-- .NET 8 has no InlineArrayN<T> types, so the compiler generates <>y__InlineArrayN<T> (like Roslyn's assembly) -->
+    <TargetFramework>net8.0</TargetFramework>
+    <Nullable>enable</Nullable>
+    <LangVersion>latest</LangVersion>
+    <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
+  </PropertyGroup>
+
+</Project>

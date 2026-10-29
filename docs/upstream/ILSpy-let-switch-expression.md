@@ -1,6 +1,6 @@
 # ILSpy issue: `let` with a switch expression decompiles to `<>h__TransparentIdentifier`
 
-Ready to submit at https://github.com/icsharpcode/ILSpy/issues/new (paste everything below the line). dnSpy works around it in `Extensions/ILSpyModern.Decompiler/dnSpy.Decompiler.ILSpyModern.Core/SwitchExpressionTransforms.cs` (`InlineLambdaTemporariesTransform.InsertBeforeQueryExpressions`) and can drop that once a fixed ICSharpCode.Decompiler ships.
+Submitted 2026-10-29 as https://github.com/icsharpcode/ILSpy/issues/4300. dnSpy works around it in `Extensions/ILSpyModern.Decompiler/dnSpy.Decompiler.ILSpyModern.Core/SwitchExpressionTransforms.cs` (`InlineLambdaTemporariesTransform.InsertBeforeQueryExpressions`) and can drop that once a fixed ICSharpCode.Decompiler ships.
 
 ---
 

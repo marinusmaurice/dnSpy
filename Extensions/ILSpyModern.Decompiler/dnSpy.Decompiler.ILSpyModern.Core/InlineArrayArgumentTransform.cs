@@ -52,6 +52,8 @@ namespace dnSpy.Decompiler.ILSpyModern.Core {
 					}
 				}
 			}
+			foreach (var decl in rootNode.DescendantsAndSelf.OfType<VariableDeclarationStatement>().ToArray())
+				TryTransformAssignedBuffer(context.TypeSystem, context.TypeSystemAstBuilder, decl);
 		}
 
 		static bool TryTransform(ICompilation compilation, TypeSystemAstBuilder astBuilder, List<Statement> statements, int index, out int removed) {
@@ -61,84 +63,153 @@ namespace dnSpy.Decompiler.ILSpyModern.Core {
 			var init = decl.Variables.Single();
 			if (!(init.GetILVariable() is ILVariable buffer) || !TryGetLength(buffer.Type, out int length))
 				return false;
-			// `default` (DefaultLiteralResolveResult is internal)
-			if (init.Initializer is not null && !(init.Initializer is DefaultValueExpression) && init.Initializer.GetResolveResult().GetType().Name != "DefaultLiteralResolveResult")
+			// Declared without a value: see TryTransformAssignedBuffer
+			if (init.Initializer is null || !IsDefault(init.Initializer))
 				return false;
-			if (index + length + 1 >= statements.Count)
+			if (!(TryMatch(statements, index, buffer, length) is Match match))
 				return false;
+			// The declaration, one use per element, and the span
+			if (GetUses(decl, buffer).Count != length + 2)
+				return false;
+			Apply(compilation, astBuilder, match);
+			removed = length + 1;
+			return true;
+		}
+
+		/// <summary>
+		/// When ICSharpCode.Decompiler duplicates code (eg. around <c>fixed</c> statements), the buffer is declared at the
+		/// start of the method and each copy fills it: <c>buffer = default; buffer[0] = a; ...; span = buffer;</c>. Only
+		/// done when every use of the buffer is in such a sequence.
+		/// </summary>
+		static void TryTransformAssignedBuffer(ICompilation compilation, TypeSystemAstBuilder astBuilder, VariableDeclarationStatement decl) {
+			if (decl.Variables.Count != 1)
+				return;
+			var init = decl.Variables.Single();
+			if (init.Initializer is not null)
+				return;
+			if (!(init.GetILVariable() is ILVariable buffer) || !TryGetLength(buffer.Type, out int length))
+				return;
+			var root = GetRoot(decl);
+			var matches = new List<Match>();
+			foreach (var start in root.Descendants.OfType<ExpressionStatement>().ToArray()) {
+				if (!(start.Expression is AssignmentExpression { Operator: AssignmentOperatorType.Assign } assign) || !IsBuffer(assign.Left, buffer) || !IsDefault(assign.Right))
+					continue;
+				if (!(start.Parent is BlockStatement block))
+					return;
+				var statements = block.Statements.ToList();
+				if (!(TryMatch(statements, statements.IndexOf(start), buffer, length) is Match match))
+					return;
+				matches.Add(match);
+			}
+			// The declaration, and per sequence the `= default`, one use per element and the span
+			if (matches.Count == 0 || GetUses(decl, buffer).Count != 1 + matches.Count * (length + 2))
+				return;
+			foreach (var match in matches)
+				Apply(compilation, astBuilder, match);
+			decl.Remove();
+		}
+
+		// `default` (DefaultLiteralResolveResult is internal)
+		static bool IsDefault(Expression expr) =>
+			expr is DefaultValueExpression || expr.GetResolveResult().GetType().Name == "DefaultLiteralResolveResult";
+
+		sealed class Match {
+			public Statement Start = null!;
+			public List<(ExpressionStatement statement, Expression value)> Elements = null!;
+			public Statement User = null!;
+			public IdentifierExpression Use = null!;
+			public CastExpression? Cast;
+			public IType SpanType = null!;
+			public IType ElementType = null!;
+		}
+
+		// statements[index] creates the buffer, the next `length` statements set its elements and the one after them
+		// uses it once, as a span
+		static Match? TryMatch(List<Statement> statements, int index, ILVariable buffer, int length) {
+			if (index < 0 || index + length + 1 >= statements.Count)
+				return null;
 
 			var elements = new List<(ExpressionStatement statement, Expression value)>();
 			for (int i = 0; i < length; i++) {
 				if (!(statements[index + 1 + i] is ExpressionStatement { Expression: AssignmentExpression { Operator: AssignmentOperatorType.Assign } assign } statement))
-					return false;
+					return null;
 				if (!(assign.Left is IndexerExpression indexer) || !IsBuffer(indexer.Target, buffer) || indexer.Arguments.Count != 1)
-					return false;
+					return null;
 				if (!(indexer.Arguments.Single() is PrimitiveExpression { Value: int elementIndex }) || elementIndex != i)
-					return false;
+					return null;
 				elements.Add((statement, assign.Right));
 			}
 
 			var user = statements[index + length + 1];
-			var uses = GetUses(decl, buffer);
-			// The declaration, one use per element, and the span
-			if (uses.Count != length + 2)
-				return false;
-			if (!(uses.FirstOrDefault(a => a.Ancestors.Contains(user)) is IdentifierExpression use))
-				return false;
-			// `(ReadOnlySpan<T>)buffer`, or `buffer` converted implicitly (an argument, a span local's initializer)
+			var usesInUser = user.Descendants.OfType<IdentifierExpression>().Where(a => IsBuffer(a, buffer)).ToArray();
+			if (usesInUser.Length != 1)
+				return null;
+			var use = usesInUser[0];
+			// `(ReadOnlySpan<T>)buffer`, or `buffer` converted implicitly (an argument, a span local's initializer, an assignment)
 			var cast = use.Parent as CastExpression;
 			IType? spanType = cast?.GetResolveResult().Type;
 			if (spanType is null || !IsSpan(spanType, out _))
 				spanType = GetSpanHelperReturnType(use);
 			if (spanType is null || !IsSpan(spanType, out var elementType))
-				return false;
+				return null;
 			// The whole buffer is the span
 			if (GetSpanHelperCall(use) is CallInstruction helper && !(helper.Arguments.Count == 2 && helper.Arguments[1].MatchLdcI4(length)))
-				return false;
+				return null;
 			if (cast is not null && !IsSpan(cast.GetResolveResult().Type, out _))
 				cast = null;
 			if (elements.Any(a => a.value.DescendantsAndSelf.OfType<IdentifierExpression>().Any(b => IsBuffer(b, buffer))))
-				return false;
+				return null;
 			if (!CanMoveAfterPrecedingCode(user, (Expression?)cast ?? use, elements.Select(a => a.value)))
-				return false;
+				return null;
+			return new Match {
+				Start = statements[index],
+				Elements = elements,
+				User = user,
+				Use = use,
+				Cast = cast,
+				SpanType = spanType,
+				ElementType = elementType,
+			};
+		}
+
+		static void Apply(ICompilation compilation, TypeSystemAstBuilder astBuilder, Match match) {
+			var cast = match.Cast;
 			// The cast's element type keeps its nullability (object?)
 			AstType elementAstType;
 			if (cast is not null && GetTypeArguments(cast.Type) is AstNodeCollection<AstType> typeArgs && typeArgs.Count == 1)
 				elementAstType = typeArgs.Single().Clone();
 			else
-				elementAstType = astBuilder.ConvertType(elementType);
+				elementAstType = astBuilder.ConvertType(match.ElementType);
 
 			var initializer = new ArrayInitializerExpression();
-			foreach (var (_, value) in elements)
+			foreach (var (_, value) in match.Elements)
 				initializer.Elements.Add(value.Detach());
 			var arrayCreate = new ArrayCreateExpression {
 				Type = elementAstType,
 				Initializer = initializer,
 			};
 			arrayCreate.AdditionalArraySpecifiers.Add(new ArraySpecifier(1));
-			arrayCreate.AddAnnotation(new ResolveResult(new ArrayType(compilation, elementType)));
+			arrayCreate.AddAnnotation(new ResolveResult(new ArrayType(compilation, match.ElementType)));
 			// Keep the IL ranges for the debugger's statement mapping
-			foreach (var node in decl.DescendantsAndSelf)
+			foreach (var node in match.Start.DescendantsAndSelf)
 				ConditionalToSwitchExpressionTransform.CopyILAnnotations(node, arrayCreate);
-			foreach (var (statement, _) in elements) {
+			foreach (var (statement, _) in match.Elements) {
 				foreach (var node in statement.DescendantsAndSelf)
 					ConditionalToSwitchExpressionTransform.CopyILAnnotations(node, arrayCreate);
 			}
-			ConditionalToSwitchExpressionTransform.CopyILAnnotations(use, arrayCreate);
+			ConditionalToSwitchExpressionTransform.CopyILAnnotations(match.Use, arrayCreate);
 			if (cast is not null)
-				use.ReplaceWith(arrayCreate);
+				match.Use.ReplaceWith(arrayCreate);
 			else {
 				// Keeps the overload that takes the span (an array could pick a `params T[]` overload)
-				var newCast = new CastExpression(astBuilder.ConvertType(spanType), arrayCreate);
-				newCast.AddAnnotation(new ResolveResult(spanType));
-				use.ReplaceWith(newCast);
+				var newCast = new CastExpression(astBuilder.ConvertType(match.SpanType), arrayCreate);
+				newCast.AddAnnotation(new ResolveResult(match.SpanType));
+				match.Use.ReplaceWith(newCast);
 			}
-			decl.Remove();
-			foreach (var (statement, _) in elements)
+			match.Start.Remove();
+			foreach (var (statement, _) in match.Elements)
 				statement.Remove();
-			user.AddAnnotation(MergedStatementAnnotation.Instance);
-			removed = length + 1;
-			return true;
+			match.User.AddAnnotation(MergedStatementAnnotation.Instance);
 		}
 
 		static bool TryGetLength(IType type, out int length) {

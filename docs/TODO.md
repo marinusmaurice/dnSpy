@@ -22,7 +22,8 @@ Each item gets its own branch from `master`, named after its target version (eg.
 
 - [ ] ⏸ ★ **M** Fix `out var` in Watch ("Internal debugger error"): implement the EE variable intrinsics (`CreateVariable`, `GetVariableAddress`, `GetObjectByAlias`) in dnSpy's interpreter. (The Immediate window that this enables is a feature, see 7.1.)
 - [x] **M** BAML (XAML) events (7.0.1.0): .NET 5+ WPF apps lost every XAML event (`Connect` method "cannot be parsed"); events in templates and style `EventSetter`s were lost on all frameworks. The BAML decompiler now reads `IComponentConnector.Connect`/`IStyleConnector.Connect` from the IL (no old decompiler needed); exported WPF projects build (code-behind without `IStyleConnector.Connect`, `LangVersion` in .NET Framework projects). Regression test: `Test/WpfEvents` in `check.ps1`.
-- [ ] **M** C# (ILSpy 11) Export to Project: the last 4 errors in the Roslyn (Microsoft.CodeAnalysis.dll) export test (compiler-generated `<>y__InlineArray` locals, `BytesToStringHelper`, `DefaultTypeDef`). Planned for 7.0.2.0.
+- [x] **M** C# (ILSpy 11) Export to Project: the last 4 errors in the Roslyn (Microsoft.CodeAnalysis.dll) export test (7.0.2.0: 0 errors; regression test `Test/ExportCases` in `check.ps1`).
+- [ ] **M** C# (ILSpy 11): span collection expressions whose elements are `?:`/`??` expressions (the compiler writes them through `ref` locals to the `<>y__InlineArrayN` elements) still export as code that doesn't compile.
 - [ ] **S** Exporting a VB WPF app as a C# project doesn't build: ILSpy writes C# stubs for VB's renamed `Connect`/`InitializeComponent` interface methods, which the WPF build generates again.
 - [ ] **S** Translations for the new strings (C# (ILSpy 11) settings page, console help).
 - [ ] **S** Per-monitor DPI / 4K scaling check.
@@ -112,7 +113,8 @@ Suggested first, in this order:
 ## No release needed (docs, CI, outside the repo)
 
 - [ ] ★ **S** winget, Scoop and Chocolatey manifests.
-- [ ] **S** Report the `let` + switch expression bug upstream to ILSpy, so dnSpy can drop its workaround once a fixed package ships. The issue text is ready in [upstream/ILSpy-let-switch-expression.md](upstream/ILSpy-let-switch-expression.md); the owner submits it.
+- [x] **S** Report the `let` + switch expression bug upstream to ILSpy (submitted 2026-10-29: [icsharpcode/ILSpy#4300](https://github.com/icsharpcode/ILSpy/issues/4300), text in [upstream/ILSpy-let-switch-expression.md](upstream/ILSpy-let-switch-expression.md)).
+- [ ] **S** When a fixed ICSharpCode.Decompiler ships (icsharpcode/ILSpy#4300), update the package and drop dnSpy's `let` workaround if `check.ps1` still passes without it.
 - [ ] ⏸ ★ **S** Dependabot or Renovate for NuGet packages and GitHub Actions.
 - [ ] ⏸ **S** CodeQL security scanning in CI.
 - [ ] ⏸ **S** Issue/PR templates, CONTRIBUTING.md, CHANGELOG.md.

@@ -152,6 +152,30 @@ try {
 			else { Write-Host "  OK: $count XAML event handlers, export builds and wires up the same handlers" }
 		}
 	}
+
+	# Export to Project: code shapes that used to export as code that doesn't compile (<>y__InlineArrayN locals declared
+	# at the start of a method with `fixed` statements, a file-local type that ICSharpCode.Decompiler hid)
+	$casesProject = Join-Path $PSScriptRoot '..\ExportCases\ExportCases.csproj'
+	foreach ($configuration in 'Debug', 'Release') {
+		$name = "Export cases $configuration"
+		Write-Host "== $name"
+		$origDir = Join-Path $work "cases-$configuration"
+		Invoke-Checked "build ExportCases ($configuration)" { dotnet build $casesProject -c $configuration -o $origDir -v:q -nologo } > $null
+		$original = Invoke-Checked "run ExportCases" { dotnet (Join-Path $origDir 'ExportCases.dll') }
+		$exportDir = Join-Path $work "cases-export-$configuration"
+		Invoke-Checked "export ExportCases" { & $Console --no-color -o $exportDir (Join-Path $origDir 'ExportCases.dll') } > $null
+		$exportProject = (Get-ChildItem $exportDir -Recurse -Filter *.csproj | Select-Object -First 1).FullName
+		$rebuiltDir = Join-Path $work "cases-rebuilt-$configuration"
+		$build = & dotnet build $exportProject -c Release -o $rebuiltDir -v:q -nologo 2>&1
+		if ($LASTEXITCODE) {
+			Fail "$name`: exported project doesn't build"
+			$build | Where-Object { $_ -match ' error ' } | Select-Object -First 10 | ForEach-Object { Write-Host "  $_" }
+			continue
+		}
+		$rerun = Invoke-Checked "run exported ExportCases" { dotnet (Join-Path $rebuiltDir 'ExportCases.dll') }
+		if (Compare-Object $original $rerun) { Fail "$name`: exported program prints something different" }
+		else { Write-Host "  OK: export builds and prints the same ($($original.Count) lines)" }
+	}
 }
 catch {
 	Fail $_.Exception.Message

@@ -87,7 +87,36 @@ namespace dnSpy.Decompiler.ILSpyModern.Core {
 		}
 
 		public override void Decompile(TypeDef type, IDecompilerOutput output, DecompilationContext ctx) =>
-			Decompile(type.Module, output, ctx, (d, m) => d.DecompileTypes(new[] { (TypeDefinitionHandle)m.GetHandle(type) }));
+			Decompile(type.Module, output, ctx, CreateILSpySettings(type), null, (d, m) => d.DecompileTypes(new[] { (TypeDefinitionHandle)m.GetHandle(type) }));
+
+		ICSharpCode.Decompiler.DecompilerSettings CreateILSpySettings(TypeDef type) {
+			var settings = langSettings.CreateILSpySettings();
+			if (IsFileLocalTypeHiddenByILSpy(type))
+				settings.SwitchStatementOnString = false;
+			return settings;
+		}
+
+		/// <summary>
+		/// A C# 11 file-local type (<c>file class C</c>) is named <c>&lt;FileName&gt;F{SHA-256}__C</c>. ICSharpCode.Decompiler
+		/// hides every type whose name starts with <c>&lt;PrivateImplementationDetails&gt;</c> when array initializers and
+		/// string switches are restored, so a file-local type declared in a file named PrivateImplementationDetails.cs (eg.
+		/// Roslyn's <c>BytesToStringHelper</c>) decompiled to nothing. Such a type is decompiled without restoring string
+		/// switches (the check needs both settings).
+		/// </summary>
+		static bool IsFileLocalTypeHiddenByILSpy(TypeDef type) {
+			while (type.DeclaringType is not null)
+				type = type.DeclaringType;
+			const string prefix = "<PrivateImplementationDetails>F";
+			string name = type.Name;
+			if (!name.StartsWith(prefix, StringComparison.Ordinal) || name.Length < prefix.Length + 64 + 2)
+				return false;
+			for (int i = 0; i < 64; i++) {
+				char c = name[prefix.Length + i];
+				if (!((c >= '0' && c <= '9') || (c >= 'A' && c <= 'F')))
+					return false;
+			}
+			return string.CompareOrdinal(name, prefix.Length + 64, "__", 0, 2) == 0;
+		}
 
 		public override void Decompile(AssemblyDef asm, IDecompilerOutput output, DecompilationContext ctx) {
 			WriteAssembly(asm, output, ctx);
@@ -127,7 +156,7 @@ namespace dnSpy.Decompiler.ILSpyModern.Core {
 		}
 
 		void DecompilePartialType(DecompilePartialType info) {
-			var settings = langSettings.CreateILSpySettings();
+			var settings = CreateILSpySettings(info.Type);
 			DecompilePartialTypeTransform.UpdateSettings(settings, info);
 			var modules = info.Context.GetOrCreate<ConvertedModules>();
 			Decompile(info.Type.Module, info.Output, info.Context, settings, new DecompilePartialTypeTransform(info, modules),
@@ -142,7 +171,7 @@ namespace dnSpy.Decompiler.ILSpyModern.Core {
 				(d, m) => d.DecompileModuleAndAssemblyAttributes());
 
 		void DecompileTypeMethods(DecompileTypeMethods info) {
-			var settings = langSettings.CreateILSpySettings();
+			var settings = CreateILSpySettings(info.Type);
 			DecompileTypeMethodsTransform.UpdateSettings(settings, info);
 			var modules = info.Context.GetOrCreate<ConvertedModules>();
 			var mainModule = modules.GetMainModule(info.Type.Module);
