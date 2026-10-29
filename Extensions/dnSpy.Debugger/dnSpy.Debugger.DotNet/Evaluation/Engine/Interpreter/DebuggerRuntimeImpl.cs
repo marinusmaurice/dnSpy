@@ -48,6 +48,11 @@ namespace dnSpy.Debugger.DotNet.Evaluation.Engine.Interpreter {
 		readonly Dictionary<DmdTypeName, DotNetClassHook> classHooks;
 		readonly List<DbgDotNetValue> valuesToDispose;
 		readonly InterpreterLocalsProvider interpreterLocalsProvider;
+		// Variables the expression declares (eg. `out var x`), by name
+		readonly Dictionary<string, VariableAddressValue> variables;
+		// The System.Type objects that Type.GetTypeFromHandle(ldtoken T) (`typeof(T)`) returned, and their T. ToType() uses
+		// them, eg. for the type of a declared variable.
+		readonly Dictionary<DbgDotNetValue, DmdType> typeOfValues;
 
 		public DebuggerRuntimeImpl(DbgObjectIdService dbgObjectIdService, IDbgDotNetRuntime runtime, int pointerSize, DotNetClassHookFactory[] dotNetClassHookFactories) {
 			if (dotNetClassHookFactories is null)
@@ -58,6 +63,8 @@ namespace dnSpy.Debugger.DotNet.Evaluation.Engine.Interpreter {
 			this.runtime = runtime ?? throw new ArgumentNullException(nameof(runtime));
 			valuesToDispose = new List<DbgDotNetValue>();
 			interpreterLocalsProvider = new InterpreterLocalsProvider(this);
+			variables = new Dictionary<string, VariableAddressValue>(StringComparer.Ordinal);
+			typeOfValues = new Dictionary<DbgDotNetValue, DmdType>();
 			PointerSize = pointerSize;
 
 			var anyClassHooksList = new List<DotNetClassHook>();
@@ -117,6 +124,8 @@ namespace dnSpy.Debugger.DotNet.Evaluation.Engine.Interpreter {
 					v.Dispose();
 			}
 			valuesToDispose.Clear();
+			variables.Clear();
+			typeOfValues.Clear();
 			argumentsProvider.Clear();
 			interpreterLocalsProvider.Clear();
 			argumentsProvider = null!;
@@ -782,15 +791,24 @@ namespace dnSpy.Debugger.DotNet.Evaluation.Engine.Interpreter {
 			if (!canFuncEval)
 				throw new InterpreterMessageException(PredefinedEvaluationErrorMessages.FuncEvalDisabled);
 			var invokeOptions = isCallvirt ? DbgDotNetInvokeOptions.None : DbgDotNetInvokeOptions.NonVirtual;
-			return runtime.Call(evalInfo, obj, method, Convert(arguments, method.GetMethodSignature().GetParameterTypes()), invokeOptions);
+			var result = runtime.Call(evalInfo, obj, method, Convert(arguments, method.GetMethodSignature().GetParameterTypes()), invokeOptions);
+			if (result.IsNormalResult && result.Value is DbgDotNetValue typeValue && arguments.Length == 1 && arguments[0] is RuntimeTypeHandleILValue typeHandle &&
+				method.Name == nameof(Type.GetTypeFromHandle) && method.DeclaringType == method.AppDomain.System_Type)
+				typeOfValues[typeValue] = typeHandle.HandleType;
+			return result;
 		}
 
 		object?[] Convert(ILValue[] values, ReadOnlyCollection<DmdType> targetTypes) {
 			if (values.Length != targetTypes.Count)
 				throw new InvalidOperationException();
 			var res = values.Length == 0 ? Array.Empty<object?>() : new object?[values.Length];
-			for (int i = 0; i < res.Length; i++)
-				res[i] = GetDebuggerValue(values[i], targetTypes[i]);
+			for (int i = 0; i < res.Length; i++) {
+				// A declared variable passed as a ref/out argument: pass the array element, the debugger passes its location
+				if (targetTypes[i].IsByRef && values[i] is IDebuggerRuntimeILValue addr && addr.GetDotNetValue() is VariableAddressValue variable)
+					res[i] = RecordValue(variable.GetElement());
+				else
+					res[i] = GetDebuggerValue(values[i], targetTypes[i]);
+			}
 			return res;
 		}
 
@@ -846,19 +864,33 @@ namespace dnSpy.Debugger.DotNet.Evaluation.Engine.Interpreter {
 			throw new InterpreterMessageException(PredefinedEvaluationErrorMessages.InternalDebuggerError);
 		}
 
+		// Only `typeof(T)` values are supported (the expression compiler's intrinsics are passed those)
 		DmdType IDebuggerRuntime.ToType(ILValue value) {
-			//TODO:
+			if (TryGetDotNetValue(value, canCreateValue: false) is DbgDotNetValue dnValue && typeOfValues.TryGetValue(dnValue, out var type))
+				return type;
 			throw new InterpreterMessageException(PredefinedEvaluationErrorMessages.InternalDebuggerError);
 		}
 
+		// The custom type info (tuple element names, `dynamic`) of a declared variable. It's only used when the variable is
+		// used in a later expression, which isn't supported yet, so Guid.Empty is returned if it can't be read.
 		Guid IDebuggerRuntime.ToGuid(ILValue value) {
-			//TODO:
-			throw new InterpreterMessageException(PredefinedEvaluationErrorMessages.InternalDebuggerError);
+			if (TryGetDotNetValue(value, canCreateValue: false) is DbgDotNetValue dnValue && dnValue.GetRawValue().RawValue is Guid guid)
+				return guid;
+			return Guid.Empty;
 		}
 
+		// See ToGuid()
 		byte[] IDebuggerRuntime.ToByteArray(ILValue value) {
-			//TODO:
-			throw new InterpreterMessageException(PredefinedEvaluationErrorMessages.InternalDebuggerError);
+			if (value.IsNull || !(TryGetDotNetValue(value, canCreateValue: false) is DbgDotNetValue dnValue) || !dnValue.GetArrayCount(out uint count))
+				return Array.Empty<byte>();
+			var bytes = new byte[count];
+			for (uint i = 0; i < count; i++) {
+				var element = RecordValue(dnValue.GetArrayElementAt(i));
+				if (!(element.GetRawValue().RawValue is byte b))
+					return Array.Empty<byte>();
+				bytes[i] = b;
+			}
+			return bytes;
 		}
 
 		DbgDotNetValue IDebuggerRuntime.ToDotNetValue(ILValue value) {
@@ -907,7 +939,13 @@ namespace dnSpy.Debugger.DotNet.Evaluation.Engine.Interpreter {
 				break;
 
 			case DbgDotNetAliasKind.Variable:
-				//TODO:
+				if (variables.TryGetValue(name, out var variable)) {
+					value = RecordValue(variable.GetElement());
+					// The intrinsic returns an object
+					if (value.Type.IsValueType && value.Box(evalInfo) is DbgDotNetValueResult boxed)
+						value = RecordValue(boxed);
+					return value;
+				}
 				break;
 
 			case DbgDotNetAliasKind.ObjectId:
@@ -931,14 +969,24 @@ namespace dnSpy.Debugger.DotNet.Evaluation.Engine.Interpreter {
 			throw new InterpreterMessageException(dnSpy_Debugger_DotNet_Resources.NoDotNetObjectFoundAtAddress);
 		}
 
+		// A variable the expression declares (eg. `int.TryParse(s, out var n) ? n : -1`). It lives in a T[1] array in the
+		// debugged process until the evaluation ends, so a called method can write to it (see VariableAddressValue).
 		void IDebuggerRuntime.CreateVariable(DmdType type, string name, Guid customTypeInfoPayloadTypeId, byte[] customTypeInfoPayload) {
-			//TODO:
-			throw new InterpreterMessageException(PredefinedEvaluationErrorMessages.InternalDebuggerError);
+			if (variables.TryGetValue(name, out var existing)) {
+				if (existing.VariableType == type)
+					return;
+				throw new InterpreterMessageException(PredefinedEvaluationErrorMessages.InternalDebuggerError);
+			}
+			if (!canFuncEval)
+				throw new InterpreterMessageException(PredefinedEvaluationErrorMessages.FuncEvalDisabled);
+			var array = RecordValue(runtime.CreateSZArray(evalInfo, type, 1));
+			variables.Add(name, new VariableAddressValue(type, array));
 		}
 
 		DbgDotNetValue IDebuggerRuntime.GetVariableAddress(DmdType type, string name) {
-			//TODO:
-			throw new InterpreterMessageException(PredefinedEvaluationErrorMessages.InternalDebuggerError);
+			if (!variables.TryGetValue(name, out var variable) || variable.VariableType != type)
+				throw new InterpreterMessageException(dnSpy_Debugger_DotNet_Resources.UnknownVariableOrObjectId);
+			return variable;
 		}
 
 		internal DbgDotNetValue CreateValue(object? value, DmdType targetType) =>

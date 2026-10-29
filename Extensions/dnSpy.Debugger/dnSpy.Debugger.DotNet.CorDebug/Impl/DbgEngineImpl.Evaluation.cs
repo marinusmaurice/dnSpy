@@ -301,6 +301,9 @@ namespace dnSpy.Debugger.DotNet.CorDebug.Impl {
 		}
 
 		CorValue BoxIfNeeded(DnEval dnEval, CorAppDomain appDomain, List<CorValue> createdValues, CorValue corValue, DmdType targetType, DmdType valueType) {
+			// A value with a location (eg. an array element) passed by reference: CorDebug passes its address
+			if (targetType.IsByRef)
+				return corValue;
 			if (!targetType.IsValueType && valueType.IsValueType && corValue.IsGeneric && !corValue.IsHeap) {
 				var etype = corValue.ElementType;
 				var corValueType = corValue.ExactType;

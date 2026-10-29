@@ -124,7 +124,8 @@ namespace dnSpy.Debugger.DotNet.Evaluation.Engine {
 
 		MethodDef CreateGetVariableAddress() {
 			var method = new MethodDefUser(ExpressionCompilerConstants.GetVariableAddressMethodName, null, methodImplAttributes, methodAttributes);
-			var sig = MethodSig.CreateStaticGeneric(1, new PtrSig(new GenericMVar(0, method)), corlibTypes.String);
+			// `ref T`: the expression compiler references `T& GetVariableAddress<T>(string)` (a T* method didn't resolve)
+			var sig = MethodSig.CreateStaticGeneric(1, new ByRefSig(new GenericMVar(0, method)), corlibTypes.String);
 			method.MethodSig = sig;
 			method.GenericParameters.Add(new GenericParamUser(0, GenericParamAttributes.NonVariant, "T"));
 			method.ParamDefs.Add(new ParamDefUser("name", 1));

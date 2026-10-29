@@ -24,6 +24,11 @@ namespace dnSpy.Debugger.DotNet.Evaluation.Engine.Interpreter {
 	sealed class RuntimeTypeHandleILValue : TypeILValueImpl {
 		readonly DmdType type;
 
+		/// <summary>
+		/// The type whose handle this is (<c>ldtoken</c>)
+		/// </summary>
+		public DmdType HandleType => type;
+
 		public RuntimeTypeHandleILValue(DebuggerRuntimeImpl runtime, DmdType type)
 			: base(runtime, type.AppDomain.GetWellKnownType(DmdWellKnownType.System_RuntimeTypeHandle)) {
 			this.type = type;
