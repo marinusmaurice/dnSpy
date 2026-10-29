@@ -2,9 +2,73 @@
 
 dnSpy is a debugger and .NET assembly editor. You can use it to edit and debug assemblies even if you don't have any source code available.
 
-> **dnSpy 7.0 (beta).** This fork updates dnSpy 6.1.8 (last upstream release, 2020) to current .NET while staying backward compatible: existing extensions (`dnSpy.Contracts.*`) and settings keep working, and the .NET Framework 4.8 build is kept next to the .NET 10 build. See [docs/MODERNIZATION_PLAN.md](docs/MODERNIZATION_PLAN.md) for the phases, what's done and the test log. Planned features and fixes are in [docs/TODO.md](docs/TODO.md).
+> **This is a fork of [dnSpy](https://github.com/dnSpy/dnSpy)** (original by 0xd4d, archived in December 2020). dnSpy 7.0 updates the last upstream release, 6.1.8, to current .NET and a current decompiler, and stays backward compatible with it.
 
-Main features:
+## Why this fork
+
+dnSpy is still one of the best tools to look inside .NET programs, but the [original repository](https://github.com/dnSpy/dnSpy) was archived in 2020 and its last release, [6.1.8](https://github.com/dnSpy/dnSpy/releases/tag/v6.1.8), has fallen behind:
+
+- **It can't debug current .NET.** 6.1.8 runs on .NET 5 (out of support since 2022), and the debugger needs `dbgshim.dll`, which .NET 7 and later no longer ship, so debugging a .NET 7–10 app fails with "Couldn't find dbgshim.dll".
+- **Its decompiler is from 2017.** The C# decompiler is a fork of ILSpy 2.3: no `async`/`await` (you get the state machine), no switch expressions, pattern matching, local functions, records, `out var` and so on. Modern code comes out hard to read, and often doesn't compile.
+- **Its compiler is from 2018.** Edit Method, C# Interactive and the debugger's Watch/Locals expressions use Roslyn 2.10, which doesn't understand C# 8 or later.
+- **Its dependencies are old**, several with known security advisories.
+- **Nobody maintains it**, so bugs and new .NET releases go unanswered.
+
+The goal of this fork is to keep dnSpy useful for current .NET without breaking anything that works today: existing extensions (`dnSpy.Contracts.*`), saved settings and the .NET Framework 4.8 build all keep working, next to the new .NET 10 build. The old decompiler is still there as a language choice.
+
+## What's new in 7.0
+
+**Runs on and debugs current .NET**
+- Builds for .NET 10 (self-contained x64 and x86, nothing to install) and .NET Framework 4.8 (was .NET 5 / .NET Framework 4.8)
+- Debugs .NET Core 3.1 and .NET 5–10 apps (new `dbgshim` 10.0), as well as .NET Framework and Unity; launch and attach tested from all four builds
+- Recognizes self-contained single-file .NET 6+ apps when starting them under the debugger
+- *Prevent managed debugger detection* works on .NET 10 again (`Debugger.IsAttached`, `IsLogging`, `Launch`)
+
+**New default decompiler: C# (ILSpy 11)**
+- Based on ICSharpCode.Decompiler 11.1, the current ILSpy engine (the old one was ILSpy 2.3 from 2017)
+- **Choose the C# version to decompile to**: C# 1 up to C# 14, or "Latest" (the default). The output only uses that version's features, eg. C# 7.3 gives switch statements and block namespaces, so the code compiles with an older compiler. Set it on the settings page or with `dnSpy.Console --csharp-version 7.3`
+- C# features it gives back instead of the compiler's lowered code, among others:
+  - `async`/`await`, `await foreach`/`await using`, async streams (`IAsyncEnumerable<T>`), iterators (`yield return`)
+  - LINQ query syntax (`from … let … join … group … into`), lambdas, local functions (also `static`), expression trees
+  - switch expressions and patterns: type, property, relational (`< 4`), `and`/`or`/`not`, `is` with declarations
+  - records and record structs, `init` accessors, `required` members, primary constructors, `with` expressions
+  - nullable reference types (`string?`), `default` interface methods, static abstract interface members
+  - tuples and deconstruction, `out var`, discards, target-typed `new()`, `??=`, ranges and indices (`a[1..^1]`)
+  - `ref` locals and returns, `in`/`ref readonly` parameters, `readonly`/`ref` structs, `Span<T>`/`stackalloc`, `nint`/`nuint`, function pointers
+  - string interpolation, `using` declarations, file-scoped namespaces, collection expressions
+- Every feature can be turned off on its settings page (anonymous methods, query expressions, async, switch expressions, string interpolation, `using` declarations, …), as well as the old language's options (auto properties/events, `foreach`/`using`/`lock`, object initializers, member order, sorting)
+- dnSpy's own clean-up on top of ILSpy's output: `let` clauses instead of `<>h__TransparentIdentifier` chains, switch expressions instead of `?:` chains, string interpolation, no needless casts or `? true : false`, and fixes for code ILSpy writes that doesn't compile
+- Full debugger support: stepping (including over `await`), breakpoints, Locals with the decompiled names and correct scopes
+- Works with Edit Method, Edit Class, Edit Assembly and Export to Project, with clickable references, XML doc comments and the token/RVA comments of the old language
+- Its own settings page (C# language version, member order, every transform can be turned off) and `dnSpy.Console` options
+- The old C# (ILSpy 2.3) decompiler is still in the language list; settings saved with it switch to C# (ILSpy 11) once
+
+**Current C# for editing and expressions**
+- Roslyn 5.9 (was 2.10): Edit Method, C# Interactive and the debugger's expression evaluator understand C# 14 and current VB
+
+**Export to Project**
+- Visual Studio 2022/2026 project options; .NET Core / .NET 5+ / .NET Standard assemblies become SDK-style projects that build
+- References to NuGet `System.*` assemblies, WinForms/WPF code-behind split, no compiler-generated types or attributes that break the build
+
+**Fixes**
+- Stepping over `await` with the new decompiler ran to the end of the program (fixed in 7.0.0)
+- Edit Method could save .NET Framework assemblies that referenced `System.Private.CoreLib` (and crashed)
+- Watch expressions with pattern variables (`x is int y`) showed "Internal debugger error"
+- Mono debugger: `CustomAttributeNamedArgumentMirror.Field` always returned `null`
+- The .NET build never applied its own build settings (`IsDotNet` typo)
+- Plus the fixes that come with dnlib 4.5 (generic names in decompiled code, edited resources)
+
+**Updated libraries**
+- dnlib 4.5, Iced 1.21, VS-MEF 17.13, ClrMD 3.1, Roslyn 5.9, ICSharpCode.Decompiler 11.1, and updated packages that fix known security advisories (Newtonsoft.Json, MessagePack, MSBuild)
+
+**Build and release**
+- Release zips (`dnSpy-netframework.zip`, `dnSpy-net-win32.zip`, `dnSpy-net-win64.zip`) are built by GitHub Actions for every `v*` tag
+- CI runs a decompiler regression test and a debugger-info test on every release build, and smoke-tests the zips
+- Submodules point to maintained forks, so a recursive clone builds first time
+
+The full list, with details, is in [All changes in detail](#all-changes-in-detail) below; the work log and test results are in [docs/MODERNIZATION_PLAN.md](docs/MODERNIZATION_PLAN.md), and what's planned next is in [docs/TODO.md](docs/TODO.md).
+
+## Main features
 
 - Debug .NET and Unity assemblies
 - Edit .NET and Unity assemblies
@@ -18,7 +82,7 @@ See below for more features
 
 ## Binaries
 
-Download the latest release from https://github.com/marinusmaurice/dnSpy/releases (7.0.0-beta.3 is a pre-release: please report problems). Releases are built by the GitHub Actions workflow (`.github/workflows/build.yml`) when a `v*` tag is pushed; tags with a `-` (eg. `v7.0.0-beta.1`) are published as pre-releases. The last upstream release (6.1.8, .NET Framework 4.8 / .NET 5) is at https://github.com/dnSpy/dnSpy/releases
+Download the latest release from https://github.com/marinusmaurice/dnSpy/releases. Releases are built by the GitHub Actions workflow (`.github/workflows/build.yml`) when a `v*` tag is pushed; tags with a `-` (eg. `v7.0.0-beta.1`) are published as pre-releases. The last upstream release (6.1.8, .NET Framework 4.8 / .NET 5) is at https://github.com/dnSpy/dnSpy/releases
 
 There are three builds:
 
@@ -58,7 +122,7 @@ Don't use `clean-all.cmd` with uncommitted work: it runs `git clean -xdf`, which
 
 To debug Unity games, you need this repo too: https://github.com/dnSpy/dnSpy-Unity-mono (or get the binaries from https://github.com/dnSpy/dnSpy/releases/unity)
 
-## What changed in this branch
+## All changes in detail
 
 - Targets `net48` and `net10.0-windows` (was `net5.0-windows`), C# language version pinned to 13
 - Debugger uses `dbgshim.dll` 10.0 from Microsoft's `Microsoft.Diagnostics.DbgShim` NuGet package (.NET 7+ runtimes don't include it). This replaces the 2017 copy and the `netcorefiles` submodule.

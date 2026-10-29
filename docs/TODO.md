@@ -6,7 +6,7 @@ Size: **S** = hours, **M** = a day or two, **L** = several days, **XL** = weeks.
 
 ## Suggested order
 
-1. [ ] Click-test the beta in the UI, then release 7.0.0 final (section 1)
+1. [x] Click-test the beta in the UI, then release 7.0.0 final (section 1)
 2. [ ] Sign the release binaries (section 9)
 3. [ ] winget / Scoop / Chocolatey packages (section 9)
 4. [ ] Dependabot or Renovate (section 10)
@@ -21,7 +21,7 @@ Size: **S** = hours, **M** = a day or two, **L** = several days, **XL** = weeks.
 
 - [x] ★ **S** Click-test v7.0.0-beta.1 in the UI: Edit Method/Class with C# (ILSpy 11), debugger stepping through async code, Export to Project, the C# (ILSpy 11) settings page, the one-time default-language switch for existing settings. (Done 2026-10-29 on beta.3: everything worked except stepping over `await`, which ran to the end of the program; fixed, regression test `Test/DebugInfoCheck`.)
 - [ ] ★ **M** Fix `out var` in Watch ("Internal debugger error"): implement the EE variable intrinsics (`CreateVariable`, `GetVariableAddress`, `GetObjectByAlias`) in dnSpy's interpreter. Also enables `int x = 1` statements, i.e. a real Immediate window.
-- [ ] ★ **S** Promote 7.0.0-beta.1 to 7.0.0 final: set `DnSpyAssemblyInformationalVersion` to `v7.0.0`, push tag `v7.0.0`.
+- [x] ★ **S** Promote 7.0.0-beta.1 to 7.0.0 final (done 2026-10-29): set `DnSpyAssemblyInformationalVersion` to `v7.0.0`, push tag `v7.0.0`.
 - [ ] **M** C# (ILSpy 11) gaps: decompile a whole namespace, `using` aliases, BAML (XAML) through the new engine, the last 4 errors in the Roslyn export test.
 - [x] **M** Restore `let` clauses instead of `<>h__TransparentIdentifier` chains (Debug builds; done 2026-10-27, regression test `Test/DecompilerStress/check.ps1` runs in CI).
 - [ ] **S** Report the `let` + switch expression bug upstream to ILSpy (icsharpcode/ILSpy: issue or pull request with the DecompilerStress sections 4 and 11), so dnSpy can drop its workaround once a fixed package ships.
