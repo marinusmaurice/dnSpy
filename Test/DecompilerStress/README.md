@@ -6,6 +6,7 @@
 |---|---|
 | `check.ps1` | Automated regression test (runs in CI): see below. |
 | `check-publish.ps1` | Release smoke test (runs in CI on the three release builds): `-PublishDir <folder with dnSpy.exe and bin\>` checks that C# (ILSpy 11) is in the build, then runs `check.ps1` with that build's own dnSpy.Console. |
+| `../DebugInfoCheck` | Debugger info test that `check.ps1` runs (.NET builds only): see below. |
 | `ilspy-reference.cs.txt` | ILSpy's output for sections 1–10 (provided by the repo owner). This is the target: dnSpy should be at least this good. |
 | `dnspy-baseline.cs.txt` | dnSpy's output before the new decompiler (ILSpy 2.3-based). Async methods aren't decompiled, and extension methods are shown as static calls. |
 
@@ -20,6 +21,13 @@ Without `-Console`, it uses `dnSpy\dnSpy\bin\Release\net10.0-windows\dnSpy.Conso
 - `<>h__TransparentIdentifier` or `if (1 == 0)` is left in the output,
 - one of the four `let` clauses (`gross`, `segment`, `size`, `band`) isn't restored,
 - the decompiled code doesn't compile, or prints something different from the original (`"Hash"` values are ignored: `HashCode.Combine` is seeded randomly per process).
+
+With a .NET build of dnSpy it also builds `Test/DebugInfoCheck` against that build's DLLs and checks the debugger info of every method (the IL ↔ statement map the debugger steps with):
+
+- IL that no statement maps (the debugger steps over it as hidden code) must not hide the statement before it. Without a PDB, the runtime only has native offsets where the IL stack is empty, after calls, at `nop`s and at exception handlers, and it maps a range that starts elsewhere from the offset before it. In v7.0.0-beta.3 the unmapped IL of a statement's lambdas hid the statement, so stepping over an `await` ran to the end of the program.
+- an `await`'s yield offset must follow its `Await(Unsafe)OnCompleted()` call, and it must resume in the same method.
+
+By hand: `dotnet build Test/DebugInfoCheck -p:DnSpyBin=<dnSpy DLL folder>`, then `DebugInfoCheck <dnSpy DLL folder> <assembly>...`.
 
 Debug builds matter: the compiler adds temporaries and unreachable `if (1 == 0)` branches around switch expressions there, which is where ILSpy leaves `<>h__TransparentIdentifier` chains.
 

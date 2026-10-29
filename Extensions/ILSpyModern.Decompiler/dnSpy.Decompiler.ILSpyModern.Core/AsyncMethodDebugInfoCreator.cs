@@ -26,7 +26,10 @@ namespace dnSpy.Decompiler.ILSpyModern.Core {
 	/// offset) from an async state machine's MoveNext IL. ICSharpCode.Decompiler doesn't expose these, so this looks for
 	/// the code the C# and VB compilers generate, like the old decompiler's AsyncDecompiler:
 	/// <list type="bullet">
-	/// <item>yield offset: right after <c>state = N;</c> (N &gt;= 0) that's followed by an <c>Await*OnCompleted()</c> call</item>
+	/// <item>yield offset: right after the <c>Await*OnCompleted()</c> call that follows <c>state = N;</c> (N &gt;= 0), like Roslyn's
+	/// PDB yield offsets. The old decompiler used the offset right after <c>state = N;</c>, but there the builder's task can't
+	/// be used to recognize the same async call when it resumes on .NET Core 3+: <c>Await*OnCompleted()</c> replaces it with
+	/// the state machine box, so stepping over an await ran to the end of the program.</item>
 	/// <item>resume offset: where the state dispatch at the start of MoveNext (and in try blocks) goes when state is N</item>
 	/// </list>
 	/// </summary>
@@ -63,12 +66,13 @@ namespace dnSpy.Decompiler.ILSpyModern.Core {
 			for (int i = 0; stateField is not null && i + 1 < instrs.Count; i++) {
 				if (!IsStoreState(instrs, i, stateField, out int state) || state < 0 || !seenStates.Add(state))
 					continue;
-				if (!IsFollowedByAwaitCall(instrs, i, stateField, stateMachineType, ref builderField))
+				int callIndex = FindAwaitCall(instrs, i, stateField, stateMachineType, ref builderField);
+				if (callIndex < 0 || callIndex + 1 >= instrs.Count)
 					continue;
 				normalEntry ??= FindResumeOffset(instrs, body.Variables, stateField, -1, out _);
 				var resumeOffset = FindResumeOffset(instrs, body.Variables, stateField, state, out bool tookDispatchBranch);
 				if (resumeOffset is uint offs && tookDispatchBranch && offs != normalEntry)
-					stepInfos.Add(new AsyncStepInfo(instrs[i + 1].Offset, moveNextMethod, offs));
+					stepInfos.Add(new AsyncStepInfo(instrs[callIndex + 1].Offset, moveNextMethod, offs));
 			}
 
 			if (stepInfos.Count == 0 && builderField is null)
@@ -213,23 +217,24 @@ namespace dnSpy.Decompiler.ILSpyModern.Core {
 			return true;
 		}
 
-		static bool IsFollowedByAwaitCall(IList<Instruction> instrs, int index, FieldDef stateField, TypeDef stateMachineType, ref FieldDef? builderField) {
+		// The index of the Await*OnCompleted() call that follows 'state = N;' at index, or -1
+		static int FindAwaitCall(IList<Instruction> instrs, int index, FieldDef stateField, TypeDef stateMachineType, ref FieldDef? builderField) {
 			for (int i = index + 1; i < instrs.Count && i <= index + MaxAwaitCallDistance; i++) {
 				var instr = instrs[i];
 				if ((instr.OpCode.Code == Code.Stfld && GetField(instr.Operand, stateMachineType) == stateField) || instr.OpCode.Code == Code.Ret)
-					return false;
+					return -1;
 				if (IsCall(instr, "AwaitUnsafeOnCompleted", out var method) || IsCall(instr, "AwaitOnCompleted", out method)) {
 					if (builderField is null) {
 						int fieldIndex = FindBuilderFieldLoad(instrs, i, stateMachineType, method);
 						if (fieldIndex >= 0)
 							builderField = GetField(instrs[fieldIndex].Operand, stateMachineType);
 					}
-					return true;
+					return i;
 				}
 				if (instr.OpCode.Code == Code.Leave || instr.OpCode.Code == Code.Leave_S)
-					return false;
+					return -1;
 			}
-			return false;
+			return -1;
 		}
 
 		/// <summary>

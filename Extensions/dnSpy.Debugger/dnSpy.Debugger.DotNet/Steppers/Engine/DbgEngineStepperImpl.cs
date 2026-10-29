@@ -760,10 +760,16 @@ namespace dnSpy.Debugger.DotNet.Steppers.Engine {
 
 						var newFrame = stepper.TryGetFrameInfo(thread);
 						Debug2.Assert(newFrame is not null);
-						if (newFrame is not null && newFrame.TryGetLocation(out var newModule, out var newToken, out _)) {
+						if (newFrame is not null && newFrame.TryGetLocation(out var newModule, out var newToken, out var newOffset)) {
 							Debug.Assert(newModule == module && asyncState.ResumeToken == newToken);
-							if (result.DebugInfo is not null && newModule == module && asyncState.ResumeToken == newToken)
-								thread = await StepOverHiddenInstructionsAsync(newFrame, result);
+							if (result.DebugInfo is not null && newModule == module && asyncState.ResumeToken == newToken) {
+								// If the code resumes inside the statement (eg. a decompiled await statement maps the IL up to
+								// GetResult()), step over the rest of it, else we'd stop in the middle of the statement
+								if (token == newToken && Contains(result.ExactStatementRanges, newOffset))
+									thread = await StepOverCore2Async(newFrame);
+								else
+									thread = await StepOverHiddenInstructionsAsync(newFrame, result);
+							}
 						}
 					}
 				}

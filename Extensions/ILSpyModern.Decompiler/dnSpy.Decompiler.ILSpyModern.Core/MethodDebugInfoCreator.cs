@@ -81,12 +81,16 @@ namespace dnSpy.Decompiler.ILSpyModern.Core {
 				if (mergedStatements.Length != 0)
 					MapMergedStatements(statements, covered, function, mergedStatements, codeSize, writer);
 				if (expressionBodies.TryGetValue(function, out var body))
-					AddExpressionBodyRanges(statements, function, body, covered, codeSize, writer);
+					AddExpressionBodyRanges(statements, function, method, body, covered, codeSize, writer);
 				if (asyncInfo is not null)
 					AsyncMethodDebugInfoCreator.AddAwaitStatements(statements, method, asyncInfo);
+				functionNodes.TryGetValue(function, out var functionNode);
+				if (functionNode is not null)
+					AddSimpleStatementRanges(statements, function, functionNode, codeSize);
+				if (function.Kind == ILFunctionKind.Delegate && function.MoveNextMethod is null && !(functionNode is LambdaExpression || functionNode is AnonymousMethodExpression))
+					MapQueryClauseLambda(statements, method);
 				foreach (var statement in statements)
 					builder.Add(statement);
-				functionNodes.TryGetValue(function, out var functionNode);
 				AddLocals(builder.Scope, locals, function, method, functionNode, variableReferences, statements, codeSize, writer);
 				if (functionNode is not null) {
 					int start = writer.GetPosition(functionNode.StartLocation.Line, functionNode.StartLocation.Column);
@@ -157,6 +161,91 @@ namespace dnSpy.Decompiler.ILSpyModern.Core {
 			covered.AddRange(statements.Select(a => (a.ILSpan.Start, a.ILSpan.End)));
 		}
 
+		/// <summary>
+		/// ICSharpCode.Decompiler's sequence points only keep the first contiguous IL range of a statement, and the debugger
+		/// treats the rest (eg. the cached delegate initialization of a query's lambdas) as hidden code. That IL often starts
+		/// where the IL stack isn't empty, so the runtime has no native offset for its start, it merges the statement's own
+		/// range into the hidden range, and stepping doesn't stop at the statement (eg. after an <c>await</c>). Maps the IL
+		/// between the first and last IL byte of a simple statement that no other statement maps to the statement. Statements
+		/// with nested statements (<c>if</c>, loops, ...) aren't changed: their unmapped IL is the braces and branches.
+		/// </summary>
+		static void AddSimpleStatementRanges(List<SourceStatement> statements, ILFunction function, AstNode functionNode, uint codeSize) {
+			var added = new List<SourceStatement>();
+			foreach (var statement in functionNode.Descendants.OfType<Statement>()) {
+				if (statement is BlockStatement || GetFunction(statement) != function)
+					continue;
+				if (statement.Descendants.Any(a => a is Statement && GetFunction(a) == function))
+					continue;
+				uint min = uint.MaxValue, max = 0;
+				var seen = new HashSet<ILInstruction>();
+				foreach (var node in statement.DescendantsAndSelf) {
+					foreach (var inst in node.Annotations.OfType<ILInstruction>())
+						AddRange(inst);
+				}
+				if (min >= max || max > codeSize)
+					continue;
+				// The text is the statement's sequence point's text
+				var first = statements.Where(a => a.ILSpan.End > min && a.ILSpan.Start < max).OrderBy(a => a.ILSpan.Start).FirstOrDefault();
+				if (first.TextSpan.Length == 0)
+					continue;
+				uint start = min;
+				foreach (var span in statements.Concat(added).Select(a => a.ILSpan).Where(a => a.End > min && a.Start < max).OrderBy(a => a.Start).ToArray()) {
+					if (span.Start > start)
+						added.Add(new SourceStatement(ILSpan.FromBounds(start, span.Start), first.TextSpan));
+					if (span.End > start)
+						start = span.End;
+				}
+				if (max > start)
+					added.Add(new SourceStatement(ILSpan.FromBounds(start, max), first.TextSpan));
+
+				void AddRange(ILInstruction inst) {
+					if (!seen.Add(inst))
+						return;
+					// A nested function's own range is its delegate creation in this method (like ILSpy's SequencePointBuilder)
+					if (!inst.ILRangeIsEmpty && !(inst is Block) && !(inst is BlockContainer) && inst.Parent?.Ancestors.OfType<ILFunction>().FirstOrDefault() == function) {
+						foreach (var range in inst.ILRanges) {
+							if (range.Start >= 0 && range.End > range.Start) {
+								min = System.Math.Min(min, (uint)range.Start);
+								max = System.Math.Max(max, (uint)range.End);
+							}
+						}
+					}
+					if (inst is ILFunction)
+						return;
+					foreach (var child in inst.Children)
+						AddRange(child);
+				}
+			}
+			statements.AddRange(added);
+
+			static ILFunction? GetFunction(AstNode node) =>
+				node.Ancestors.Select(a => a.Annotation<ILFunction>()).FirstOrDefault(a => a is not null);
+		}
+
+		/// <summary>
+		/// A query clause's lambda (eg. <c>select g.Sum(x => x.Total)</c>) has no lambda node, and ICSharpCode.Decompiler only
+		/// maps the clause's first IL range (see <see cref="AddSimpleStatementRanges"/>). If all of its statements are the
+		/// clause, its IL up to its last <c>ret</c> is the clause.
+		/// </summary>
+		static void MapQueryClauseLambda(List<SourceStatement> statements, MethodDef method) {
+			if (statements.Count == 0 || statements.Any(a => a.TextSpan != statements[0].TextSpan))
+				return;
+			var instrs = method.Body.Instructions;
+			if (instrs.Count == 0 || instrs[instrs.Count - 1].OpCode.Code != Code.Ret)
+				return;
+			uint start = statements.Min(a => a.ILSpan.Start);
+			uint end = instrs[instrs.Count - 1].Offset;
+			var text = statements[0].TextSpan;
+			foreach (var span in statements.Select(a => a.ILSpan).OrderBy(a => a.Start).ToArray()) {
+				if (span.Start > start && span.Start <= end)
+					statements.Add(new SourceStatement(ILSpan.FromBounds(start, span.Start), text));
+				if (span.End > start)
+					start = span.End;
+			}
+			if (end > start)
+				statements.Add(new SourceStatement(ILSpan.FromBounds(start, end), text));
+		}
+
 		static ImportInfo[] GetImports(SyntaxTree syntaxTree) {
 			var namespaces = new List<string>();
 			foreach (var usingDecl in syntaxTree.Descendants.OfType<UsingDeclaration>()) {
@@ -196,7 +285,7 @@ namespace dnSpy.Decompiler.ILSpyModern.Core {
 		/// lambda's body is one statement, and if it contains branches (switch expressions, <c>?:</c>, <c>??</c>) most of its
 		/// IL isn't mapped. Maps the rest of the body's IL to the body too.
 		/// </summary>
-		static void AddExpressionBodyRanges(List<SourceStatement> statements, ILFunction function, Expression body, List<(uint start, uint end)> covered, uint codeSize, DecompilerOutputTokenWriter writer) {
+		static void AddExpressionBodyRanges(List<SourceStatement> statements, ILFunction function, MethodDef method, Expression body, List<(uint start, uint end)> covered, uint codeSize, DecompilerOutputTokenWriter writer) {
 			int textStart = writer.GetPosition(body.StartLocation.Line, body.StartLocation.Column);
 			int textEnd = writer.GetPosition(body.EndLocation.Line, body.EndLocation.Column);
 			if (textStart < 0 || textEnd < textStart)
@@ -208,10 +297,14 @@ namespace dnSpy.Decompiler.ILSpyModern.Core {
 					AddRanges(inst);
 			}
 			ranges.Sort();
-			// All of a (non state machine) lambda method's IL is the body's, including IL that no instruction keeps
-			// after ILSpy's transforms (cached delegate initialization, the compares of a rebuilt switch expression)
-			if (function.MoveNextMethod is null && ranges.Count > 1) {
+			// All of a (non state machine) lambda method's IL up to its last ret is the body's, including IL that no
+			// instruction keeps after ILSpy's transforms (cached delegate initialization, the compares of a rebuilt switch
+			// expression, calls in a query's lambdas)
+			if (function.MoveNextMethod is null && ranges.Count != 0) {
 				uint max = ranges.Max(a => a.end);
+				var instrs = method.Body.Instructions;
+				if (instrs.Count != 0 && instrs[instrs.Count - 1].OpCode.Code == Code.Ret && instrs[instrs.Count - 1].Offset > max)
+					max = instrs[instrs.Count - 1].Offset;
 				ranges = new List<(uint start, uint end)> { (ranges[0].start, max) };
 			}
 			uint? curStart = null, curEnd = null;

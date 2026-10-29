@@ -7,6 +7,7 @@
 	  - no compiler names are left: <>h__TransparentIdentifier, if (1 == 0)
 	  - every `let` clause is restored (sections 4 and 11)
 	  - the decompiled code compiles and prints the same as the original (HashCode.Combine values are random per process)
+	  - the debugger info lets the debugger stop at every statement and step over awaits (../DebugInfoCheck, .NET builds only)
 	Exits with 1 when a check fails.
 #>
 param(
@@ -40,6 +41,19 @@ try {
 	$project = Join-Path $PSScriptRoot 'DecompilerStress.csproj'
 	$expectedLets = 4	# section 4: gross, segment; section 11: size, band
 
+	# A release build has the DLLs in bin\, a dev build next to dnSpy.Console.exe
+	$dllDir = Split-Path $Console
+	if (Test-Path (Join-Path $dllDir 'bin\dnlib.dll')) { $dllDir = Join-Path $dllDir 'bin' }
+	$debugInfoCheck = $null
+	if (Test-Path (Join-Path $dllDir 'dnSpy.Console.runtimeconfig.json')) {
+		$debugInfoCheckDir = Join-Path $work 'DebugInfoCheck'
+		Invoke-Checked "build DebugInfoCheck" { dotnet build (Join-Path $PSScriptRoot '..\DebugInfoCheck\DebugInfoCheck.csproj') -c Release -o $debugInfoCheckDir -v:q -nologo "-p:DnSpyBin=$dllDir" } > $null
+		$debugInfoCheck = Join-Path $debugInfoCheckDir 'DebugInfoCheck.exe'
+	}
+	else {
+		Write-Host '  (debugger info check skipped: it needs a .NET build of dnSpy)'
+	}
+
 	foreach ($configuration in 'Debug', 'Release') {
 		Write-Host "== $configuration"
 		$origDir = Join-Path $work "orig-$configuration"
@@ -57,6 +71,17 @@ try {
 		if ($lets -ne $expectedLets) { Fail "$configuration`: $lets let clauses, expected $expectedLets" }
 		foreach ($let in 'let gross =', 'let segment =', 'let size =', 'let band =') {
 			if (-not $code.Contains($let)) { Fail "$configuration`: missing '$let'" }
+		}
+
+		if ($debugInfoCheck) {
+			$debugInfo = & $debugInfoCheck $dllDir (Join-Path $origDir 'DecompilerStress.dll') 2>&1
+			if ($LASTEXITCODE) {
+				Fail "$configuration`: debugger info"
+				$debugInfo | Select-Object -First 15 | ForEach-Object { Write-Host "  $_" }
+			}
+			else {
+				$debugInfo | ForEach-Object { Write-Host "  OK debugger info: $("$_".Trim())" }
+			}
 		}
 
 		# The decompiled code must compile and behave like the original
