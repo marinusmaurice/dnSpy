@@ -66,13 +66,13 @@ namespace dnSpy.Decompiler.ILSpyModern.Core {
 			// Declared without a value: see TryTransformAssignedBuffer
 			if (init.Initializer is null || !IsDefault(init.Initializer))
 				return false;
-			if (!(TryMatch(statements, index, buffer, length) is Match match))
+			if (!(TryMatch(statements, index, buffer, length) is Match match) || match.Helpers.Count != 0)
 				return false;
 			// The declaration, one use per element, and the span
 			if (GetUses(decl, buffer).Count != length + 2)
 				return false;
 			Apply(compilation, astBuilder, match);
-			removed = length + 1;
+			removed = match.Elements.Sum(a => a.statements.Count) + 1;
 			return true;
 		}
 
@@ -104,9 +104,29 @@ namespace dnSpy.Decompiler.ILSpyModern.Core {
 			// The declaration, and per sequence the `= default`, one use per element and the span
 			if (matches.Count == 0 || GetUses(decl, buffer).Count != 1 + matches.Count * (length + 2))
 				return;
+			// The ref locals and temporaries of the elements are only used there (and declared)
+			var helpers = new HashSet<ILVariable>(matches.SelectMany(a => a.Helpers));
+			var helperDecls = new List<VariableDeclarationStatement>();
+			if (helpers.Count != 0) {
+				var matched = new HashSet<AstNode>(matches.SelectMany(a => a.Elements.SelectMany(b => b.statements)));
+				foreach (var node in root.Descendants) {
+					if (node is IdentifierExpression id && id.GetILVariable() is ILVariable v && helpers.Contains(v) && !id.Ancestors.Any(matched.Contains))
+						return;
+					if (node is VariableInitializer vi && vi.GetILVariable() is ILVariable v2 && helpers.Contains(v2)) {
+						if (!(vi.Parent is VariableDeclarationStatement helperDecl) || helperDecl.Variables.Count != 1)
+							return;
+						// `T x;` or `ref T r = ref Unsafe.NullRef<T>();` (RefLocalInitializerTransform)
+						if (vi.Initializer is not null && !(vi.Initializer is DirectionExpression { Expression: InvocationExpression { Target: MemberReferenceExpression { MemberName: "NullRef" } } }))
+							return;
+						helperDecls.Add(helperDecl);
+					}
+				}
+			}
 			foreach (var match in matches)
 				Apply(compilation, astBuilder, match);
 			decl.Remove();
+			foreach (var helperDecl in helperDecls)
+				helperDecl.Remove();
 		}
 
 		// `default` (DefaultLiteralResolveResult is internal)
@@ -115,7 +135,10 @@ namespace dnSpy.Decompiler.ILSpyModern.Core {
 
 		sealed class Match {
 			public Statement Start = null!;
-			public List<(ExpressionStatement statement, Expression value)> Elements = null!;
+			// Each element is set by one to three statements
+			public List<(List<Statement> statements, Expression value)> Elements = null!;
+			// The ref locals and temporaries the element statements use
+			public List<ILVariable> Helpers = null!;
 			public Statement User = null!;
 			public IdentifierExpression Use = null!;
 			public CastExpression? Cast;
@@ -123,24 +146,25 @@ namespace dnSpy.Decompiler.ILSpyModern.Core {
 			public IType ElementType = null!;
 		}
 
-		// statements[index] creates the buffer, the next `length` statements set its elements and the one after them
-		// uses it once, as a span
+		// statements[index] creates the buffer, the next statements set its elements and the one after them uses it once,
+		// as a span
 		static Match? TryMatch(List<Statement> statements, int index, ILVariable buffer, int length) {
-			if (index < 0 || index + length + 1 >= statements.Count)
+			if (index < 0)
 				return null;
 
-			var elements = new List<(ExpressionStatement statement, Expression value)>();
+			var elements = new List<(List<Statement> statements, Expression value)>();
+			var helpers = new List<ILVariable>();
+			int pos = index + 1;
 			for (int i = 0; i < length; i++) {
-				if (!(statements[index + 1 + i] is ExpressionStatement { Expression: AssignmentExpression { Operator: AssignmentOperatorType.Assign } assign } statement))
+				if (!(TryMatchElement(statements, pos, buffer, i, helpers) is (List<Statement> elementStatements, Expression value)))
 					return null;
-				if (!(assign.Left is IndexerExpression indexer) || !IsBuffer(indexer.Target, buffer) || indexer.Arguments.Count != 1)
-					return null;
-				if (!(indexer.Arguments.Single() is PrimitiveExpression { Value: int elementIndex }) || elementIndex != i)
-					return null;
-				elements.Add((statement, assign.Right));
+				elements.Add((elementStatements, value));
+				pos += elementStatements.Count;
 			}
+			if (pos >= statements.Count)
+				return null;
 
-			var user = statements[index + length + 1];
+			var user = statements[pos];
 			var usesInUser = user.Descendants.OfType<IdentifierExpression>().Where(a => IsBuffer(a, buffer)).ToArray();
 			if (usesInUser.Length != 1)
 				return null;
@@ -157,13 +181,15 @@ namespace dnSpy.Decompiler.ILSpyModern.Core {
 				return null;
 			if (cast is not null && !IsSpan(cast.GetResolveResult().Type, out _))
 				cast = null;
-			if (elements.Any(a => a.value.DescendantsAndSelf.OfType<IdentifierExpression>().Any(b => IsBuffer(b, buffer))))
+			// The values can't use the buffer, or the ref locals and temporaries that are removed with it
+			if (elements.Any(a => a.value.DescendantsAndSelf.OfType<IdentifierExpression>().Any(b => IsBuffer(b, buffer) || (b.GetILVariable() is ILVariable v && helpers.Contains(v)))))
 				return null;
 			if (!CanMoveAfterPrecedingCode(user, (Expression?)cast ?? use, elements.Select(a => a.value)))
 				return null;
 			return new Match {
 				Start = statements[index],
 				Elements = elements,
+				Helpers = helpers,
 				User = user,
 				Use = use,
 				Cast = cast,
@@ -171,6 +197,53 @@ namespace dnSpy.Decompiler.ILSpyModern.Core {
 				ElementType = elementType,
 			};
 		}
+
+		/// <summary>
+		/// Element <paramref name="elementIndex"/> starting at <c>statements[pos]</c>: <c>buffer[i] = value;</c>, or (when the
+		/// value is a <c>?:</c>/<c>??</c> expression in code ICSharpCode.Decompiler duplicated) written through a ref local:
+		/// <c>r = ref buffer[i]; n = (r = value);</c>, <c>r = ref buffer[i]; n = value; r = n;</c> or
+		/// <c>r = ref buffer[i]; r = value;</c>
+		/// </summary>
+		static (List<Statement>, Expression)? TryMatchElement(List<Statement> statements, int pos, ILVariable buffer, int elementIndex, List<ILVariable> helpers) {
+			if (pos >= statements.Count || !(GetAssignment(statements[pos]) is AssignmentExpression first))
+				return null;
+			if (IsElement(first.Left, buffer, elementIndex))
+				return (new List<Statement> { statements[pos] }, first.Right);
+
+			// r = ref buffer[i]
+			if (!(first.Left is IdentifierExpression refLocal && refLocal.GetILVariable() is ILVariable r) || !(first.Right is DirectionExpression { FieldDirection: FieldDirection.Ref } dir) || !IsElement(dir.Expression, buffer, elementIndex))
+				return null;
+			if (pos + 1 >= statements.Count || !(GetAssignment(statements[pos + 1]) is AssignmentExpression second))
+				return null;
+			bool IsLocal(Expression expr, ILVariable v) => expr is IdentifierExpression id && id.GetILVariable() == v;
+			// r = value
+			if (IsLocal(second.Left, r)) {
+				helpers.Add(r);
+				return (new List<Statement> { statements[pos], statements[pos + 1] }, second.Right);
+			}
+			if (!(second.Left is IdentifierExpression tempLocal && tempLocal.GetILVariable() is ILVariable n) || n == r)
+				return null;
+			// n = (r = value)
+			if (second.Right is AssignmentExpression { Operator: AssignmentOperatorType.Assign } inner && IsLocal(inner.Left, r)) {
+				helpers.Add(r);
+				helpers.Add(n);
+				return (new List<Statement> { statements[pos], statements[pos + 1] }, inner.Right);
+			}
+			// n = value; r = n
+			if (pos + 2 < statements.Count && GetAssignment(statements[pos + 2]) is AssignmentExpression third && IsLocal(third.Left, r) && IsLocal(third.Right, n)) {
+				helpers.Add(r);
+				helpers.Add(n);
+				return (new List<Statement> { statements[pos], statements[pos + 1], statements[pos + 2] }, second.Right);
+			}
+			return null;
+		}
+
+		static AssignmentExpression? GetAssignment(Statement statement) =>
+			statement is ExpressionStatement { Expression: AssignmentExpression { Operator: AssignmentOperatorType.Assign } assign } ? assign : null;
+
+		static bool IsElement(Expression expr, ILVariable buffer, int elementIndex) =>
+			expr is IndexerExpression indexer && IsBuffer(indexer.Target, buffer) && indexer.Arguments.Count == 1 &&
+			indexer.Arguments.Single() is PrimitiveExpression { Value: int index } && index == elementIndex;
 
 		static void Apply(ICompilation compilation, TypeSystemAstBuilder astBuilder, Match match) {
 			var cast = match.Cast;
@@ -193,7 +266,7 @@ namespace dnSpy.Decompiler.ILSpyModern.Core {
 			// Keep the IL ranges for the debugger's statement mapping
 			foreach (var node in match.Start.DescendantsAndSelf)
 				ConditionalToSwitchExpressionTransform.CopyILAnnotations(node, arrayCreate);
-			foreach (var (statement, _) in match.Elements) {
+			foreach (var statement in match.Elements.SelectMany(a => a.statements)) {
 				foreach (var node in statement.DescendantsAndSelf)
 					ConditionalToSwitchExpressionTransform.CopyILAnnotations(node, arrayCreate);
 			}
@@ -207,7 +280,7 @@ namespace dnSpy.Decompiler.ILSpyModern.Core {
 				match.Use.ReplaceWith(newCast);
 			}
 			match.Start.Remove();
-			foreach (var (statement, _) in match.Elements)
+			foreach (var statement in match.Elements.SelectMany(a => a.statements))
 				statement.Remove();
 			match.User.AddAnnotation(MergedStatementAnnotation.Instance);
 		}

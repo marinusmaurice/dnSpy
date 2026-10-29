@@ -23,8 +23,8 @@ namespace ExportCases {
 		public static int Sum(string a, string? b) {
 			fixed (char* pa = a) {
 				fixed (char* pb = b) {
-					// (Conditional elements are written through ref locals, which isn't handled yet: see docs/TODO.md)
-					Span<int> values = [a.Length, pa[0], Length(b), First(pb)];
+					// The ?: and ?? elements are written through ref locals to the buffer's elements (7.0.3.0)
+					Span<int> values = [a.Length, pa[0], b?.Length ?? -1, pb == null ? 0 : pb[0], Length(b), First(pb)];
 					return Total(values);
 				}
 			}
