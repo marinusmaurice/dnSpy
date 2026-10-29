@@ -21,7 +21,9 @@ Each item gets its own branch from `master`, named after its target version (eg.
 ## Next bug-fix releases (7.0.y.0)
 
 - [ ] ⏸ ★ **M** Fix `out var` in Watch ("Internal debugger error"): implement the EE variable intrinsics (`CreateVariable`, `GetVariableAddress`, `GetObjectByAlias`) in dnSpy's interpreter. (The Immediate window that this enables is a feature, see 7.1.)
-- [ ] **M** C# (ILSpy 11) gaps: decompile a whole namespace, `using` aliases, BAML (XAML) through the new engine, the last 4 errors in the Roslyn export test.
+- [x] **M** BAML (XAML) events (7.0.1.0): .NET 5+ WPF apps lost every XAML event (`Connect` method "cannot be parsed"); events in templates and style `EventSetter`s were lost on all frameworks. The BAML decompiler now reads `IComponentConnector.Connect`/`IStyleConnector.Connect` from the IL (no old decompiler needed); exported WPF projects build (code-behind without `IStyleConnector.Connect`, `LangVersion` in .NET Framework projects). Regression test: `Test/WpfEvents` in `check.ps1`.
+- [ ] **M** C# (ILSpy 11) Export to Project: the last 4 errors in the Roslyn (Microsoft.CodeAnalysis.dll) export test (compiler-generated `<>y__InlineArray` locals, `BytesToStringHelper`, `DefaultTypeDef`). Planned for 7.0.2.0.
+- [ ] **S** Exporting a VB WPF app as a C# project doesn't build: ILSpy writes C# stubs for VB's renamed `Connect`/`InitializeComponent` interface methods, which the WPF build generates again.
 - [ ] **S** Translations for the new strings (C# (ILSpy 11) settings page, console help).
 - [ ] **S** Per-monitor DPI / 4K scaling check.
 
@@ -50,6 +52,8 @@ Suggested first, in this order:
 - [ ] **M** Single-file bundles: open a .NET 6+ single-file `.exe` and browse the DLLs inside.
 - [ ] **S–M** Xamarin/MAUI Android: unpack compressed `XALZ` assemblies from APKs.
 - [ ] **S** C# language version picker in the toolbar.
+- [ ] **M** Decompile a whole namespace (all its types in one view; both C# languages only list the types today).
+- [ ] **S** `using` aliases in C# (ILSpy 11)'s debugger info (the old language's `ImportInfo` aliases), for Watch expressions that use an alias.
 - [ ] **M** Source Link and symbol servers: fetch real source and PDBs (Microsoft/NuGet symbol servers), fall back to decompiling.
 - [ ] **M** Remove the old ILSpy 2.3 decompiler and its submodules (ICSharpCode.Decompiler 2.3, NRefactory) after a release or two with both. Note it in the release: extensions that use the old `ICSharpCode.Decompiler` stop working.
 
@@ -108,7 +112,7 @@ Suggested first, in this order:
 ## No release needed (docs, CI, outside the repo)
 
 - [ ] ★ **S** winget, Scoop and Chocolatey manifests.
-- [ ] **S** Report the `let` + switch expression bug upstream to ILSpy (icsharpcode/ILSpy: issue or pull request with the DecompilerStress sections 4 and 11), so dnSpy can drop its workaround once a fixed package ships.
+- [ ] **S** Report the `let` + switch expression bug upstream to ILSpy, so dnSpy can drop its workaround once a fixed package ships. The issue text is ready in [upstream/ILSpy-let-switch-expression.md](upstream/ILSpy-let-switch-expression.md); the owner submits it.
 - [ ] ⏸ ★ **S** Dependabot or Renovate for NuGet packages and GitHub Actions.
 - [ ] ⏸ **S** CodeQL security scanning in CI.
 - [ ] ⏸ **S** Issue/PR templates, CONTRIBUTING.md, CHANGELOG.md.

@@ -52,6 +52,7 @@ The goal of this fork is to keep dnSpy useful for current .NET without breaking 
 
 **Fixes**
 - Stepping over `await` with the new decompiler ran to the end of the program (fixed in 7.0.0)
+- XAML (BAML) of .NET 5+ WPF apps lost every event handler, and events in templates and style `EventSetter`s were lost on all frameworks; exported WPF projects then built but did nothing (fixed in 7.0.1.0)
 - Edit Method could save .NET Framework assemblies that referenced `System.Private.CoreLib` (and crashed)
 - Watch expressions with pattern variables (`x is int y`) showed "Internal debugger error"
 - Mono debugger: `CustomAttributeNamedArgumentMirror.Field` always returned `null`
@@ -164,6 +165,9 @@ To debug Unity games, you need this repo too: https://github.com/dnSpy/dnSpy-Uni
 - Fixed: the Debug configuration (what Visual Studio builds) failed with about 25 errors in the C# and VB expression compilers (`MethodSymbolAdapter`, `WithSynthesizedLocalKindAndSyntax`). The Roslyn 5.9 sources use `#if DEBUG` for code that only compiles against Roslyn's own Debug build, and dnSpy uses the Release NuGet packages, so those two projects no longer define `DEBUG`.
 - CI uses current GitHub Actions and reads the SDK version from `global.json`. It also builds the Debug configuration (.NET Framework).
 - Submodules point to forks under `marinusmaurice` (all upstream branches kept). The Roslyn expression compiler is on branch `dnSpy-roslyn-5.9`; the others are pinned to the same commits as upstream dnSpy.
+
+- 7.0.1.0: the BAML decompiler reads the code-behind's `IComponentConnector.Connect` and `IStyleConnector.Connect` methods from the IL instead of with the old ILSpy 2.3 engine (which couldn't parse them for .NET 5+ WPF apps, where the interfaces moved to `System.Xaml` and `Connect` dispatches with `switch (connectionId - 1)`). For each connection id in the BAML it evaluates the method's dispatch code and turns the id's field stores (`x:Name`, also VB's `WithEvents` properties), event subscriptions, attached events (`AddHandler`) and style `EventSetter`s (created in code, not in the BAML) into XAML again. Export to Project removes `IStyleConnector.Connect` from the code-behind too (the WPF build generates it again), and .NET Framework (classic) projects get `LangVersion latest` (they defaulted to C# 7.3, and C# (ILSpy 11) writes current C#). The BAML decompiler no longer references the old decompiler.
+- 7.0.1.0: dnSpy's assemblies have file version 7.x.y.z (the release); the assembly version stays 7.0.0.0 so extensions keep loading.
 
 ## Tested
 
