@@ -238,6 +238,17 @@ namespace dnSpy.Debugger.DotNet.CorDebug.Impl {
 					}
 					for (int i = 0; i < arguments.Length; i++) {
 						var paramType = paramTypes[i];
+						// A ref/out argument that is a variable of the frame: pass the variable (not a handle to its value),
+						// so the called method can change it
+						if (arguments[i] is DbgDotNetFrameVariableReference frameVariable && paramType.IsByRef) {
+							if (!ILDbgEngineStackFrame.TryGetEngineStackFrame(evalInfo.Frame, out var ilFrame))
+								return DbgDotNetValueResult.CreateError(CordbgErrorHelper.InternalError);
+							var variable = frameVariable.IsParameter ? ilFrame.CorFrame.GetILArgument(frameVariable.Index, out hr) : ilFrame.CorFrame.GetILLocal(frameVariable.Index, out hr);
+							if (variable is null)
+								return DbgDotNetValueResult.CreateError(CordbgErrorHelper.GetErrorMessage(hr));
+							args[w++] = variable;
+							continue;
+						}
 						var val = converter.Convert(arguments[i], paramType, out origType);
 						if (val.ErrorMessage is not null)
 							return DbgDotNetValueResult.CreateError(val.ErrorMessage);

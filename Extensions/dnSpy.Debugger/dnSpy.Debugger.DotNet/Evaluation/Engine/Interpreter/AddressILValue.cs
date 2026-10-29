@@ -165,6 +165,8 @@ namespace dnSpy.Debugger.DotNet.Evaluation.Engine.Interpreter {
 			this.index = index;
 		}
 
+		public int Index => index;
+
 		protected override DbgDotNetValue? ReadValue() => runtime.LoadLocal2(index);
 		protected override void WriteValue(object? value) => runtime.StoreLocal2(index, localType, value);
 
@@ -182,6 +184,8 @@ namespace dnSpy.Debugger.DotNet.Evaluation.Engine.Interpreter {
 			this.argumentType = argumentType;
 			this.index = index;
 		}
+
+		public int Index => index;
 
 		protected override DbgDotNetValue? ReadValue() => runtime.LoadArgument2(index);
 		protected override void WriteValue(object? value) => runtime.StoreArgument2(index, argumentType, value);

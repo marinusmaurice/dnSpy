@@ -803,13 +803,27 @@ namespace dnSpy.Debugger.DotNet.Evaluation.Engine.Interpreter {
 				throw new InvalidOperationException();
 			var res = values.Length == 0 ? Array.Empty<object?>() : new object?[values.Length];
 			for (int i = 0; i < res.Length; i++) {
-				// A declared variable passed as a ref/out argument: pass the array element, the debugger passes its location
+				// A ref/out argument whose value the debugger can pass by its location: a declared variable (its array
+				// element), or a local or parameter of the method that's being debugged (its value in the frame)
 				if (targetTypes[i].IsByRef && values[i] is IDebuggerRuntimeILValue addr && addr.GetDotNetValue() is VariableAddressValue variable)
 					res[i] = RecordValue(variable.GetElement());
+				else if (targetTypes[i].IsByRef && values[i] is LocalAddress local && interpreterLocalsProvider.IsRealLocal(local.Index))
+					res[i] = GetFrameVariableArgument(targetTypes[i], isParameter: false, local.Index);
+				else if (targetTypes[i].IsByRef && values[i] is ArgumentAddress argument)
+					res[i] = GetFrameVariableArgument(targetTypes[i], isParameter: true, argument.Index);
 				else
 					res[i] = GetDebuggerValue(values[i], targetTypes[i]);
 			}
 			return res;
+		}
+
+		// A value type variable's value has its location in the frame. A reference type variable's value is kept in a
+		// handle (frame values can't be used once the process runs, eg. after a func-eval), so the runtime reads the
+		// variable from the frame when it calls the method.
+		object GetFrameVariableArgument(DmdType byRefType, bool isParameter, int index) {
+			if (byRefType.GetElementType()!.IsValueType)
+				return isParameter ? LoadArgument2(index) : LoadLocal2(index);
+			return new DbgDotNetFrameVariableReference(isParameter, (uint)index);
 		}
 
 		public override int GetSizeOfValueType(DmdType type) {

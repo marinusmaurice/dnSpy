@@ -55,6 +55,11 @@ namespace dnSpy.Debugger.DotNet.Evaluation.Engine.Interpreter {
 			localsProvider.Initialize(evalInfo, method, body);
 		}
 
+		/// <summary>
+		/// true if it's a local of the method that's being debugged (else it's a local the expression compiler added)
+		/// </summary>
+		public bool IsRealLocal(int index) => (uint)index < (uint)realLocalVariables.Count;
+
 		public override DbgDotNetValue? GetValueAddress(int index, DmdType targetType) {
 			if ((uint)index < (uint)realLocalVariables.Count)
 				return localsProvider.GetValueAddress(index, targetType);
