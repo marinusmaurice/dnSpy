@@ -4,17 +4,21 @@ What changed in each release of this fork, newest first. The release workflow pu
 
 Each section starts with a short summary, then **New Features** (new things you can do), **Enhancements** (existing things that work better) and **Bug Fixes**, with a link to the commit for each item. Technical details are in [All changes in detail](docs/CHANGES.md#all-changes-in-detail) and in [docs/MODERNIZATION_PLAN.md](docs/MODERNIZATION_PLAN.md).
 
-## 7.4.1.0
+## 7.5.0.0
 
-A shorter title bar and a shorter README.
+Work in progress: time-travel debugging (a history of the stops of a debugged .NET program, to look back at earlier call stacks and values), a shorter title bar and a shorter README. 7.4.1.0 was not released on its own; its changes are part of 7.5.0.0.
 
-### Bug Fixes
+### New Features
 
-- The title bar showed the full commit hash (`dnSpy v7.3.0.0+fd14f75aa01f9b23fa9a5b04cb2fec5384522649 (64-bit, ...)`); it shows `dnSpy v7.4.1.0 (64-bit, ...)` now.
+- Time-travel debugging: design written ([docs/TIME_TRAVEL_DEBUGGING.md](docs/TIME_TRAVEL_DEBUGGING.md)); not implemented yet.
 
 ### Enhancements
 
 - The README says why this fork exists and lists its most important changes, with a link to the original dnSpy; the details moved to [docs/CHANGES.md](docs/CHANGES.md).
+
+### Bug Fixes
+
+- The title bar showed the full commit hash (`dnSpy v7.3.0.0+fd14f75aa01f9b23fa9a5b04cb2fec5384522649 (64-bit, ...)`); it shows `dnSpy v7.5.0.0 (64-bit, ...)` now.
 
 ## 7.4.0.0
 
