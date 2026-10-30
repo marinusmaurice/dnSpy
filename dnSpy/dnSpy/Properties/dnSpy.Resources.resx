@@ -2136,4 +2136,58 @@ Filter can be changed in Assembly Explorer options.</value>
   <data name="OpenNuGet_SearchError" xml:space="preserve">
     <value>Couldn't search nuget.org: {0}</value>
   </data>
+  <data name="Update_CheckCommand" xml:space="preserve">
+    <value>Check for _Updates...</value>
+  </data>
+  <data name="Update_Title" xml:space="preserve">
+    <value>dnSpy Update</value>
+  </data>
+  <data name="Update_Available" xml:space="preserve">
+    <value>dnSpy {0} is available. You have {1}.</value>
+  </data>
+  <data name="Update_Explanation" xml:space="preserve">
+    <value>Update now downloads it, closes dnSpy, replaces this dnSpy's files with the new ones and starts dnSpy again. Your settings are kept.</value>
+  </data>
+  <data name="Update_CheckAtStartup" xml:space="preserve">
+    <value>Check for _updates at startup (once a day)</value>
+  </data>
+  <data name="Update_InstallButton" xml:space="preserve">
+    <value>_Update Now</value>
+  </data>
+  <data name="Update_ReleaseNotesButton" xml:space="preserve">
+    <value>_Release Notes</value>
+  </data>
+  <data name="Update_LaterButton" xml:space="preserve">
+    <value>_Later</value>
+  </data>
+  <data name="Update_NoNewVersion" xml:space="preserve">
+    <value>You have the latest version of dnSpy ({0}).</value>
+  </data>
+  <data name="Update_CheckFailed" xml:space="preserve">
+    <value>Couldn't check for updates: {0}</value>
+  </data>
+  <data name="Update_Downloading" xml:space="preserve">
+    <value>Downloading...</value>
+  </data>
+  <data name="Update_DownloadProgress" xml:space="preserve">
+    <value>Downloading: {0} of {1} MB</value>
+  </data>
+  <data name="Update_DownloadFailed" xml:space="preserve">
+    <value>The download failed: {0}</value>
+  </data>
+  <data name="Update_NoAsset" xml:space="preserve">
+    <value>The release has no {0}.</value>
+  </data>
+  <data name="Update_NoAssetForBuild" xml:space="preserve">
+    <value>This release has no download for this build of dnSpy. Use Release Notes to download it yourself.</value>
+  </data>
+  <data name="Update_ReadOnlyInstallDir" xml:space="preserve">
+    <value>dnSpy can't write to its folder (eg. it's in Program Files). Use Release Notes to download it yourself, or run dnSpy as administrator.</value>
+  </data>
+  <data name="Update_BadHash" xml:space="preserve">
+    <value>The downloaded file doesn't match the release's SHA-256 hash.</value>
+  </data>
+  <data name="Update_BadZip" xml:space="preserve">
+    <value>The downloaded zip has no {0}.</value>
+  </data>
 </root>

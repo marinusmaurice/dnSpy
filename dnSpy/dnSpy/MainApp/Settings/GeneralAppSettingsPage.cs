@@ -156,6 +156,17 @@ namespace dnSpy.MainApp.Settings {
 		}
 		bool useMemoryMappedIO;
 
+		public bool CheckForUpdates {
+			get => checkForUpdates;
+			set {
+				if (checkForUpdates != value) {
+					checkForUpdates = value;
+					OnPropertyChanged(nameof(CheckForUpdates));
+				}
+			}
+		}
+		bool checkForUpdates;
+
 		public GeneralAppSettingsPage(IThemeServiceImpl themeService, IWindowsExplorerIntegrationService windowsExplorerIntegrationService, IDocumentTabServiceSettings documentTabServiceSettings, DocumentTreeViewSettingsImpl documentTreeViewSettings, IDsDocumentServiceSettings documentServiceSettings, AppSettingsImpl appSettings, MessageBoxService messageBoxService) {
 			this.themeService = themeService ?? throw new ArgumentNullException(nameof(themeService));
 			this.windowsExplorerIntegrationService = windowsExplorerIntegrationService ?? throw new ArgumentNullException(nameof(windowsExplorerIntegrationService));
@@ -177,6 +188,7 @@ namespace dnSpy.MainApp.Settings {
 			RestoreTabs = documentTabServiceSettings.RestoreTabs;
 			DeserializeResources = documentTreeViewSettings.DeserializeResources;
 			UseMemoryMappedIO = documentServiceSettings.UseMemoryMappedIO;
+			CheckForUpdates = appSettings.CheckForUpdates;
 		}
 
 		public override string[]? GetSearchStrings() => ThemesVM.Select(a => a.Name).ToArray();
@@ -187,6 +199,7 @@ namespace dnSpy.MainApp.Settings {
 				themeService.Theme = SelectedThemeVM.Theme;
 			windowsExplorerIntegrationService.WindowsExplorerIntegration = WindowsExplorerIntegration;
 			appSettings.AllowMoreThanOneInstance = AllowMoreThanOneInstance;
+			appSettings.CheckForUpdates = CheckForUpdates;
 			documentTabServiceSettings.DecompileFullType = DecompileFullType;
 			documentTabServiceSettings.RestoreTabs = RestoreTabs;
 			documentTreeViewSettings.DeserializeResources = DeserializeResources;

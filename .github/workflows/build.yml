@@ -105,6 +105,41 @@ jobs:
           path: C:\builtfiles\dnSpy-net-win64.zip
           if-no-files-found: error
 
+      # The release's notes: its section in CHANGELOG.md (## 7.x.y.z), then what's in each zip
+      - name: Write the release notes
+        if: startsWith(github.ref, 'refs/tags/')
+        shell: pwsh
+        run: |
+          $version = '${{ github.ref_name }}'.TrimStart('v')
+          $section = @()
+          $inSection = $false
+          foreach ($line in Get-Content CHANGELOG.md -Encoding utf8) {
+            if ($line -match '^## ') {
+              if ($inSection) { break }
+              $inSection = $line.Substring(3).Trim() -eq $version
+              continue
+            }
+            if ($inSection) { $section += $line }
+          }
+          $notes = ($section -join "`n").Trim()
+          if (-not $notes) {
+            # Pre-releases (v7.0.0-beta.1) don't need a section
+            if (-not $version.Contains('-')) { Write-Error "CHANGELOG.md has no '## $version' section"; exit 1 }
+            $notes = 'Pre-release.'
+          }
+          $downloads = @(
+            ''
+            '### Downloads'
+            ''
+            '- `dnSpy-netframework.zip`: needs .NET Framework 4.8 (dnSpy.exe = 64-bit, dnSpy-x86.exe = 32-bit)'
+            '- `dnSpy-net-win64.zip` / `dnSpy-net-win32.zip`: self-contained .NET 10, no runtime install needed'
+            ''
+            'dnSpy 7.3 and later can update themselves (Help > Check for Updates). If your antivirus software complains, it''s a false positive.'
+          ) -join "`n"
+          New-Item -ItemType Directory -Path C:\builtfiles -Force > $null
+          Set-Content -Path C:\builtfiles\release-notes.md -Value ($notes + "`n" + $downloads) -Encoding utf8
+          Get-Content C:\builtfiles\release-notes.md
+
       # Create a new release: create a tag, then 'git push origin <tagname>', wait for it to build
       - name: Create a new GitHub release if a new tag is pushed
         uses: softprops/action-gh-release@v2
@@ -115,13 +150,7 @@ jobs:
             C:\builtfiles\dnSpy-net-win64.zip
           # Tags like v7.0.0-beta.1 are published as pre-releases
           prerelease: ${{ contains(github.ref_name, '-') }}
-          body: |
-            dnSpy for .NET Framework 4.8 and .NET 10. See the README for what changed since 6.1.8.
-
-            - `dnSpy-netframework.zip`: needs .NET Framework 4.8 (dnSpy.exe = 64-bit, dnSpy-x86.exe = 32-bit)
-            - `dnSpy-net-win64.zip` / `dnSpy-net-win32.zip`: self-contained .NET 10, no runtime install needed
-
-            If your antivirus software complains, it's a false positive.
+          body_path: C:\builtfiles\release-notes.md
         if: startsWith(github.ref, 'refs/tags/')
         env:
           GITHUB_TOKEN: ${{secrets.GITHUB_TOKEN}}

@@ -1,0 +1,68 @@
+<!--
+    Copyright (C) 2014-2019 de4dot@gmail.com
+
+    This file is part of dnSpy
+
+    dnSpy is free software: you can redistribute it and/or modify
+    it under the terms of the GNU General Public License as published by
+    the Free Software Foundation, either version 3 of the License, or
+    (at your option) any later version.
+
+    dnSpy is distributed in the hope that it will be useful,
+    but WITHOUT ANY WARRANTY; without even the implied warranty of
+    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+    GNU General Public License for more details.
+
+    You should have received a copy of the GNU General Public License
+    along with dnSpy.  If not, see <http://www.gnu.org/licenses/>.
+-->
+<ctrls:WindowBase x:Class="dnSpy.MainApp.Update.UpdateDlg"
+        x:ClassModifier="internal"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:ctrls="clr-namespace:dnSpy.Contracts.Controls;assembly=dnSpy.Contracts.DnSpy"
+        xmlns:p="clr-namespace:dnSpy.Properties"
+        Style="{StaticResource DialogWindowStyle}" WindowStartupLocation="CenterOwner"
+        MinHeight="250" MinWidth="400"
+        Title="{x:Static p:dnSpy_Resources.Update_Title}" Height="460" Width="620">
+    <Grid>
+        <Grid.Resources>
+            <BooleanToVisibilityConverter x:Key="booleanToVisibilityConverter" />
+        </Grid.Resources>
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto" />
+            <RowDefinition Height="Auto" />
+            <RowDefinition Height="Auto" />
+            <RowDefinition Height="*" />
+            <RowDefinition Height="Auto" />
+            <RowDefinition Height="Auto" />
+        </Grid.RowDefinitions>
+
+        <TextBlock Grid.Row="0" Margin="5 5 5 0" FontWeight="Bold" TextWrapping="Wrap" Text="{Binding Message}" />
+        <TextBlock Grid.Row="1" Margin="5 5 5 0" TextWrapping="Wrap" Text="{x:Static p:dnSpy_Resources.Update_Explanation}" />
+        <TextBlock Grid.Row="2" Margin="5 5 5 0" TextWrapping="Wrap" Foreground="OrangeRed" Text="{Binding CantInstallReason}" Visibility="{Binding HasCantInstallReason, Converter={StaticResource booleanToVisibilityConverter}}" />
+        <TextBox Grid.Row="3" Margin="5 8 5 0" IsReadOnly="True" TextWrapping="Wrap" VerticalScrollBarVisibility="Auto" Text="{Binding ReleaseNotes, Mode=OneWay}" />
+
+        <Grid Grid.Row="4" Margin="5 5 5 0">
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="*" />
+                <ColumnDefinition Width="Auto" />
+            </Grid.ColumnDefinitions>
+            <ProgressBar Grid.Column="0" Height="12" Minimum="0" Maximum="100" Value="{Binding Progress}" Visibility="{Binding IsDownloading, Converter={StaticResource booleanToVisibilityConverter}}" />
+            <TextBlock Grid.Column="1" Margin="5 0 0 0" TextWrapping="Wrap" Text="{Binding StatusText}" />
+        </Grid>
+
+        <Grid Grid.Row="5" Margin="5">
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="*" />
+                <ColumnDefinition Width="Auto" />
+                <ColumnDefinition Width="Auto" />
+                <ColumnDefinition Width="Auto" />
+            </Grid.ColumnDefinitions>
+            <CheckBox Grid.Column="0" VerticalAlignment="Center" Content="{x:Static p:dnSpy_Resources.Update_CheckAtStartup}" IsChecked="{Binding CheckAtStartup}" />
+            <Button Grid.Column="1" Margin="5 0 0 0" Padding="10 0" Style="{StaticResource DialogButton}" Content="{x:Static p:dnSpy_Resources.Update_InstallButton}" IsDefault="True" IsEnabled="{Binding CanStartInstall}" Click="installButton_Click" />
+            <Button Grid.Column="2" Margin="5 0 0 0" Padding="10 0" Style="{StaticResource DialogButton}" Content="{x:Static p:dnSpy_Resources.Update_ReleaseNotesButton}" Click="releaseNotesButton_Click" />
+            <Button Grid.Column="3" Margin="5 0 0 0" Padding="10 0" Style="{StaticResource DialogButton}" Content="{x:Static p:dnSpy_Resources.Update_LaterButton}" IsCancel="True" />
+        </Grid>
+    </Grid>
+</ctrls:WindowBase>

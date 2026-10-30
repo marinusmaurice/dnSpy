@@ -32,7 +32,7 @@
     <!-- Assembly version that extensions bind to: stays 7.0.0.0 for all 7.x releases. Update app.config whenever this value changes -->
     <DnSpyAssemblyVersion>7.0.0.0</DnSpyAssemblyVersion>
     <!-- The release: 7.x.y.z (x = features, y = bug fixes, z = rebuild without code changes, see docs/TODO.md). File version of the assemblies -->
-    <DnSpyFileVersion>7.2.0.0</DnSpyFileVersion>
+    <DnSpyFileVersion>7.3.0.0</DnSpyFileVersion>
     <!-- This is shown in the title bar -->
     <DnSpyAssemblyInformationalVersion>v$(DnSpyFileVersion)</DnSpyAssemblyInformationalVersion>
     <DnSpyAssemblyCopyright>Copyright (C) 2014-2020 de4dot@gmail.com</DnSpyAssemblyCopyright>

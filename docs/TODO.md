@@ -14,7 +14,7 @@ dnSpy stays on major version 7. Versions have four parts, **7.x.y.z**:
 | **y** | Bug-fix release: fixes only, no new features or options | 7.0.1.0 |
 | **z** | Rebuild without code changes: signing, packaging, CI | 7.0.0.1 |
 
-Each item gets its own branch from `master`, named after its target version (eg. `7.0.1.0/fix-out-var`), whose first commit sets the version in `DnSpyCommon.props`. One release branch at a time. When the work is tested (tests, `Test/DecompilerStress/check-publish.ps1`, a click-test in the UI when the debugger or UI changed) and CI is green, it's merged into `master` and tagged `v7.x.y.z`, which builds and publishes the release. A feature release can get `-beta.N` tags first (published as pre-releases). Docs and CI-only changes don't need a version.
+Each item gets its own branch from `master`, named after its target version (eg. `7.0.1.0/fix-out-var`), whose first commit sets the version in `DnSpyCommon.props`, and which adds the version's section to `CHANGELOG.md` (the release notes; the release build fails without it). One release branch at a time. When the work is tested (tests, `Test/DecompilerStress/check-publish.ps1`, a click-test in the UI when the debugger or UI changed) and CI is green, it's merged into `master` and tagged `v7.x.y.z`, which builds and publishes the release. A feature release can get `-beta.N` tags first (published as pre-releases). Docs and CI-only changes don't need a version.
 
 `DnSpyAssemblyVersion` stays `7.0.0.0` for all 7.x releases (extensions bind to it); the first 4-part release adds a separate file/informational version for 7.x.y.z.
 
@@ -103,7 +103,9 @@ Suggested first, in this order:
 - [ ] **S** Translate the 7.1.0.0 strings (Open from NuGet, NuGet Packages) in `dnSpy/dnSpy/Properties/dnSpy.Resources.*.resx`; they show in English for now.
 - [x] **S** Open from NuGet: search nuget.org (7.2.0.0: a search dialog with versions and prereleases).
 - [ ] **S** Open from NuGet: private feeds from NuGet.config.
-- [ ] **S** Update checker based on GitHub releases.
+- [x] **S** Update checker based on GitHub releases (7.3.0.0: daily check and Help → Check for Updates, release notes, Update Now downloads the build's zip, checks its SHA-256, replaces the files after dnSpy exits and restarts it).
+- [ ] **S** Translate the 7.3.0.0 strings (update dialog, Check for Updates, the General page's update option) in `dnSpy/dnSpy/Properties`.
+- [ ] **S** Updates: an option for prereleases (beta tags), and updating a dnSpy in a folder that needs admin rights (today it opens the release page).
 
 ### Extensibility and scripting
 

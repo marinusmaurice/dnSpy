@@ -6107,6 +6107,7 @@
                 <RowDefinition Height="Auto" />
                 <RowDefinition Height="Auto" />
                 <RowDefinition Height="Auto" />
+                <RowDefinition Height="Auto" />
             </Grid.RowDefinitions>
             <Grid.ColumnDefinitions>
                 <ColumnDefinition Width="Auto" />
@@ -6119,7 +6120,8 @@
             <CheckBox Grid.Row="3" Grid.Column="0" Grid.ColumnSpan="2" Margin="0 5 0 0" IsChecked="{Binding DecompileFullType}" Content="{x:Static p:dnSpy_Resources.DisplaySettings_DecompileType}" />
             <CheckBox Grid.Row="4" Grid.Column="0" Grid.ColumnSpan="2" Margin="0 5 0 0" IsChecked="{Binding RestoreTabs}" Content="{x:Static p:dnSpy_Resources.DisplaySettings_RestoreTabs}" />
             <CheckBox Grid.Row="5" Grid.Column="0" Grid.ColumnSpan="2" Margin="0 5 0 0" IsChecked="{Binding UseMemoryMappedIO}" Content="{x:Static p:dnSpy_Resources.Options_Misc_UseMmapdIO}" />
-            <Button Grid.Row="6" Grid.Column="0" Grid.ColumnSpan="2" Margin="0 5 0 0" Content="{x:Static p:dnSpy_Resources.Options_Misc_Button_EnableAllWarnings}" Command="{Binding ClearAllWarningsCommand}" />
+            <CheckBox Grid.Row="6" Grid.Column="0" Grid.ColumnSpan="2" Margin="0 5 0 0" IsChecked="{Binding CheckForUpdates}" Content="{x:Static p:dnSpy_Resources.Update_CheckAtStartup}" />
+            <Button Grid.Row="7" Grid.Column="0" Grid.ColumnSpan="2" Margin="0 5 0 0" Content="{x:Static p:dnSpy_Resources.Options_Misc_Button_EnableAllWarnings}" Command="{Binding ClearAllWarningsCommand}" />
         </Grid>
     </DataTemplate>
 

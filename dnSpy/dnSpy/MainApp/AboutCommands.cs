@@ -25,8 +25,9 @@ using dnSpy.Properties;
 
 namespace dnSpy.MainApp {
 	static class AboutHelpers {
-		public const string BASE_URL = @"https://github.com/dnSpy/dnSpy/";
-		public const string BUILD_URL = @"https://github.com/dnSpy/dnSpy/actions";
+		// This fork's repository (releases, builds); the original is https://github.com/dnSpy/dnSpy
+		public const string BASE_URL = @"https://github.com/marinusmaurice/dnSpy/";
+		public const string BUILD_URL = @"https://github.com/marinusmaurice/dnSpy/actions";
 
 		public static void OpenWebPage(string url, IMessageBoxService messageBoxService) {
 			try {

@@ -20,6 +20,7 @@
 using System;
 using System.ComponentModel;
 using System.ComponentModel.Composition;
+using System.Globalization;
 using dnSpy.Contracts.MVVM;
 using dnSpy.Contracts.Settings;
 
@@ -35,6 +36,30 @@ namespace dnSpy.MainApp {
 			}
 		}
 		bool allowMoreThanOneInstance = true;
+
+		/// <summary>Check this fork's GitHub releases for a newer dnSpy once a day</summary>
+		public bool CheckForUpdates {
+			get => checkForUpdates;
+			set {
+				if (checkForUpdates != value) {
+					checkForUpdates = value;
+					OnPropertyChanged(nameof(CheckForUpdates));
+				}
+			}
+		}
+		bool checkForUpdates = true;
+
+		/// <summary>UTC time of the last update check</summary>
+		public DateTime LastUpdateCheck {
+			get => lastUpdateCheck;
+			set {
+				if (lastUpdateCheck != value) {
+					lastUpdateCheck = value;
+					OnPropertyChanged(nameof(LastUpdateCheck));
+				}
+			}
+		}
+		DateTime lastUpdateCheck;
 	}
 
 	[Export]
@@ -49,12 +74,17 @@ namespace dnSpy.MainApp {
 
 			var sect = settingsService.GetOrCreateSection(SETTINGS_GUID);
 			AllowMoreThanOneInstance = sect.Attribute<bool?>(nameof(AllowMoreThanOneInstance)) ?? AllowMoreThanOneInstance;
+			CheckForUpdates = sect.Attribute<bool?>(nameof(CheckForUpdates)) ?? CheckForUpdates;
+			if (DateTime.TryParse(sect.Attribute<string>(nameof(LastUpdateCheck)), CultureInfo.InvariantCulture, DateTimeStyles.AdjustToUniversal | DateTimeStyles.AssumeUniversal, out var lastCheck))
+				LastUpdateCheck = lastCheck;
 			PropertyChanged += AppSettingsImpl_PropertyChanged;
 		}
 
 		void AppSettingsImpl_PropertyChanged(object? sender, PropertyChangedEventArgs e) {
 			var sect = settingsService.RecreateSection(SETTINGS_GUID);
 			sect.Attribute(nameof(AllowMoreThanOneInstance), AllowMoreThanOneInstance);
+			sect.Attribute(nameof(CheckForUpdates), CheckForUpdates);
+			sect.Attribute(nameof(LastUpdateCheck), LastUpdateCheck.ToString("o", CultureInfo.InvariantCulture));
 		}
 	}
 }

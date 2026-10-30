@@ -3621,6 +3621,168 @@ namespace dnSpy.Properties {
         }
         
         /// <summary>
+        ///   Looks up a localized string similar to Check for _Updates....
+        /// </summary>
+        public static string Update_CheckCommand {
+            get {
+                return ResourceManager.GetString("Update_CheckCommand", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to dnSpy Update.
+        /// </summary>
+        public static string Update_Title {
+            get {
+                return ResourceManager.GetString("Update_Title", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to dnSpy {0} is available. You have {1}..
+        /// </summary>
+        public static string Update_Available {
+            get {
+                return ResourceManager.GetString("Update_Available", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Update now downloads it, closes dnSpy, replaces this dnSpy's files with the new ones and starts dnSpy again. Your settings are kept..
+        /// </summary>
+        public static string Update_Explanation {
+            get {
+                return ResourceManager.GetString("Update_Explanation", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Check for _updates at startup (once a day).
+        /// </summary>
+        public static string Update_CheckAtStartup {
+            get {
+                return ResourceManager.GetString("Update_CheckAtStartup", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to _Update Now.
+        /// </summary>
+        public static string Update_InstallButton {
+            get {
+                return ResourceManager.GetString("Update_InstallButton", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to _Release Notes.
+        /// </summary>
+        public static string Update_ReleaseNotesButton {
+            get {
+                return ResourceManager.GetString("Update_ReleaseNotesButton", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to _Later.
+        /// </summary>
+        public static string Update_LaterButton {
+            get {
+                return ResourceManager.GetString("Update_LaterButton", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to You have the latest version of dnSpy ({0})..
+        /// </summary>
+        public static string Update_NoNewVersion {
+            get {
+                return ResourceManager.GetString("Update_NoNewVersion", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Couldn't check for updates: {0}.
+        /// </summary>
+        public static string Update_CheckFailed {
+            get {
+                return ResourceManager.GetString("Update_CheckFailed", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Downloading....
+        /// </summary>
+        public static string Update_Downloading {
+            get {
+                return ResourceManager.GetString("Update_Downloading", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Downloading: {0} of {1} MB.
+        /// </summary>
+        public static string Update_DownloadProgress {
+            get {
+                return ResourceManager.GetString("Update_DownloadProgress", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to The download failed: {0}.
+        /// </summary>
+        public static string Update_DownloadFailed {
+            get {
+                return ResourceManager.GetString("Update_DownloadFailed", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to The release has no {0}..
+        /// </summary>
+        public static string Update_NoAsset {
+            get {
+                return ResourceManager.GetString("Update_NoAsset", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to This release has no download for this build of dnSpy. Use Release Notes to download it yourself..
+        /// </summary>
+        public static string Update_NoAssetForBuild {
+            get {
+                return ResourceManager.GetString("Update_NoAssetForBuild", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to dnSpy can't write to its folder (eg. it's in Program Files). Use Release Notes to download it yourself, or run dnSpy as administrator..
+        /// </summary>
+        public static string Update_ReadOnlyInstallDir {
+            get {
+                return ResourceManager.GetString("Update_ReadOnlyInstallDir", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to The downloaded file doesn't match the release's SHA-256 hash..
+        /// </summary>
+        public static string Update_BadHash {
+            get {
+                return ResourceManager.GetString("Update_BadHash", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to The downloaded zip has no {0}..
+        /// </summary>
+        public static string Update_BadZip {
+            get {
+                return ResourceManager.GetString("Update_BadZip", resourceCulture);
+            }
+        }
+        
+        /// <summary>
         ///   Looks up a localized string similar to Open from _GAC....
         /// </summary>
         public static string OpenGACCommand {
