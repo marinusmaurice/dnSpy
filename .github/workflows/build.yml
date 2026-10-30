@@ -111,11 +111,13 @@ jobs:
         shell: pwsh
         run: |
           $version = '${{ github.ref_name }}'.TrimStart('v')
+          # The version's section, and the version before it (the next section) for the Full Changelog link
           $section = @()
           $inSection = $false
+          $previous = $null
           foreach ($line in Get-Content CHANGELOG.md -Encoding utf8) {
             if ($line -match '^## ') {
-              if ($inSection) { break }
+              if ($inSection) { $previous = $line.Substring(3).Trim(); break }
               $inSection = $line.Substring(3).Trim() -eq $version
               continue
             }
@@ -126,6 +128,9 @@ jobs:
             # Pre-releases (v7.0.0-beta.1) don't need a section
             if (-not $version.Contains('-')) { Write-Error "CHANGELOG.md has no '## $version' section"; exit 1 }
             $notes = 'Pre-release.'
+          }
+          if ($previous) {
+            $notes += "`n`n**Full Changelog**: https://github.com/${{ github.repository }}/compare/v$previous...${{ github.ref_name }}"
           }
           $downloads = @(
             ''

@@ -93,13 +93,32 @@ namespace dnSpy.MainApp.Update {
 			this.release = release;
 			checkAtStartup = appSettings.CheckForUpdates;
 			Message = string.Format(dnSpy_Resources.Update_Available, UpdateService.FormatVersion(release.Version), UpdateService.FormatVersion(UpdateService.CurrentVersion));
-			ReleaseNotes = release.Notes.Replace("\r\n", "\n").Replace("\n", Environment.NewLine);
+			ReleaseNotes = ToPlainText(release.Notes);
 			if (release.AssetUrl is null)
 				CantInstallReason = dnSpy_Resources.Update_NoAssetForBuild;
 			else if (!UpdateService.CanWriteInstallDirectory())
 				CantInstallReason = dnSpy_Resources.Update_ReadOnlyInstallDir;
 			CanInstall = CantInstallReason is null;
 		}
+
+		// The release notes are Markdown (CHANGELOG.md): show them without the markup
+		static string ToPlainText(string markdown) {
+			var lines = new System.Collections.Generic.List<string>();
+			foreach (var rawLine in markdown.Replace("\r\n", "\n").Split('\n')) {
+				var line = commitLinkRegex.Replace(rawLine, string.Empty);
+				line = linkRegex.Replace(line, "$1");
+				line = line.Replace("**", string.Empty).Replace("`", string.Empty);
+				line = headingRegex.Replace(line, string.Empty);
+				if (line.StartsWith("- ", StringComparison.Ordinal))
+					line = "• " + line.Substring(2);
+				lines.Add(line);
+			}
+			return string.Join(Environment.NewLine, lines).Trim();
+		}
+		// " ([fba6a87](https://github.com/.../commit/fba6a8713))"
+		static readonly System.Text.RegularExpressions.Regex commitLinkRegex = new System.Text.RegularExpressions.Regex(@"\s*\(\[[0-9a-f]{7,40}\]\([^)]*\)\)");
+		static readonly System.Text.RegularExpressions.Regex linkRegex = new System.Text.RegularExpressions.Regex(@"\[([^\]]+)\]\([^)]*\)");
+		static readonly System.Text.RegularExpressions.Regex headingRegex = new System.Text.RegularExpressions.Regex(@"^#+\s*");
 
 		public void OpenReleasePage() => updateService.OpenReleasePage(release);
 
