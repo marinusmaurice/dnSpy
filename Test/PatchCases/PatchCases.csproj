@@ -1,0 +1,22 @@
+<!--
+    Copyright (C) 2026- marinusmaurice@outlook.com
+-->
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <!--
+    Patch export/import test app (see ../DecompilerStress/check.ps1 and ../PatchCheck): built four times, v1 and v2
+    (V2: a newer version with more members, so other tokens), each as is and edited (PATCHED). A patch made from v1 and
+    edited v1, applied to v2, must make a program that prints the same as edited v2.
+  -->
+  <PropertyGroup>
+    <OutputType>Exe</OutputType>
+    <TargetFramework>net10.0</TargetFramework>
+    <LangVersion>latest</LangVersion>
+    <Nullable>disable</Nullable>
+    <Deterministic>true</Deterministic>
+    <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
+    <DefineConstants Condition=" '$(PatchVersion)' == '2' ">$(DefineConstants);V2</DefineConstants>
+    <DefineConstants Condition=" '$(Patched)' == 'true' ">$(DefineConstants);PATCHED</DefineConstants>
+  </PropertyGroup>
+
+</Project>

@@ -1,0 +1,45 @@
+<!--
+    Copyright (C) 2026- marinusmaurice@outlook.com
+-->
+# Patch export/import
+
+Version 7.8.0.0, branch `7.8.0.0/patch-export-import`. Status: step 1 of 2 done (the patch engine, tested headlessly by `Test/PatchCheck`); step 2 (the menu commands) is next. **Not usable from dnSpy's window yet.**
+
+## Goal
+
+Edits made in dnSpy (Edit Method (C#), Edit IL Instructions) are lost when the program gets a new version: they have to be made again by hand. A patch file keeps them: export the edits of an assembly to a `.dnspypatch` file, and apply that file to another version of the assembly later.
+
+## What a patch holds
+
+The method bodies that differ between the assembly on disk (the original) and the edited one, found with the assembly diff (`AssemblyDiff`, 7.2.0.0). Each method is stored by name, not by token:
+
+- the type's full name (`NS.Outer/Inner`) and the method's name and signature as the assembly diff shows it (`System.Int32 Add(System.Int32,System.Int32)`; methods of compiler-generated nested types, eg. lambdas, get the nested type's name as prefix: `<>c::System.Int32 <Sum>b__4_0(System.Int32)`);
+- the body: `initLocals`, the locals' types, the instructions (opcode name; operand: a number, a string, a branch target as an instruction index, a local or parameter index, or a type, method or field by name) and the exception handlers (instruction indexes, catch type);
+- types by namespace and name and the assembly that defines them (none: the patched assembly itself); generic instances, arrays, pointers, by-refs, modifiers, function pointers as nested elements; methods and fields by declaring type, name and signature; generic method instances with their type arguments;
+- array initializer data (the `<PrivateImplementationDetails>` fields that `new int[] { 1, 2, 3 }` uses): the data itself, since the other version may not have it.
+
+Not in a patch yet (listed as "not included" when the patch is made): added and removed types and members, changed attributes, field values, parameter names, resources, assembly version. A patched method that calls a member that only the edited assembly has can't be applied (the member is reported missing).
+
+The file is XML, with root `<dnSpyPatch version="1" assembly="...">` and one `<method type="..." name="...">` per method. Strings that XML can't hold as they are (eg. with `\0`, tabs or line breaks) are stored as UTF-16 base64.
+
+## Applying
+
+Each method is applied on its own: it's looked up in the target assembly by type and member name, its body is read with the target's types and members (the target's own definitions by name, other assemblies' types and members as references, reusing the target's existing references), and replaces the method's body. Short/long branches are recomputed (`SimplifyBranches`, `OptimizeBranches`). A method that isn't there, or that uses a type or member the target doesn't have, isn't applied and is reported with the reason; the other methods are still applied. Applying a patch twice changes nothing the second time.
+
+## Code
+
+- `dnSpy/dnSpy.Decompiler/Patch/AssemblyPatch.cs`: `AssemblyPatch.Create(original, edited, out notIncluded)`, `Apply(module)` → `PatchApplyResult` (applied and failed methods), `Save(stream)`, `Load(stream)` (`PatchException` for invalid files or files of a newer format).
+- `PatchBodyWriter.cs` / `PatchBodyReader.cs`: a body to XML and back.
+- `AssemblyDiff.FindMethod(module, typeFullName, methodName)`: finds a method by the names the diff reports. The diff now also skips types nested in compiler-generated types (`<PrivateImplementationDetails>/__StaticArrayInitTypeSize=12`), which only hold array initializer data.
+- No contract changes.
+
+## Tests
+
+`Test/PatchCases` is built four times: v1, v1 edited (`-p:Patched=true`), v2 (a newer version with more members, so other tokens) and v2 edited. `Test/PatchCheck` (run by `check.ps1`) makes a patch from v1 and edited v1 (4 methods: calls into the type itself and generic BCL methods, a `switch`, strings with a tab and a `\0`, try/catch, value types, multi-dimensional arrays, an array initializer, `typeof`, `fixed` and pointers), saves and loads it, applies it to v2 and checks that the result has the same method bodies as edited v2 (assembly diff) and the same assembly references; `check.ps1` also runs it and edited v2, which must print the same. It also checks: applying twice, a missing method and a missing callee (reported, the other methods applied), a module without `<PrivateImplementationDetails>` (added), the added members of v2 listed as not included, and invalid files.
+
+## Step 2 (next run)
+
+- File → Export Patch... (and in the assembly node's context menu): compares the edited assembly in memory with its file on disk, shows what's not included, saves a `.dnspypatch` file.
+- File → Apply Patch...: applies a patch to the selected assembly in memory, as one undoable edit (the `IUndoCommandService` like the other edit commands), and shows the applied and failed methods; then File → Save Module as usual.
+- `dnSpy.Console --patch-create <patch> <original> <edited>` and `--patch-apply <patch> <assembly> -o <output>` for scripts.
+- Click-test steps for the owner.

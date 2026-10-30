@@ -12,6 +12,7 @@
 	  - the Debug History (time-travel debugging) ring buffer and Step Back/Forward (../DebugHistoryCheck)
 	  - the command palette's fuzzy matching (../CommandPaletteCheck)
 	  - the side-by-side view's language choice and tab sync (../SideBySideCheck)
+	  - patch export/import: a patch made from ../PatchCases and its edited version, applied to a newer version (../PatchCheck)
 	Exits with 1 when a check fails.
 #>
 param(
@@ -204,6 +205,30 @@ try {
 	$sideCheck = Invoke-Checked "run SideBySideCheck" { dotnet run --project (Join-Path $PSScriptRoot '..\SideBySideCheck\SideBySideCheck.csproj') -c Release -v:q -nologo }
 	if (-not ($sideCheck -contains 'All side-by-side checks passed')) { Fail 'Side-by-side view: checks failed'; $sideCheck | ForEach-Object { Write-Host "  $_" } }
 	else { Write-Host '  OK: language picked for the second view, tab pair and sync guard' }
+
+	# Patch export/import: a patch made from PatchCases v1 and edited v1, applied to v2 (more members, other tokens), must
+	# give the same method bodies as edited v2 and print the same
+	Write-Host '== Patch export/import'
+	$patchProject = Join-Path $PSScriptRoot '..\PatchCases\PatchCases.csproj'
+	$patchDirs = @{}
+	foreach ($variant in @(@('v1', '1', 'false'), @('v1p', '1', 'true'), @('v2', '2', 'false'), @('v2p', '2', 'true'))) {
+		$dir = Join-Path $work "patch-$($variant[0])"
+		Invoke-Checked "build PatchCases $($variant[0])" { dotnet build $patchProject -c Release -o $dir -v:q -nologo "-p:PatchVersion=$($variant[1])" "-p:Patched=$($variant[2])" } > $null
+		$patchDirs[$variant[0]] = $dir
+	}
+	$patchOut = Join-Path $work 'patch-applied'
+	Copy-Item $patchDirs['v2'] $patchOut -Recurse
+	$patchCheckDir = Join-Path $work 'PatchCheck'
+	Invoke-Checked "build PatchCheck" { dotnet build (Join-Path $PSScriptRoot '..\PatchCheck\PatchCheck.csproj') -c Release -o $patchCheckDir -v:q -nologo } > $null
+	$patchCheck = & (Join-Path $patchCheckDir 'PatchCheck.exe') (Join-Path $patchDirs['v1'] 'PatchCases.dll') (Join-Path $patchDirs['v1p'] 'PatchCases.dll') `
+		(Join-Path $patchDirs['v2'] 'PatchCases.dll') (Join-Path $patchDirs['v2p'] 'PatchCases.dll') (Join-Path $patchOut 'PatchCases.dll') 2>&1
+	if ($LASTEXITCODE -or -not ($patchCheck -contains 'All patch checks passed')) { Fail 'Patch export/import: checks failed'; $patchCheck | ForEach-Object { Write-Host "  $_" } }
+	else {
+		$expectedRun = Invoke-Checked "run edited PatchCases v2" { dotnet (Join-Path $patchDirs['v2p'] 'PatchCases.dll') }
+		$patchedRun = Invoke-Checked "run patched PatchCases v2" { dotnet (Join-Path $patchOut 'PatchCases.dll') }
+		if (Compare-Object $expectedRun $patchedRun) { Fail 'Patch export/import: patched v2 prints something different'; $patchedRun | ForEach-Object { Write-Host "  $_" } }
+		else { Write-Host "  OK: $($patchCheck[0]), applied to a newer version, same output ($($expectedRun.Count) lines)" }
+	}
 
 	# Assembly diff: the two versions of Test/DiffCases differ exactly in the members marked V2; a lambda, an iterator
 	# and an unchanged type must not show up

@@ -39,6 +39,8 @@ It also builds `Test/WpfEvents` (a WPF window with every kind of XAML event and 
 
 And it builds `Test/ExportCases` (`net8.0`, Debug and Release: span collection expressions inside `fixed` statements, which use compiler-generated `<>y__InlineArrayN` types on .NET 8 (also with `?:`/`??` elements), a constructor with a local function that captures its parameters, a `file` class in a file named PrivateImplementationDetails.cs), exports it, and fails unless the export builds and prints the same as the original. 7.0.1.0's export had 3 errors.
 
+And it builds `Test/PatchCases` four times (v1, v1 edited, v2 with more members, v2 edited), runs `Test/PatchCheck` to make a patch from v1 and edited v1 and apply it to v2, and fails unless the patched v2 has the same method bodies and assembly references as edited v2 and prints the same (also: applying twice, missing members reported, array initializer data added, invalid files). See [docs/PATCH_EXPORT_IMPORT.md](../../docs/PATCH_EXPORT_IMPORT.md).
+
 By hand: `dotnet build Test/DebugInfoCheck -p:DnSpyBin=<dnSpy DLL folder>`, then `DebugInfoCheck <dnSpy DLL folder> <assembly>...`.
 
 Debug builds matter: the compiler adds temporaries and unreachable `if (1 == 0)` branches around switch expressions there, which is where ILSpy leaves `<>h__TransparentIdentifier` chains.

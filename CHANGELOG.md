@@ -7,6 +7,18 @@ What changed in each release of this fork, newest first. The release workflow pu
 
 Each section starts with a short summary, then **New Features** (new things you can do), **Enhancements** (existing things that work better) and **Bug Fixes**, with a link to the commit for each item. Technical details are in [All changes in detail](docs/CHANGES.md#all-changes-in-detail) and in [docs/MODERNIZATION_PLAN.md](docs/MODERNIZATION_PLAN.md).
 
+## 7.8.0.0
+
+Work in progress: patch export/import, to keep the edits of an assembly in a file and apply them to a newer version of it. Also has everything in 7.7.0.0, 7.6.0.0 and 7.5.0.0.
+
+### New Features
+
+- Patch export/import ([docs/PATCH_EXPORT_IMPORT.md](docs/PATCH_EXPORT_IMPORT.md)), in progress: the patch engine is done: it saves the changed method bodies of an edited assembly to a patch file (by name, not by token, with array initializer data) and applies them to another version of the assembly, method by method, reporting the methods it can't apply (not there, or a type or member they use is missing). Tested headlessly (`Test/PatchCheck`: a patch applied to a newer version with other tokens gives the same code and output as making the edits there). The menu commands (File → Export Patch... / Apply Patch...) come next; not usable from dnSpy's window yet.
+
+### Enhancements
+
+- Assembly diff: the array initializer data types (`<PrivateImplementationDetails>/__StaticArrayInitTypeSize=12`) aren't listed as added or removed types any more.
+
 ## 7.7.0.0
 
 A side-by-side view, to compare two languages (the new and the old C#, or C# and IL) of the same code. Also has everything in 7.6.0.0 and 7.5.0.0.

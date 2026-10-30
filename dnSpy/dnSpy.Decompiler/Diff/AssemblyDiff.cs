@@ -140,7 +140,7 @@ namespace dnSpy.Decompiler.Diff {
 		static Dictionary<string, TypeDef> GetTypes(ModuleDef module) {
 			var dict = new Dictionary<string, TypeDef>(StringComparer.Ordinal);
 			foreach (var type in module.GetTypes()) {
-				if (IsCompilerGenerated(type))
+				if (IsCompilerGenerated(type) || IsInCompilerGenerated(type))
 					continue;
 				dict[type.FullName] = type;
 			}
@@ -148,6 +148,15 @@ namespace dnSpy.Decompiler.Diff {
 		}
 
 		static bool IsCompilerGenerated(TypeDef type) => type.Name.String.IndexOf('<') >= 0 && !type.IsGlobalModuleType;
+
+		// eg. <PrivateImplementationDetails>/__StaticArrayInitTypeSize=12 (array initializer data)
+		static bool IsInCompilerGenerated(TypeDef type) {
+			for (var t = type.DeclaringType; t is not null; t = t.DeclaringType) {
+				if (IsCompilerGenerated(t))
+					return true;
+			}
+			return false;
+		}
 
 		static void CompareTypes(TypeDiff diff, TypeDef oldType, TypeDef newType) {
 			if (oldType.Attributes != newType.Attributes)
@@ -200,6 +209,17 @@ namespace dnSpy.Decompiler.Diff {
 		}
 
 		static string Or(string s) => s.Length == 0 ? "(none)" : s;
+
+		/// <summary>
+		/// Finds a method by the type name and member name that <see cref="Compare"/> reports (<see cref="TypeDiff.FullName"/>,
+		/// <see cref="MemberDiff.Name"/>), or returns null
+		/// </summary>
+		public static MethodDef? FindMethod(ModuleDef module, string typeFullName, string methodName) {
+			var type = module.Find(typeFullName, false);
+			if (type is null || IsCompilerGenerated(type))
+				return null;
+			return GetMembers(type).TryGetValue("M:" + methodName, out var info) ? info.member as MethodDef : null;
+		}
 
 		// Key: kind and signature. The members of compiler-generated nested types get the nested type's name as prefix.
 		static Dictionary<string, (IMemberDef member, string kind, string name)> GetMembers(TypeDef type) {
