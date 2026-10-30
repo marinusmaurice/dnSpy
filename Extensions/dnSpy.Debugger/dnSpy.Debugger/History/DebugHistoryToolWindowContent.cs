@@ -203,6 +203,9 @@ namespace dnSpy.Debugger.History {
 		public ICommand ReturnToLiveCommand { get; }
 		public ICommand ClearCommand { get; }
 		public ICommand GoToFrameCommand { get; }
+		public ICommand ShowTimelineCommand { get; }
+		public ICommand CloseTimelineCommand { get; }
+		public ICommand GoToTimelineEntryCommand { get; }
 
 		public DebugHistoryStopVM? SelectedStop {
 			get => selectedStop;
@@ -219,6 +222,9 @@ namespace dnSpy.Debugger.History {
 					if (index >= 0)
 						navigator.MoveTo(index);
 				}
+				// Refresh() updates it after all rows are added
+				if (!ignoreSelectionChange)
+					UpdateTimeline();
 			}
 		}
 		DebugHistoryStopVM? selectedStop;
@@ -226,6 +232,29 @@ namespace dnSpy.Debugger.History {
 		public IReadOnlyList<DbgHistoryFrame> Frames => selectedStop?.Snapshot.Frames ?? Array.Empty<DbgHistoryFrame>();
 		public IReadOnlyList<DbgHistoryValueDiff> Values => selectedStop?.Values ?? Array.Empty<DbgHistoryValueDiff>();
 		public string PartialText => selectedStop?.Snapshot.IsPartial == true ? dnSpy_Debugger_Resources.DbgHistory_Partial : string.Empty;
+
+		/// <summary>
+		/// The time line of a value ("Show History of 'x'"), or null
+		/// </summary>
+		public DbgHistoryTimeline? Timeline {
+			get => timeline;
+			set {
+				if (timeline == value)
+					return;
+				timeline = value;
+				OnPropertyChanged(nameof(Timeline));
+				OnPropertyChanged(nameof(HasTimeline));
+				OnPropertyChanged(nameof(TimelineText));
+				OnPropertyChanged(nameof(TimelineEntries));
+			}
+		}
+		DbgHistoryTimeline? timeline;
+		// Key path of the value whose time line is shown, so it's updated when another stop is selected
+		IReadOnlyList<string>? timelineKeyPath;
+
+		public bool HasTimeline => timeline is not null;
+		public string TimelineText => timeline?.GetText(diffStrings) ?? string.Empty;
+		public IReadOnlyList<DbgHistoryTimelineEntry> TimelineEntries => timeline?.Entries ?? Array.Empty<DbgHistoryTimelineEntry>();
 
 		public string StatusText {
 			get => statusText;
@@ -264,14 +293,58 @@ namespace dnSpy.Debugger.History {
 				New = dnSpy_Debugger_Resources.DbgHistory_Diff_New,
 				Gone = dnSpy_Debugger_Resources.DbgHistory_Diff_Gone,
 				Changed = dnSpy_Debugger_Resources.DbgHistory_Diff_Changed,
+				Timeline = dnSpy_Debugger_Resources.DbgHistory_Timeline,
+				TimelineSeparator = dnSpy_Debugger_Resources.DbgHistory_TimelineSeparator,
 			};
 			StepBackCommand = new RelayCommand(a => navigator.StepBack(), a => navigator.CanStepBack);
 			StepForwardCommand = new RelayCommand(a => navigator.StepForward(), a => navigator.CanStepForward);
 			ReturnToLiveCommand = new RelayCommand(a => navigator.ReturnToLive(), a => navigator.CanReturnToLive);
 			ClearCommand = new RelayCommand(a => navigator.History.Clear(), a => Stops.Count > 0);
 			GoToFrameCommand = new RelayCommand(a => navigator.GoToCode(a as DbgHistoryFrame));
+			ShowTimelineCommand = new RelayCommand(a => ShowTimeline(a as DbgHistoryValueDiff), a => a is DbgHistoryValueDiff diff && !diff.IsGone);
+			CloseTimelineCommand = new RelayCommand(a => CloseTimeline());
+			GoToTimelineEntryCommand = new RelayCommand(a => GoToTimelineEntry(a as DbgHistoryTimelineEntry));
 			navigator.History.Changed += History_Changed;
 			dbgHistorySettings.PropertyChanged += DbgHistorySettings_PropertyChanged;
+		}
+
+		void ShowTimeline(DbgHistoryValueDiff? diff) {
+			if (diff is null || diff.IsGone)
+				return;
+			timelineKeyPath = diff.KeyPath;
+			Timeline = null;
+			UpdateTimeline();
+		}
+
+		void CloseTimeline() {
+			timelineKeyPath = null;
+			Timeline = null;
+		}
+
+		// Recreated from the selected stop. If it's another method or doesn't have the value, the old time line stays.
+		void UpdateTimeline() {
+			if (timelineKeyPath is null || selectedStop is null)
+				return;
+			int index = Stops.IndexOf(selectedStop);
+			if (index < 0)
+				return;
+			var snapshots = new DbgHistorySnapshot[Stops.Count];
+			for (int i = 0; i < snapshots.Length; i++)
+				snapshots[i] = Stops[i].Snapshot;
+			var newTimeline = DbgHistoryTimeline.Create(snapshots, index, timelineKeyPath);
+			if (newTimeline is not null)
+				Timeline = newTimeline;
+		}
+
+		void GoToTimelineEntry(DbgHistoryTimelineEntry? entry) {
+			if (entry is null)
+				return;
+			foreach (var stop in Stops) {
+				if (stop.Snapshot == entry.Snapshot) {
+					SelectedStop = stop;
+					return;
+				}
+			}
 		}
 
 		void DbgHistorySettings_PropertyChanged(object? sender, PropertyChangedEventArgs e) {
@@ -330,6 +403,10 @@ namespace dnSpy.Debugger.History {
 			finally {
 				ignoreSelectionChange = false;
 			}
+			if (Stops.Count == 0)
+				CloseTimeline();
+			else
+				UpdateTimeline();
 
 			StatusText = GetStatusText(history, currentIndex);
 			CommandManager.InvalidateRequerySuggested();

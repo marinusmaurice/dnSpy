@@ -57,6 +57,8 @@ namespace dnSpy.Debugger.History {
 		public string New { get; set; } = "(new)";
 		public string Gone { get; set; } = "(gone)";
 		public string Changed { get; set; } = "(changed)";
+		public string Timeline { get; set; } = "{0}: {1}";
+		public string TimelineSeparator { get; set; } = " → ";
 	}
 
 	/// <summary>
@@ -80,6 +82,12 @@ namespace dnSpy.Debugger.History {
 		public IReadOnlyList<DbgHistoryValueDiff> Children { get; }
 
 		/// <summary>
+		/// Keys of the value and its parents, top-level value first, used to find the same value
+		/// at other stops (<see cref="DbgHistoryTimeline"/>)
+		/// </summary>
+		public IReadOnlyList<string> KeyPath { get; }
+
+		/// <summary>
 		/// Text shown after the value, eg. "(was: 1)", or an empty string
 		/// </summary>
 		public string DiffText { get; }
@@ -89,8 +97,9 @@ namespace dnSpy.Debugger.History {
 		public bool IsChanged => Kind == DbgHistoryDiffKind.Changed || Kind == DbgHistoryDiffKind.New;
 		public bool IsGone => Kind == DbgHistoryDiffKind.Gone;
 
-		public DbgHistoryValueDiff(DbgHistoryDiffKind kind, DbgHistoryValue value, DbgHistoryValue? oldValue, IReadOnlyList<DbgHistoryValueDiff>? children, DbgHistoryDiffStrings strings) {
+		public DbgHistoryValueDiff(DbgHistoryDiffKind kind, DbgHistoryValue value, DbgHistoryValue? oldValue, IReadOnlyList<DbgHistoryValueDiff>? children, IReadOnlyList<string> keyPath, DbgHistoryDiffStrings strings) {
 			Kind = kind;
+			KeyPath = keyPath ?? throw new ArgumentNullException(nameof(keyPath));
 			Value = value ?? throw new ArgumentNullException(nameof(value));
 			OldValue = oldValue;
 			Children = children ?? noChildren;
@@ -165,15 +174,25 @@ namespace dnSpy.Debugger.History {
 		/// <param name="current">The stop</param>
 		/// <param name="strings">Texts</param>
 		public static IReadOnlyList<DbgHistoryValueDiff> Compare(DbgHistorySnapshot? previous, DbgHistorySnapshot current, DbgHistoryDiffStrings strings) =>
-			Compare(previous?.Values, current.Values, strings, isTopLevel: true);
+			Compare(previous?.Values, current.Values, strings, Array.Empty<string>());
 
-		static IReadOnlyList<DbgHistoryValueDiff> Compare(IReadOnlyList<DbgHistoryValue>? oldValues, IReadOnlyList<DbgHistoryValue> newValues, DbgHistoryDiffStrings strings, bool isTopLevel) {
+		static string[] Append(string[] path, string key) {
+			var result = new string[path.Length + 1];
+			Array.Copy(path, result, path.Length);
+			result[path.Length] = key;
+			return result;
+		}
+
+		static IReadOnlyList<DbgHistoryValueDiff> Compare(IReadOnlyList<DbgHistoryValue>? oldValues, IReadOnlyList<DbgHistoryValue> newValues, DbgHistoryDiffStrings strings, string[] parentPath) {
+			bool isTopLevel = parentPath.Length == 0;
 			if (oldValues is null) {
 				if (newValues.Count == 0)
 					return Array.Empty<DbgHistoryValueDiff>();
-				var list = new DbgHistoryValueDiff[newValues.Count];
-				for (int i = 0; i < list.Length; i++)
-					list[i] = new DbgHistoryValueDiff(DbgHistoryDiffKind.None, newValues[i], null, Compare(null, newValues[i].Children, strings, isTopLevel: false), strings);
+				var list = new List<DbgHistoryValueDiff>(newValues.Count);
+				foreach (var kv in GetKeys(newValues)) {
+					var path = Append(parentPath, kv.Key);
+					list.Add(new DbgHistoryValueDiff(DbgHistoryDiffKind.None, kv.Value, null, Compare(null, kv.Value.Children, strings, path), path, strings));
+				}
 				return list;
 			}
 
@@ -183,11 +202,12 @@ namespace dnSpy.Debugger.History {
 			var result = new List<DbgHistoryValueDiff>(newValues.Count);
 			foreach (var kv in GetKeys(newValues)) {
 				var value = kv.Value;
+				var path = Append(parentPath, kv.Key);
 				if (!oldByKey.TryGetValue(kv.Key, out var oldValue))
-					result.Add(new DbgHistoryValueDiff(DbgHistoryDiffKind.New, value, null, Compare(null, value.Children, strings, isTopLevel: false), strings));
+					result.Add(new DbgHistoryValueDiff(DbgHistoryDiffKind.New, value, null, Compare(null, value.Children, strings, path), path, strings));
 				else {
 					oldByKey.Remove(kv.Key);
-					var children = Compare(oldValue.Children, value.Children, strings, isTopLevel: false);
+					var children = Compare(oldValue.Children, value.Children, strings, path);
 					DbgHistoryDiffKind kind;
 					if (value.Value != oldValue.Value || value.IsError != oldValue.IsError)
 						kind = DbgHistoryDiffKind.Changed;
@@ -195,7 +215,7 @@ namespace dnSpy.Debugger.History {
 						kind = DbgHistoryDiffKind.ChildrenChanged;
 					else
 						kind = DbgHistoryDiffKind.Unchanged;
-					result.Add(new DbgHistoryValueDiff(kind, value, oldValue, children, strings));
+					result.Add(new DbgHistoryValueDiff(kind, value, oldValue, children, path, strings));
 				}
 			}
 			// Old values in their old order. Return values and exceptions are only there right after a
@@ -207,7 +227,7 @@ namespace dnSpy.Debugger.History {
 				if (isTopLevel && (oldValue.Kind == DbgHistoryValueKind.ReturnValue || oldValue.Kind == DbgHistoryValueKind.Exception))
 					continue;
 				// Children of a gone value aren't shown
-				result.Add(new DbgHistoryValueDiff(DbgHistoryDiffKind.Gone, oldValue, oldValue, null, strings));
+				result.Add(new DbgHistoryValueDiff(DbgHistoryDiffKind.Gone, oldValue, oldValue, null, Append(parentPath, kv.Key), strings));
 			}
 			return result;
 		}
@@ -221,7 +241,7 @@ namespace dnSpy.Debugger.History {
 		}
 
 		// Kind + name + occurrence, so two locals with the same name (different scopes) are both compared
-		static IEnumerable<KeyValuePair<string, DbgHistoryValue>> GetKeys(IReadOnlyList<DbgHistoryValue> values) {
+		internal static IEnumerable<KeyValuePair<string, DbgHistoryValue>> GetKeys(IReadOnlyList<DbgHistoryValue> values) {
 			Dictionary<string, int>? counts = null;
 			foreach (var value in values) {
 				var key = ((int)value.Kind).ToString() + ":" + value.Name;

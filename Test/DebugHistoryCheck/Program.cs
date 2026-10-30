@@ -91,5 +91,38 @@ var err = new DbgHistoryValue(DbgHistoryValueKind.Local, "x", "int", "1", true, 
 Check(DbgHistoryDiff.Compare(D(7, main, L("x", "1")), D(7, main, err), ds)[0].Kind == DbgHistoryDiffKind.Changed, "diff: error is a change");
 var longOld = D(7, main, L("s", new string('q', 100))); var longNew = D(7, main, L("s", "z"));
 Check(DbgHistoryDiff.Compare(longOld, longNew, ds)[0].DiffText == "(was: " + new string('q', 40) + "...)", "diff: long old value shortened");
+
+// Per-variable time line: same process + thread + method, a new entry when the value changes or after it was out of scope
+DbgHistoryValue O(string f) => L("o", "{C}", F("f", f));
+var tl = new[] {
+	D(7, main, L("x", "0"), O("0")),
+	D(7, inner, L("y", "9")),
+	D(7, main, L("x", "1"), O("0")),
+	D(8, main, L("x", "100")),
+	D(7, main, L("x", "1"), O("1")),
+	D(7, main, L("x", "3"), O("1")),
+	D(7, main, O("1")),
+	D(7, main, L("x", "3")),
+};
+for (int i = 0; i < tl.Length; i++) tl[i].Index = i + 1;
+var keysAt2 = DbgHistoryDiff.Compare(null, tl[2], ds);
+var tx = DbgHistoryTimeline.Create(tl, 2, keysAt2[0].KeyPath)!;
+Check(tx is not null && tx.Name == "x" && tx.Entries.Count == 4 && !tx.IsTruncated, "timeline: x entries");
+Check(tx!.GetText(ds) == "x: 0 → 1 → 3 → 3", "timeline: text '" + tx.GetText(ds) + "'");
+Check(tx.Entries[1].SnapshotIndex == 2 && tx.Entries[1].StopCount == 2 && tx.Entries[1].IsSelected && !tx.Entries[0].IsSelected && tx.Entries[1].StopText == "#3", "timeline: stops and selection");
+var keysAt4 = DbgHistoryDiff.Compare(tl[2], tl[4], ds);
+var tf = DbgHistoryTimeline.Create(tl, 4, keysAt4[1].Children[0].KeyPath)!;
+Check(tf is not null && tf.Name == "o.f" && tf.GetText(ds) == "o.f: 0 → 1" && tf.Entries[1].StopCount == 3 && tf.Entries[1].IsSelected, "timeline: field");
+Check(DbgHistoryTimeline.Create(tl, 1, keysAt2[0].KeyPath) is null, "timeline: other method has no x");
+Check(DbgHistoryTimeline.Create(tl, 3, keysAt2[0].KeyPath)!.GetText(ds) == "x: 100", "timeline: other thread");
+Check(DbgHistoryTimeline.Create(tl, 6, keysAt2[0].KeyPath) is null && DbgHistoryTimeline.Create(tl, 0, Array.Empty<string>()) is null, "timeline: not in scope");
+var dupKeys = DbgHistoryDiff.Compare(null, a, ds);
+var dupList = new[] { a, b };
+Check(DbgHistoryTimeline.Create(dupList, 0, dupKeys[1].KeyPath)!.GetText(ds) == "i: 5 → 6" && DbgHistoryTimeline.Create(dupList, 0, dupKeys[0].KeyPath)!.GetText(ds) == "i: 0", "timeline: same name twice");
+var longList = new DbgHistorySnapshot[DbgHistoryTimeline.MaxEntries + 100];
+for (int i = 0; i < longList.Length; i++) longList[i] = D(7, main, L("x", i.ToString()));
+var tlong = DbgHistoryTimeline.Create(longList, longList.Length - 1, keysAt2[0].KeyPath)!;
+Check(tlong.Entries.Count == DbgHistoryTimeline.MaxEntries && tlong.IsTruncated && tlong.Entries[0].Value.Value == "100" && tlong.Entries[^1].IsSelected, "timeline: max entries");
+Check(tlong.GetText(ds).StartsWith("x: ... → 1080 → ") && tlong.GetText(ds).EndsWith("→ 1099"), "timeline: long text '" + tlong.GetText(ds) + "'");
 Console.WriteLine(fails == 0 ? "All history checks passed" : $"{fails} history checks failed");
 return fails == 0 ? 0 : 1;

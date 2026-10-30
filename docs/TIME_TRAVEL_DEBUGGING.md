@@ -3,7 +3,7 @@
 -->
 # Time-travel debugging (Debug History)
 
-Version 7.5.0.0, branch `7.5.0.0/time-travel-debugging`. Status: **recording engine** (step b) and the **UI** (step c: Debug History window, Step Back/Forward/Return to Live, historical statement marker, toolbar buttons, Alt+[ / Alt+] shortcuts) done, see the bottom of this page; not click-tested.
+Version 7.5.0.0, branch `7.5.0.0/time-travel-debugging`. Status: **recording engine** (step b), the **UI** (step c: Debug History window, Step Back/Forward/Return to Live, historical statement marker, toolbar buttons, Alt+[ / Alt+] shortcuts) and the **value diff and per-variable time line** (step d) done, see the bottom of this page; not click-tested.
 
 ## Goal
 
@@ -78,22 +78,22 @@ Steps (each its own commit on the branch):
   - [x] c1. `History/DebugHistoryToolWindowContent.cs` + DataTemplates in `Themes/wpf.styles.templates.xaml`: Debug → Windows → Debug History (stops list; the selected stop's call stack and value tree; double-click a frame to open its code; status line live/historical/dropped; Step Back, Step Forward, Return to Live, Clear buttons). Debug → Step Back / Step Forward / Return to Live (Debug History), shown when recording is on or there's a history; moving opens the viewed stop's top frame in the code view (`ReferenceNavigatorService.GoTo`, like the Call Stack window). The view returns to live when the process runs. The window only refreshes while visible. The XAML templates were load-tested headlessly (`DataTemplate.LoadContent`); nothing was click-tested. Stop reasons are shown as the English enum names.
   - [x] c2. Historical statement marker (`History/DebugHistoryMarker.cs`): while a historical stop is viewed, its top frame's statement gets a `Backwards` glyph with the call-return colors (no new theme color, so the themes didn't need changes), drawn above the call-return marker; removed when the view is live again. A new contract `DbgCodeLocationGlyphTextMarkerLocationInfoProvider` maps the snapshot's cloned `DbgCodeLocation` to a marker location (the stack frame is closed by then). Step Back / Step Forward toolbar buttons in the debug step group, visible while debugging with recording on or a history. Not click-tested.
   - [x] c3. Keyboard shortcuts: Alt+[ (Step Back) and Alt+] (Step Forward), like Visual Studio's IntelliTrace, main-window commands (`DebugHistoryKeyboardShortcutCommands`); they do nothing (and don't swallow the key) when there's nothing to move to. Shown in the Debug menu and the toolbar tooltips. No existing shortcut uses them (Ctrl+] is Go to Brace). On non-US keyboard layouts the keys are the ones in the [ and ] positions. Not click-tested.
-- [ ] d. Value diff and per-variable time line.
+- [x] d. Value diff and per-variable time line.
   - [x] d1. Value diff (`History/DbgHistoryDiff.cs`): `GetFrameKey` (process + thread + the values' frame and its recorded callers, module + token; the snapshot now records `ValuesFrameIndex`), `FindPrevious` (searches at most 1000 earlier stops), `Compare` (values matched by kind + name + occurrence, so two locals with the same name in different scopes are both compared; children compared recursively; return values and exceptions aren't shown as gone), `GetSummary` (up to 3 `x: 1 → 2` entries, then "N more changed", "N new", "N gone"). The window's stops list has a Changes column and the values tree shows the diff (changed value in bold, `(was: …)`, `(new)`, `(changed)`, gone values dimmed). Computed once per row when it's added, so a row keeps its diff when the previous stop is dropped. Tested by `Test/DebugHistoryCheck` (15 diff checks); the templates were load-tested headlessly; not click-tested.
-  - [ ] d2. Per-variable time line ("Show history of 'x'": `x: 0 → 1 → 3`, click to move to that stop).
+  - [x] d2. Per-variable time line (`History/DbgHistoryTimeline.cs`): right-click a value → "Show History of 'x'" shows, below the values tree, `x: 0 → 1 → 3` and a list of the values with the first stop that had each one and how many stops in a row kept it (the selected stop's value in bold); double-click an entry to move to that stop; Close hides it. The value is found at other stops by its key path (kind + name + occurrence at each level, so fields work: `o.f`), only at stops of the same process, thread and method (the method whose values were recorded; recursive calls of the method are mixed in, unlike the diff). A stop where the value isn't in scope ends an entry. At most 1000 entries (the oldest are dropped), the text shows the last 20 values. It follows the selected stop while it's in the same method. Tested by `Test/DebugHistoryCheck` (10 time line checks); the templates were load-tested headlessly (net48 build, `LoadContent`); not click-tested.
 - [ ] e. Tests: headless console probe of the model/history/diff classes (in a scratch project); click-test steps below.
 
 The branch is ready to release once b + c work (the first usable feature).
 
 ## Click-test steps for the owner
 
-The debugger UI can't be click-tested unattended. Steps 1-5, 7 and 8 can be tested now; step 6 needs step d:
+The debugger UI can't be click-tested unattended. All steps can be tested now:
 
 1. Options → Debugger → Debug History: turn on "Record debug history".
 2. Debug a small .NET 10 console app with a loop (`for (int i = 0; i < 5; i++) x += i;`), set a breakpoint in the loop, press F5 a few times, then step with F10.
 3. Debug → Windows → Debug History: one row per stop, the Changes column shows `x: 0 → 1` etc.
 4. Select an earlier row (or Debug → Step Back, Alt+[, or the Step Back toolbar button after Step Out): the code view shows that statement with a "Backwards" arrow in the margin and the call-return (green) background, the window shows the call stack and locals of that stop. Check that the live yellow arrow is still on the live statement.
 5. Step Forward (Alt+]) / Return to Live / F10: the view returns to the live stop and the historical arrow goes away.
-6. Right-click `x` → "Show history of 'x'": `x: 0 → 1 → 3 → 6 → 10`.
+6. In the Debug History window's values, right-click `x` → "Show History of 'x'": `x: 0 → 1 → 3 → 6 → 10` below the values, and a list with the stop of each value; the selected stop's value is bold. Double-click an entry: that stop is selected and its code shown. Select another stop of the same method: the list follows it. Close hides it. Also try a field of `this` (`this.count`).
 7. Stop debugging: the history stays visible; start debugging again: it's cleared.
 8. Check that F10 isn't noticeably slower with recording on than off.

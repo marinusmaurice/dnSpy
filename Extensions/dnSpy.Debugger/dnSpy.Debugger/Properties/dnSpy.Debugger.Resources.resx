@@ -1656,4 +1656,25 @@ Are you sure you want to expand it?</value>
   <data name="DbgHistory_Diff_Changed" xml:space="preserve">
     <value>(changed)</value>
   </data>
+  <data name="DbgHistory_Timeline" xml:space="preserve">
+    <value>{0}: {1}</value>
+  </data>
+  <data name="DbgHistory_TimelineSeparator" xml:space="preserve">
+    <value> → </value>
+  </data>
+  <data name="DbgHistory_ShowHistoryOf" xml:space="preserve">
+    <value>Show History of &apos;{0}&apos;</value>
+  </data>
+  <data name="DbgHistory_Timeline_Close" xml:space="preserve">
+    <value>Close</value>
+  </data>
+  <data name="DbgHistory_Timeline_Info" xml:space="preserve">
+    <value>Double-click a value to go to its stop.</value>
+  </data>
+  <data name="DbgHistory_Column_Value" xml:space="preserve">
+    <value>Value</value>
+  </data>
+  <data name="DbgHistory_Column_StopCount" xml:space="preserve">
+    <value>Stops</value>
+  </data>
 </root>

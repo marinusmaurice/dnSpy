@@ -4656,5 +4656,68 @@ namespace dnSpy.Debugger.Properties {
                 return ResourceManager.GetString("DbgHistory_Partial", resourceCulture);
             }
         }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to {0}: {1}.
+        /// </summary>
+        public static string DbgHistory_Timeline {
+            get {
+                return ResourceManager.GetString("DbgHistory_Timeline", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to  → .
+        /// </summary>
+        public static string DbgHistory_TimelineSeparator {
+            get {
+                return ResourceManager.GetString("DbgHistory_TimelineSeparator", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Show History of &apos;{0}&apos;.
+        /// </summary>
+        public static string DbgHistory_ShowHistoryOf {
+            get {
+                return ResourceManager.GetString("DbgHistory_ShowHistoryOf", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Close.
+        /// </summary>
+        public static string DbgHistory_Timeline_Close {
+            get {
+                return ResourceManager.GetString("DbgHistory_Timeline_Close", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Double-click a value to go to its stop..
+        /// </summary>
+        public static string DbgHistory_Timeline_Info {
+            get {
+                return ResourceManager.GetString("DbgHistory_Timeline_Info", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Value.
+        /// </summary>
+        public static string DbgHistory_Column_Value {
+            get {
+                return ResourceManager.GetString("DbgHistory_Column_Value", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Stops.
+        /// </summary>
+        public static string DbgHistory_Column_StopCount {
+            get {
+                return ResourceManager.GetString("DbgHistory_Column_StopCount", resourceCulture);
+            }
+        }
     }
 }

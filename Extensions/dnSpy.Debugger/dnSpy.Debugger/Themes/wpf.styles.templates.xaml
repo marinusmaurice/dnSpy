@@ -169,7 +169,13 @@
 
     <!-- Debug History tool window: a recorded value and its children, compared with the previous stop of the same method frame -->
     <HierarchicalDataTemplate DataType="{x:Type hist:DbgHistoryValueDiff}" ItemsSource="{Binding Children}">
-        <StackPanel Orientation="Horizontal">
+        <!-- Tag: the window's DebugHistoryVM, used by the context menu (it's not in the visual tree) -->
+        <StackPanel Orientation="Horizontal" Tag="{Binding DataContext, RelativeSource={RelativeSource AncestorType=TreeView}}">
+            <StackPanel.ContextMenu>
+                <ContextMenu>
+                    <MenuItem Header="{Binding Name}" HeaderStringFormat="{x:Static p:dnSpy_Debugger_Resources.DbgHistory_ShowHistoryOf}" Command="{Binding PlacementTarget.Tag.ShowTimelineCommand, RelativeSource={RelativeSource AncestorType=ContextMenu}}" CommandParameter="{Binding}" />
+                </ContextMenu>
+            </StackPanel.ContextMenu>
             <StackPanel.Style>
                 <Style TargetType="{x:Type StackPanel}">
                     <Style.Triggers>
@@ -253,6 +259,51 @@
                         <TextBlock FontWeight="Bold" Text="{x:Static p:dnSpy_Debugger_Resources.Window_Locals}" />
                         <TextBlock Margin="8 0 0 0" Text="{Binding PartialText}" />
                     </StackPanel>
+                    <!-- Time line of a value ("Show History of 'x'" in the values' context menu) -->
+                    <DockPanel DockPanel.Dock="Bottom" MaxHeight="200">
+                        <DockPanel.Style>
+                            <Style TargetType="{x:Type DockPanel}">
+                                <Style.Triggers>
+                                    <DataTrigger Binding="{Binding HasTimeline}" Value="False">
+                                        <Setter Property="Visibility" Value="Collapsed" />
+                                    </DataTrigger>
+                                </Style.Triggers>
+                            </Style>
+                        </DockPanel.Style>
+                        <DockPanel DockPanel.Dock="Top" Margin="2">
+                            <Button DockPanel.Dock="Right" Padding="4 0" Command="{Binding CloseTimelineCommand}" Content="{x:Static p:dnSpy_Debugger_Resources.DbgHistory_Timeline_Close}" />
+                            <TextBlock VerticalAlignment="Center" FontWeight="Bold" TextTrimming="CharacterEllipsis" Text="{Binding TimelineText}" ToolTip="{x:Static p:dnSpy_Debugger_Resources.DbgHistory_Timeline_Info}" />
+                        </DockPanel>
+                        <ListView ItemsSource="{Binding TimelineEntries}" SelectionMode="Single" ToolTip="{x:Static p:dnSpy_Debugger_Resources.DbgHistory_Timeline_Info}">
+                            <ListView.InputBindings>
+                                <MouseBinding Gesture="LeftDoubleClick" Command="{Binding GoToTimelineEntryCommand}" CommandParameter="{Binding SelectedItem, RelativeSource={RelativeSource AncestorType=ListView}}" />
+                            </ListView.InputBindings>
+                            <ListView.View>
+                                <GridView>
+                                    <GridViewColumn Header="#" Width="60" DisplayMemberBinding="{Binding StopText}" />
+                                    <!-- The value of the selected stop is bold -->
+                                    <GridViewColumn Header="{x:Static p:dnSpy_Debugger_Resources.DbgHistory_Column_Value}" Width="250">
+                                        <GridViewColumn.CellTemplate>
+                                            <DataTemplate>
+                                                <TextBlock Text="{Binding ValueText}">
+                                                    <TextBlock.Style>
+                                                        <Style TargetType="{x:Type TextBlock}">
+                                                            <Style.Triggers>
+                                                                <DataTrigger Binding="{Binding IsSelected}" Value="True">
+                                                                    <Setter Property="FontWeight" Value="Bold" />
+                                                                </DataTrigger>
+                                                            </Style.Triggers>
+                                                        </Style>
+                                                    </TextBlock.Style>
+                                                </TextBlock>
+                                            </DataTemplate>
+                                        </GridViewColumn.CellTemplate>
+                                    </GridViewColumn>
+                                    <GridViewColumn Header="{x:Static p:dnSpy_Debugger_Resources.DbgHistory_Column_StopCount}" Width="50" DisplayMemberBinding="{Binding StopCount}" />
+                                </GridView>
+                            </ListView.View>
+                        </ListView>
+                    </DockPanel>
                     <TreeView ItemsSource="{Binding Values}" />
                 </DockPanel>
             </Grid>
