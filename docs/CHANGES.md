@@ -1,3 +1,6 @@
+<!--
+    Copyright (C) 2026- marinusmaurice@outlook.com
+-->
 # dnSpy: details
 
 What's new in each 7.x feature release, all changes in detail, what was tested, and dnSpy's features. For a short overview see the [README](../README.md); for the release notes see [CHANGELOG.md](../CHANGELOG.md).

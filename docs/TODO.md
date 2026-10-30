@@ -1,3 +1,6 @@
+<!--
+    Copyright (C) 2026- marinusmaurice@outlook.com
+-->
 # dnSpy TODO
 
 Planned work after the 7.0.0 release (2026-10-29), grouped by the release it goes into. Tick items off (`[x]`) as they're done, and record details in [MODERNIZATION_PLAN.md](MODERNIZATION_PLAN.md)'s progress log.

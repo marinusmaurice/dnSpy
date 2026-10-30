@@ -1,3 +1,6 @@
+<!--
+    Copyright (C) 2026- marinusmaurice@outlook.com
+-->
 # dnSpy modernization plan
 
 Next work (after 2026-10-28) is tracked in [TODO.md](TODO.md).

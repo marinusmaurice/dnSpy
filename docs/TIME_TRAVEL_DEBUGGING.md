@@ -1,3 +1,6 @@
+<!--
+    Copyright (C) 2026- marinusmaurice@outlook.com
+-->
 # Time-travel debugging (Debug History)
 
 Version 7.5.0.0, branch `7.5.0.0/time-travel-debugging`. Status: **design** (step a of a-e, see the bottom of this page).

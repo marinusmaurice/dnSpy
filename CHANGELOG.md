@@ -1,3 +1,6 @@
+<!--
+    Copyright (C) 2026- marinusmaurice@outlook.com
+-->
 # Changelog
 
 What changed in each release of this fork, newest first. The release workflow puts the section of the version being released on its GitHub release page (with a link to the full list of commits), and dnSpy's update dialog shows it, so every release needs a section here.

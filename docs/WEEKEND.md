@@ -1,3 +1,6 @@
+<!--
+    Copyright (C) 2026- marinusmaurice@outlook.com
+-->
 # Weekend branches (2026-10-30 to 2026-11-01)
 
 Unattended weekend work, for the owner to review and release in order (fast-forward `master` and `0000_Update`, tag). Each branch stacks on the one above it.
