@@ -27,6 +27,11 @@
     <ApplicationManifest>app.manifest</ApplicationManifest>
   </PropertyGroup>
 
+  <ItemGroup Condition=" '$(IsDotNetFramework)' == 'true' ">
+    <Reference Include="System.IO.Compression" />
+    <Reference Include="System.Net.Http" />
+  </ItemGroup>
+
   <ItemGroup>
     <Compile Remove="MainApp\DevBuildWarning.cs" />
     <None Include="MainApp\DevBuildWarning.cs" />

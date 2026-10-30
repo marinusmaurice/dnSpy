@@ -168,6 +168,11 @@ namespace dnSpy.Documents {
 					if (info.IsAlternativeAssemblyName(assembly))
 						return info.Document;
 				}
+				// The assemblies in an opened single-file bundle or NuGet package
+				foreach (var info in documents) {
+					if (info.Document is Containers.ContainerDocument container && container.FindAssembly(assembly, comparer) is IDsDocument document)
+						return document;
+				}
 			}
 			finally {
 				rwLock.ExitReadLock();
@@ -177,6 +182,22 @@ namespace dnSpy.Documents {
 					if (comparer.Equals(document.AssemblyDef, assembly))
 						return document;
 				}
+			}
+			return null;
+		}
+
+		// The assembly in the single-file bundle or NuGet package that has sourceModule, in its folder first
+		internal IDsDocument? FindAssemblyInContainer(IAssembly assembly, ModuleDef? sourceModule) {
+			if (sourceModule is null)
+				return null;
+			var options = DefaultOptions;
+			// The decompiler looks up some assemblies by name only
+			if (PublicKeyBase.IsNullOrEmpty2(assembly.PublicKeyOrToken))
+				options &= ~FindAssemblyOptions.PublicKeyToken;
+			var comparer = new AssemblyNameComparer(ToAssemblyNameComparerFlags(options));
+			foreach (var document in GetDocuments()) {
+				if (document is Containers.ContainerDocument root && root.FindContainerOf(sourceModule) is Containers.ContainerDocument parent)
+					return parent.FindAssembly(assembly, comparer) ?? (parent == root ? null : root.FindAssembly(assembly, comparer));
 			}
 			return null;
 		}

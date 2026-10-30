@@ -497,6 +497,12 @@ namespace dnSpy.Documents {
 		}
 
 		IDsDocument? ResolveNormal(IAssembly assembly, ModuleDef? sourceModule) {
+			// A module in a single-file bundle or NuGet package: use the assemblies in it (eg. a self-contained app's
+			// runtime) before the installed runtime
+			var containerDocument = documentService.FindAssemblyInContainer(assembly, sourceModule);
+			if (containerDocument is not null)
+				return containerDocument;
+
 			var fwkKind = GetFrameworkKind(sourceModule, out var netVersion, out var sourceModuleDirectoryHint);
 			if (fwkKind == FrameworkKind.DotNet && !dotNetPathProvider.HasDotNet)
 				fwkKind = FrameworkKind.DotNetFramework4;

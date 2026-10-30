@@ -60,7 +60,7 @@ namespace dnSpy.Documents.Tabs {
 			appWindow.MainWindowCommands.Add(ApplicationCommands.Open, (s, e) => { Open(); e.Handled = true; }, (s, e) => e.CanExecute = true);
 		}
 
-		static readonly string DotNetAssemblyOrModuleFilter = $"{dnSpy_Resources.DotNetExes} (*.exe, *.dll, *.netmodule, *.winmd)|*.exe;*.dll;*.netmodule;*.winmd|{dnSpy_Resources.AllFiles} (*.*)|*.*";
+		static readonly string DotNetAssemblyOrModuleFilter = $"{dnSpy_Resources.DotNetExes} (*.exe, *.dll, *.netmodule, *.winmd)|*.exe;*.dll;*.netmodule;*.winmd|{dnSpy_Resources.NuGetPackages} (*.nupkg)|*.nupkg|{dnSpy_Resources.AllFiles} (*.*)|*.*";
 
 		void Open() {
 			var openDlg = new OpenFileDialog {

@@ -2073,4 +2073,25 @@ Filter can be changed in Assembly Explorer options.</value>
   <data name="ToolTip_OpCode" xml:space="preserve">
     <value>OpCode</value>
   </data>
+  <data name="OpenNuGetCommand" xml:space="preserve">
+    <value>Open from _NuGet...</value>
+  </data>
+  <data name="OpenNuGet_Label" xml:space="preserve">
+    <value>Package ID [version]:</value>
+  </data>
+  <data name="OpenNuGet_Title" xml:space="preserve">
+    <value>Open from NuGet</value>
+  </data>
+  <data name="OpenNuGet_NotFound" xml:space="preserve">
+    <value>Package {0} wasn&apos;t found on nuget.org.</value>
+  </data>
+  <data name="OpenNuGet_Error" xml:space="preserve">
+    <value>Couldn&apos;t download {0}: {1}</value>
+  </data>
+  <data name="NuGetPackages" xml:space="preserve">
+    <value>NuGet Packages</value>
+  </data>
+  <data name="OpenNuGet_Invalid" xml:space="preserve">
+    <value>Enter a package ID, optionally followed by a version (eg. Newtonsoft.Json 13.0.3)</value>
+  </data>
 </root>

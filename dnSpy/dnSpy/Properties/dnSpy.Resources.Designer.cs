@@ -3432,6 +3432,69 @@ namespace dnSpy.Properties {
         }
         
         /// <summary>
+        ///   Looks up a localized string similar to Open from _NuGet....
+        /// </summary>
+        public static string OpenNuGetCommand {
+            get {
+                return ResourceManager.GetString("OpenNuGetCommand", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Enter a package ID, optionally followed by a version (eg. Newtonsoft.Json 13.0.3).
+        /// </summary>
+        public static string OpenNuGet_Invalid {
+            get {
+                return ResourceManager.GetString("OpenNuGet_Invalid", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Package ID [version]:.
+        /// </summary>
+        public static string OpenNuGet_Label {
+            get {
+                return ResourceManager.GetString("OpenNuGet_Label", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Open from NuGet.
+        /// </summary>
+        public static string OpenNuGet_Title {
+            get {
+                return ResourceManager.GetString("OpenNuGet_Title", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Package {0} wasn&apos;t found on nuget.org..
+        /// </summary>
+        public static string OpenNuGet_NotFound {
+            get {
+                return ResourceManager.GetString("OpenNuGet_NotFound", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Couldn&apos;t download {0}: {1}.
+        /// </summary>
+        public static string OpenNuGet_Error {
+            get {
+                return ResourceManager.GetString("OpenNuGet_Error", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to NuGet Packages.
+        /// </summary>
+        public static string NuGetPackages {
+            get {
+                return ResourceManager.GetString("NuGetPackages", resourceCulture);
+            }
+        }
+        
+        /// <summary>
         ///   Looks up a localized string similar to Open from _GAC....
         /// </summary>
         public static string OpenGACCommand {

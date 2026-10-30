@@ -34,9 +34,9 @@ Each item gets its own branch from `master`, named after its target version (eg.
 
 - [ ] ★ **S–M** Sign release binaries (free for open source via SignPath.io).
 
-## Next feature release (7.1.0.0)
+## Next feature releases (7.2.0.0 and later)
 
-Suggested first, in this order:
+Assembly diff is planned for 7.2.0.0 (see Decompiler below). Suggested after that, in this order:
 
 1. [ ] ★ **S–M** Command palette (Ctrl+Shift+P): fuzzy search for commands, types and members.
 2. [ ] ★ **M** Side-by-side view: two decompilers (old vs new C#, or C# vs IL) in a split view, synced by member.
@@ -52,7 +52,7 @@ Suggested first, in this order:
 - [ ] **M–L** Assembly diff: compare two versions of a DLL (added, removed and changed members with code diff).
 - [ ] **M** Generate a PDB from decompiled code, to debug third-party DLLs in Visual Studio.
 - [ ] **M** ReadyToRun / NativeAOT viewer: show the precompiled native code next to the IL.
-- [ ] **M** Single-file bundles: open a .NET 6+ single-file `.exe` and browse the DLLs inside.
+- [x] **M** Single-file bundles: open a .NET 6+ single-file `.exe` and browse the DLLs inside (7.1.0.0; .NET Core 3.x to .NET 10 bundles, also compressed ones; references between the bundle's assemblies, eg. a self-contained app's runtime, resolve to the bundle's copies).
 - [ ] **S–M** Xamarin/MAUI Android: unpack compressed `XALZ` assemblies from APKs.
 - [ ] **S** C# language version picker in the toolbar.
 - [ ] **M** Decompile a whole namespace (all its types in one view; both C# languages only list the types today).
@@ -96,8 +96,10 @@ Suggested first, in this order:
 - [ ] **S** Dark theme refresh, high-contrast theme, font picker, ligatures toggle.
 - [ ] **S** Recent files with pinning; restore last session.
 - [ ] **S** Portable mode (settings next to the exe).
-- [ ] **S** Open `.nupkg` files (drag and drop) and browse the DLLs inside.
-- [ ] **M** "Open from NuGet": download a package by ID/version and open it.
+- [x] **S** Open `.nupkg` files (drag and drop) and browse the DLLs inside (7.1.0.0; grouped by folder, eg. lib/net8.0).
+- [x] **M** "Open from NuGet": download a package by ID/version and open it (7.1.0.0; File menu; uses NuGet's global packages folder when the package is there, else downloads from nuget.org to `%LOCALAPPDATA%\dnSpy\NuGet`).
+- [ ] **S** Translate the 7.1.0.0 strings (Open from NuGet, NuGet Packages) in `dnSpy/dnSpy/Properties/dnSpy.Resources.*.resx`; they show in English for now.
+- [ ] **S** Open from NuGet: search nuget.org (today: ID and optional version) and use private feeds from NuGet.config.
 - [ ] **S** Update checker based on GitHub releases.
 
 ### Extensibility and scripting

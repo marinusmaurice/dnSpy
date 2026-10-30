@@ -473,7 +473,27 @@ namespace dnSpy.Documents.TreeView {
 					return n;
 			}
 
+			foreach (var n in GetContainerAssemblyNodes(TopNodes)) {
+				if (n.Document.AssemblyDef == asm)
+					return n;
+			}
+
 			return null;
+		}
+
+		// The assemblies in opened single-file bundles and NuGet packages (and their folders)
+		IEnumerable<AssemblyDocumentNode> GetContainerAssemblyNodes(IEnumerable<DsDocumentNode> nodes) {
+			foreach (var n in nodes) {
+				if (n.Document is not Containers.ContainerDocument)
+					continue;
+				n.TreeNode.EnsureChildrenLoaded();
+				foreach (var child in n.TreeNode.DataChildren.OfType<DsDocumentNode>()) {
+					if (child is AssemblyDocumentNode asmNode)
+						yield return asmNode;
+				}
+				foreach (var asmNode in GetContainerAssemblyNodes(n.TreeNode.DataChildren.OfType<DsDocumentNode>().ToArray()))
+					yield return asmNode;
+			}
 		}
 
 		public ModuleDocumentNode? FindNode(ModuleDef? mod) {
@@ -492,6 +512,16 @@ namespace dnSpy.Documents.TreeView {
 			foreach (var n in TopNodes.OfType<ModuleDocumentNode>()) {
 				if (n.Document.ModuleDef == mod)
 					return n;
+			}
+
+			foreach (var n in GetContainerAssemblyNodes(TopNodes)) {
+				if (n.Document.AssemblyDef != mod.Assembly)
+					continue;
+				n.TreeNode.EnsureChildrenLoaded();
+				foreach (var m in n.TreeNode.DataChildren.OfType<ModuleDocumentNode>()) {
+					if (m.Document.ModuleDef == mod)
+						return m;
+				}
 			}
 
 			return null;
