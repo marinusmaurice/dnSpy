@@ -189,7 +189,7 @@ try {
 	Write-Host '== Debug History'
 	$historyCheck = Invoke-Checked "run DebugHistoryCheck" { dotnet run --project (Join-Path $PSScriptRoot '..\DebugHistoryCheck\DebugHistoryCheck.csproj') -c Release -v:q -nologo }
 	if (-not ($historyCheck -contains 'All history checks passed')) { Fail 'Debug History: checks failed'; $historyCheck | ForEach-Object { Write-Host "  $_" } }
-	else { Write-Host '  OK: ring buffer, Step Back/Forward, limits' }
+	else { Write-Host '  OK: ring buffer, Step Back/Forward, limits, value diff' }
 
 	# Assembly diff: the two versions of Test/DiffCases differ exactly in the members marked V2; a lambda, an iterator
 	# and an unchanged type must not show up

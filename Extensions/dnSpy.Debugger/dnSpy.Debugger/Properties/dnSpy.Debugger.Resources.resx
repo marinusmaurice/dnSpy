@@ -1626,4 +1626,34 @@ Are you sure you want to expand it?</value>
   <data name="ShortCutKeyAltCloseBracket" xml:space="preserve">
     <value>Alt+]</value>
   </data>
+  <data name="DbgHistory_Column_Changes" xml:space="preserve">
+    <value>Changes</value>
+  </data>
+  <data name="DbgHistory_Diff_ValueChanged" xml:space="preserve">
+    <value>{0}: {1} → {2}</value>
+  </data>
+  <data name="DbgHistory_Diff_ChildrenChanged" xml:space="preserve">
+    <value>{0} changed</value>
+  </data>
+  <data name="DbgHistory_Diff_MoreChanged" xml:space="preserve">
+    <value>{0} more changed</value>
+  </data>
+  <data name="DbgHistory_Diff_NewCount" xml:space="preserve">
+    <value>{0} new</value>
+  </data>
+  <data name="DbgHistory_Diff_GoneCount" xml:space="preserve">
+    <value>{0} gone</value>
+  </data>
+  <data name="DbgHistory_Diff_Was" xml:space="preserve">
+    <value>(was: {0})</value>
+  </data>
+  <data name="DbgHistory_Diff_New" xml:space="preserve">
+    <value>(new)</value>
+  </data>
+  <data name="DbgHistory_Diff_Gone" xml:space="preserve">
+    <value>(gone)</value>
+  </data>
+  <data name="DbgHistory_Diff_Changed" xml:space="preserve">
+    <value>(changed)</value>
+  </data>
 </root>

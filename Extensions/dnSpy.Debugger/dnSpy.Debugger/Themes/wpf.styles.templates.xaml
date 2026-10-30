@@ -167,13 +167,33 @@
         </Grid>
     </DataTemplate>
 
-    <!-- Debug History tool window: a recorded value and its children -->
-    <HierarchicalDataTemplate DataType="{x:Type hist:DbgHistoryValue}" ItemsSource="{Binding Children}">
+    <!-- Debug History tool window: a recorded value and its children, compared with the previous stop of the same method frame -->
+    <HierarchicalDataTemplate DataType="{x:Type hist:DbgHistoryValueDiff}" ItemsSource="{Binding Children}">
         <StackPanel Orientation="Horizontal">
+            <StackPanel.Style>
+                <Style TargetType="{x:Type StackPanel}">
+                    <Style.Triggers>
+                        <DataTrigger Binding="{Binding IsGone}" Value="True">
+                            <Setter Property="Opacity" Value="0.5" />
+                        </DataTrigger>
+                    </Style.Triggers>
+                </Style>
+            </StackPanel.Style>
             <TextBlock Text="{Binding Name}" FontWeight="Bold" />
             <TextBlock Text=" = " />
-            <TextBlock Text="{Binding Value}" />
+            <TextBlock Text="{Binding Value.Value}">
+                <TextBlock.Style>
+                    <Style TargetType="{x:Type TextBlock}">
+                        <Style.Triggers>
+                            <DataTrigger Binding="{Binding IsChanged}" Value="True">
+                                <Setter Property="FontWeight" Value="Bold" />
+                            </DataTrigger>
+                        </Style.Triggers>
+                    </Style>
+                </TextBlock.Style>
+            </TextBlock>
             <TextBlock Text="{Binding Type, StringFormat='  ({0})'}" Opacity="0.7" />
+            <TextBlock Margin="6 0 0 0" Text="{Binding DiffText}" FontStyle="Italic" />
         </StackPanel>
     </HierarchicalDataTemplate>
 
@@ -202,6 +222,7 @@
                         <GridViewColumn Header="{x:Static p:dnSpy_Debugger_Resources.DbgHistory_Column_Thread}" Width="90" DisplayMemberBinding="{Binding Thread}" />
                         <GridViewColumn Header="{x:Static p:dnSpy_Debugger_Resources.DbgHistory_Column_Method}" Width="350" DisplayMemberBinding="{Binding Method}" />
                         <GridViewColumn Header="{x:Static p:dnSpy_Debugger_Resources.DbgHistory_Column_Location}" Width="160" DisplayMemberBinding="{Binding Location}" />
+                        <GridViewColumn Header="{x:Static p:dnSpy_Debugger_Resources.DbgHistory_Column_Changes}" Width="300" DisplayMemberBinding="{Binding Changes}" />
                     </GridView>
                 </ListView.View>
             </ListView>

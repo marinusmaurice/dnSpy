@@ -4451,6 +4451,96 @@ namespace dnSpy.Debugger.Properties {
         }
         
         /// <summary>
+        ///   Looks up a localized string similar to Changes.
+        /// </summary>
+        public static string DbgHistory_Column_Changes {
+            get {
+                return ResourceManager.GetString("DbgHistory_Column_Changes", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to {0}: {1} → {2}.
+        /// </summary>
+        public static string DbgHistory_Diff_ValueChanged {
+            get {
+                return ResourceManager.GetString("DbgHistory_Diff_ValueChanged", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to {0} changed.
+        /// </summary>
+        public static string DbgHistory_Diff_ChildrenChanged {
+            get {
+                return ResourceManager.GetString("DbgHistory_Diff_ChildrenChanged", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to {0} more changed.
+        /// </summary>
+        public static string DbgHistory_Diff_MoreChanged {
+            get {
+                return ResourceManager.GetString("DbgHistory_Diff_MoreChanged", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to {0} new.
+        /// </summary>
+        public static string DbgHistory_Diff_NewCount {
+            get {
+                return ResourceManager.GetString("DbgHistory_Diff_NewCount", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to {0} gone.
+        /// </summary>
+        public static string DbgHistory_Diff_GoneCount {
+            get {
+                return ResourceManager.GetString("DbgHistory_Diff_GoneCount", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to (was: {0}).
+        /// </summary>
+        public static string DbgHistory_Diff_Was {
+            get {
+                return ResourceManager.GetString("DbgHistory_Diff_Was", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to (new).
+        /// </summary>
+        public static string DbgHistory_Diff_New {
+            get {
+                return ResourceManager.GetString("DbgHistory_Diff_New", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to (gone).
+        /// </summary>
+        public static string DbgHistory_Diff_Gone {
+            get {
+                return ResourceManager.GetString("DbgHistory_Diff_Gone", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to (changed).
+        /// </summary>
+        public static string DbgHistory_Diff_Changed {
+            get {
+                return ResourceManager.GetString("DbgHistory_Diff_Changed", resourceCulture);
+            }
+        }
+        
+        /// <summary>
         ///   Looks up a localized string similar to Return to Live.
         /// </summary>
         public static string DbgHistory_ReturnToLive {

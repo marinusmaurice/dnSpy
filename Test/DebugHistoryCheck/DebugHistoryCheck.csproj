@@ -5,7 +5,7 @@
 
   <!--
     Time-travel debugging (Debug History) test: compiles dnSpy.Debugger's snapshot and history classes
-    (they don't use WPF or debugger objects) and checks the ring buffer and Step Back/Forward.
+    (they don't use WPF or debugger objects) and checks the ring buffer, Step Back/Forward and the value diff.
     check.ps1 runs it, see ../DecompilerStress/README.md.
   -->
   <PropertyGroup>
@@ -18,6 +18,7 @@
   <ItemGroup>
     <Compile Include="..\..\Extensions\dnSpy.Debugger\dnSpy.Debugger\History\DbgHistory.cs" Link="History\DbgHistory.cs" />
     <Compile Include="..\..\Extensions\dnSpy.Debugger\dnSpy.Debugger\History\DbgHistorySnapshot.cs" Link="History\DbgHistorySnapshot.cs" />
+    <Compile Include="..\..\Extensions\dnSpy.Debugger\dnSpy.Debugger\History\DbgHistoryDiff.cs" Link="History\DbgHistoryDiff.cs" />
   </ItemGroup>
 
 </Project>

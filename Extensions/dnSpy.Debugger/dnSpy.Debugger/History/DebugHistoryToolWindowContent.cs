@@ -169,13 +169,29 @@ namespace dnSpy.Debugger.History {
 			}
 		}
 
-		public DebugHistoryStopVM(DbgHistorySnapshot snapshot) => Snapshot = snapshot;
+		/// <summary>
+		/// The values compared with the previous stop of the same method frame
+		/// </summary>
+		public IReadOnlyList<DbgHistoryValueDiff> Values { get; }
+
+		/// <summary>
+		/// Summary of the changed values, eg. "x: 1 → 2, 2 new"
+		/// </summary>
+		public string Changes { get; }
+
+		public DebugHistoryStopVM(DbgHistorySnapshot snapshot, DbgHistorySnapshot? previous, DbgHistoryDiffStrings diffStrings) {
+			Snapshot = snapshot;
+			// Computed once: the snapshots don't change, and the previous stop may be dropped later
+			Values = DbgHistoryDiff.Compare(previous, snapshot, diffStrings);
+			Changes = DbgHistoryDiff.GetSummary(Values, diffStrings);
+		}
 	}
 
 	sealed class DebugHistoryVM : ViewModelBase {
 		readonly DebugHistoryNavigator navigator;
 		readonly DbgHistorySettings dbgHistorySettings;
 		readonly UIDispatcher uiDispatcher;
+		readonly DbgHistoryDiffStrings diffStrings;
 		bool refreshPending;
 		bool ignoreSelectionChange;
 		bool isVisible;
@@ -208,7 +224,7 @@ namespace dnSpy.Debugger.History {
 		DebugHistoryStopVM? selectedStop;
 
 		public IReadOnlyList<DbgHistoryFrame> Frames => selectedStop?.Snapshot.Frames ?? Array.Empty<DbgHistoryFrame>();
-		public IReadOnlyList<DbgHistoryValue> Values => selectedStop?.Snapshot.Values ?? Array.Empty<DbgHistoryValue>();
+		public IReadOnlyList<DbgHistoryValueDiff> Values => selectedStop?.Values ?? Array.Empty<DbgHistoryValueDiff>();
 		public string PartialText => selectedStop?.Snapshot.IsPartial == true ? dnSpy_Debugger_Resources.DbgHistory_Partial : string.Empty;
 
 		public string StatusText {
@@ -238,6 +254,17 @@ namespace dnSpy.Debugger.History {
 			this.navigator = navigator;
 			this.dbgHistorySettings = dbgHistorySettings;
 			this.uiDispatcher = uiDispatcher;
+			diffStrings = new DbgHistoryDiffStrings {
+				ValueChanged = dnSpy_Debugger_Resources.DbgHistory_Diff_ValueChanged,
+				ChildrenChanged = dnSpy_Debugger_Resources.DbgHistory_Diff_ChildrenChanged,
+				MoreChanged = dnSpy_Debugger_Resources.DbgHistory_Diff_MoreChanged,
+				NewCount = dnSpy_Debugger_Resources.DbgHistory_Diff_NewCount,
+				GoneCount = dnSpy_Debugger_Resources.DbgHistory_Diff_GoneCount,
+				Was = dnSpy_Debugger_Resources.DbgHistory_Diff_Was,
+				New = dnSpy_Debugger_Resources.DbgHistory_Diff_New,
+				Gone = dnSpy_Debugger_Resources.DbgHistory_Diff_Gone,
+				Changed = dnSpy_Debugger_Resources.DbgHistory_Diff_Changed,
+			};
 			StepBackCommand = new RelayCommand(a => navigator.StepBack(), a => navigator.CanStepBack);
 			StepForwardCommand = new RelayCommand(a => navigator.StepForward(), a => navigator.CanStepForward);
 			ReturnToLiveCommand = new RelayCommand(a => navigator.ReturnToLive(), a => navigator.CanReturnToLive);
@@ -291,12 +318,12 @@ namespace dnSpy.Debugger.History {
 					for (int i = 0; i < firstKept; i++)
 						Stops.RemoveAt(0);
 					for (int i = Stops.Count; i < snapshots.Length; i++)
-						Stops.Add(new DebugHistoryStopVM(snapshots[i]));
+						Stops.Add(CreateStopVM(snapshots, i));
 				}
 				else {
 					Stops.Clear();
-					foreach (var snapshot in snapshots)
-						Stops.Add(new DebugHistoryStopVM(snapshot));
+					for (int i = 0; i < snapshots.Length; i++)
+						Stops.Add(CreateStopVM(snapshots, i));
 				}
 				SelectedStop = (uint)currentIndex < (uint)Stops.Count ? Stops[currentIndex] : null;
 			}
@@ -307,6 +334,9 @@ namespace dnSpy.Debugger.History {
 			StatusText = GetStatusText(history, currentIndex);
 			CommandManager.InvalidateRequerySuggested();
 		}
+
+		DebugHistoryStopVM CreateStopVM(DbgHistorySnapshot[] snapshots, int index) =>
+			new DebugHistoryStopVM(snapshots[index], DbgHistoryDiff.FindPrevious(snapshots, index), diffStrings);
 
 		string GetStatusText(DbgHistory history, int currentIndex) {
 			string text;

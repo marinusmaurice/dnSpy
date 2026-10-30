@@ -170,6 +170,7 @@ namespace dnSpy.Debugger.History {
 			var frames = new List<DbgHistoryFrame>();
 			var values = new List<DbgHistoryValue>();
 			bool framesTruncated = false;
+			int valuesFrameIndex = -1;
 			try {
 				var language = dbgLanguageService.Value.GetCurrentLanguage(thread.Runtime.RuntimeKindGuid);
 				// One extra frame to know if the stack was truncated
@@ -180,8 +181,10 @@ namespace dnSpy.Debugger.History {
 				DbgStackFrame? valuesFrame = null;
 				for (int i = 0; i < frameCount; i++) {
 					var frame = stackFrames[i];
-					if (valuesFrame is null && frame.Location is not null)
+					if (valuesFrame is null && frame.Location is not null) {
 						valuesFrame = frame;
+						valuesFrameIndex = i;
+					}
 					var name = state.IsTimeUp ? "???" : FormatFrame(language, frame);
 					frames.Add(new DbgHistoryFrame(i, name, frame.Module?.Name, frame.FunctionToken, frame.FunctionOffset, frame.Location?.Clone()));
 				}
@@ -195,7 +198,7 @@ namespace dnSpy.Debugger.History {
 					thread.Process.DbgManager.Close(state.ObjectsToClose);
 			}
 
-			return new DbgHistorySnapshot(time, reason, thread.Process.Id, thread.Process.Name, thread.Runtime.Name, thread.Id, thread.UIName, frames, framesTruncated, values, state.IsPartial);
+			return new DbgHistorySnapshot(time, reason, thread.Process.Id, thread.Process.Name, thread.Runtime.Name, thread.Id, thread.UIName, frames, framesTruncated, values, state.IsPartial, valuesFrameIndex);
 		}
 
 		string FormatFrame(DbgLanguage language, DbgStackFrame frame) {

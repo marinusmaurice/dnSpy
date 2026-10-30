@@ -169,9 +169,17 @@ namespace dnSpy.Debugger.History {
 		/// </summary>
 		public bool IsPartial { get; }
 
+		/// <summary>
+		/// Index in <see cref="Frames"/> of the frame whose values are in <see cref="Values"/>, or -1
+		/// </summary>
+		public int ValuesFrameIndex { get; }
+
+		// Cached by DbgHistoryDiff.GetFrameKey(), empty if there's no values' frame
+		internal string? frameKey;
+
 		public DbgHistoryFrame? TopFrame => Frames.Count == 0 ? null : Frames[0];
 
-		public DbgHistorySnapshot(DateTime time, DbgHistoryStopReason reason, int processId, string processName, string runtimeName, ulong threadId, string threadName, IReadOnlyList<DbgHistoryFrame>? frames, bool framesTruncated, IReadOnlyList<DbgHistoryValue>? values, bool isPartial) {
+		public DbgHistorySnapshot(DateTime time, DbgHistoryStopReason reason, int processId, string processName, string runtimeName, ulong threadId, string threadName, IReadOnlyList<DbgHistoryFrame>? frames, bool framesTruncated, IReadOnlyList<DbgHistoryValue>? values, bool isPartial, int valuesFrameIndex = -1) {
 			Time = time;
 			Reason = reason;
 			ProcessId = processId;
@@ -183,6 +191,7 @@ namespace dnSpy.Debugger.History {
 			FramesTruncated = framesTruncated;
 			Values = values ?? noValues;
 			IsPartial = isPartial;
+			ValuesFrameIndex = valuesFrameIndex;
 		}
 
 		/// <summary>
