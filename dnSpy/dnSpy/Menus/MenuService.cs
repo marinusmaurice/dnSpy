@@ -32,6 +32,7 @@ using dnSpy.Contracts.Menus;
 using dnSpy.Contracts.MVVM;
 using dnSpy.Contracts.Resources;
 using dnSpy.Images;
+using dnSpy.MainApp.CommandPalette;
 
 namespace dnSpy.Menus {
 	sealed class MenuItemMD {
@@ -411,6 +412,87 @@ namespace dnSpy.Menus {
 			}
 
 			return null;
+		}
+
+		/// <summary>
+		/// Gets the visible and enabled commands of a menu and its sub menus (command palette). The caller disposes
+		/// the contexts added to <paramref name="contexts"/> after it has executed a command or closed the palette.
+		/// </summary>
+		internal List<CommandPaletteItem> GetCommandPaletteItems(Guid menuGuid, IInputElement? commandTarget, List<MenuItemContext> contexts) {
+			InitializeMenuItemObjects();
+			Debug2.Assert(guidToGroups is not null);
+			Debug2.Assert(guidToMenu is not null);
+
+			var result = new List<CommandPaletteItem>();
+			if (!guidToMenu.TryGetValue(menuGuid, out var list))
+				return result;
+			foreach (var md in list) {
+				var guid = new Guid(md.Metadata.Guid!);
+				if (!guidToGroups.TryGetValue(guid, out var groups))
+					continue;
+				var ctx = new MenuItemContext(guid, true, new GuidObject(guid, null), null);
+				contexts.Add(ctx);
+				var header = CommandPaletteMatcher.RemoveAccessKeys(ResourceHelper.GetStringOrNull(md.Menu, md.Metadata.Header));
+				AddCommandPaletteItems(result, ctx, groups, header, commandTarget, 0);
+			}
+			return result;
+		}
+
+		void AddCommandPaletteItems(List<CommandPaletteItem> result, MenuItemContext ctx, List<MenuItemGroupMD> groups, string path, IInputElement? commandTarget, int depth) {
+			foreach (var group in groups) {
+				foreach (var item in group.Items) {
+					if (!item.MenuItem.IsVisible(ctx))
+						continue;
+					if (item.MenuItem is IMenuItemProvider itemProvider) {
+						foreach (var createdItem in itemProvider.Create(ctx))
+							AddCommandPaletteItem(result, ctx, createdItem.MenuItem, createdItem.Metadata, path, commandTarget, depth);
+					}
+					else
+						AddCommandPaletteItem(result, ctx, item.MenuItem, item.Metadata, path, commandTarget, depth);
+				}
+			}
+		}
+
+		void AddCommandPaletteItem(List<CommandPaletteItem> result, MenuItemContext ctx, IMenuItem item, IMenuItemMetadata metadata, string path, IInputElement? commandTarget, int depth) {
+			Debug2.Assert(guidToGroups is not null);
+			var header = item.GetHeader(ctx) ?? ResourceHelper.GetStringOrNull(item, metadata.Header);
+			if (string.IsNullOrEmpty(header))
+				return;
+			var text = path + CommandPaletteMatcher.PathSeparator + CommandPaletteMatcher.RemoveAccessKeys(header);
+
+			if (metadata.Guid is not null && guidToGroups.TryGetValue(Guid.Parse(metadata.Guid), out var subGroups)) {
+				const int MAX_DEPTH = 5;
+				if (depth < MAX_DEPTH)
+					AddCommandPaletteItems(result, ctx, subGroups, text, commandTarget, depth + 1);
+				return;
+			}
+
+			Action execute;
+			if (item is ICommandHolder cmdHolder) {
+				var command = cmdHolder.Command;
+				if (command is RoutedCommand routedCommand) {
+					if (commandTarget is not null && !routedCommand.CanExecute(ctx, commandTarget))
+						return;
+					execute = () => routedCommand.Execute(null, commandTarget);
+				}
+				else {
+					if (!command.CanExecute(ctx))
+						return;
+					execute = () => command.Execute(null);
+				}
+			}
+			else {
+				if (!item.IsEnabled(ctx))
+					return;
+				execute = () => {
+					if (!ctx.IsDisposed && item.IsEnabled(ctx))
+						item.Execute(ctx);
+				};
+			}
+
+			var inputGestureText = item.GetInputGestureText(ctx) ?? ResourceHelper.GetStringOrNull(item, metadata.InputGestureText);
+			var iconImgRef = item.GetIcon(ctx) ?? ImageReferenceHelper.GetImageReference(item, metadata.Icon);
+			result.Add(new CommandPaletteItem(text, inputGestureText, iconImgRef, item.IsChecked(ctx), execute));
 		}
 
 		public Menu CreateMenu(Guid menuGuid, IInputElement? commandTarget) {

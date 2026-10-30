@@ -7,6 +7,14 @@ What changed in each release of this fork, newest first. The release workflow pu
 
 Each section starts with a short summary, then **New Features** (new things you can do), **Enhancements** (existing things that work better) and **Bug Fixes**, with a link to the commit for each item. Technical details are in [All changes in detail](docs/CHANGES.md#all-changes-in-detail) and in [docs/MODERNIZATION_PLAN.md](docs/MODERNIZATION_PLAN.md).
 
+## 7.6.0.0
+
+Work in progress: a command palette, to find and run any menu command by typing part of its name. Also has everything in 7.5.0.0.
+
+### New Features
+
+- Command palette: View → Command Palette... or F1 opens a list of all main menu commands that can run now (`File > Open...`, `Debug > Windows > Debug History`, ...) with their shortcuts. Type words of a command's menu path to filter it (`full screen`, initials such as `fs` or `ctvn` for Collapse Tree View Nodes, the words in any order); Up/Down select, Enter runs the command, Esc closes. Tested headlessly (`Test/CommandPaletteCheck`); the window isn't click-tested yet.
+
 ## 7.5.0.0
 
 Work in progress: time-travel debugging (a history of the stops of a debugged .NET program, to look back at earlier call stacks and values), a shorter title bar and a shorter README. 7.4.1.0 was not released on its own; its changes are part of 7.5.0.0.

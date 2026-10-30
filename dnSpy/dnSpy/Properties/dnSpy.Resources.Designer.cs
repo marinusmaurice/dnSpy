@@ -6265,5 +6265,50 @@ namespace dnSpy.Properties {
                 return ResourceManager.GetString("WordWrapHeader", resourceCulture);
             }
         }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Command _Palette....
+        /// </summary>
+        public static string CommandPaletteCommand {
+            get {
+                return ResourceManager.GetString("CommandPaletteCommand", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Command Palette.
+        /// </summary>
+        public static string CommandPalette_Title {
+            get {
+                return ResourceManager.GetString("CommandPalette_Title", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Type words of a command&apos;s menu path, eg. &quot;full screen&quot;, &quot;view fs&quot; or &quot;close all&quot;. Up/Down select, Enter executes, Esc closes..
+        /// </summary>
+        public static string CommandPalette_Search_ToolTip {
+            get {
+                return ResourceManager.GetString("CommandPalette_Search_ToolTip", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to No commands match..
+        /// </summary>
+        public static string CommandPalette_NoMatches {
+            get {
+                return ResourceManager.GetString("CommandPalette_NoMatches", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to F1.
+        /// </summary>
+        public static string ShortCutKeyF1 {
+            get {
+                return ResourceManager.GetString("ShortCutKeyF1", resourceCulture);
+            }
+        }
     }
 }

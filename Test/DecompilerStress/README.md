@@ -11,6 +11,7 @@
 | `check-publish.ps1` | Release smoke test (runs in CI on the three release builds): `-PublishDir <folder with dnSpy.exe and bin\>` checks that C# (ILSpy 11) is in the build, then runs `check.ps1` with that build's own dnSpy.Console. |
 | `../DebugInfoCheck` | Debugger info test that `check.ps1` runs (.NET builds only): see below. |
 | `../DebugHistoryCheck` | Debug History (time-travel debugging) test that `check.ps1` runs: compiles dnSpy.Debugger's snapshot and history classes on their own and checks the ring buffer (drop oldest, shrink, clear) and Step Back/Forward/Return to Live. |
+| `../CommandPaletteCheck` | Command palette test that `check.ps1` runs: compiles dnSpy's command palette matcher on its own and checks the fuzzy matching (words, initials, word order), the order of the results and the access key removal. |
 | `../WpfEvents` | BAML decompiler test app that `check.ps1` exports and rebuilds: see below. |
 | `../ExportCases` | Export to Project test program that `check.ps1` exports, rebuilds and runs: see below. |
 | `ilspy-reference.cs.txt` | ILSpy's output for sections 1–10 (provided by the repo owner). This is the target: dnSpy should be at least this good. |

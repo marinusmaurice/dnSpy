@@ -2190,4 +2190,19 @@ Filter can be changed in Assembly Explorer options.</value>
   <data name="Update_BadZip" xml:space="preserve">
     <value>The downloaded zip has no {0}.</value>
   </data>
+  <data name="CommandPaletteCommand" xml:space="preserve">
+    <value>Command _Palette...</value>
+  </data>
+  <data name="CommandPalette_Title" xml:space="preserve">
+    <value>Command Palette</value>
+  </data>
+  <data name="CommandPalette_Search_ToolTip" xml:space="preserve">
+    <value>Type words of a command&apos;s menu path, eg. &quot;full screen&quot;, &quot;view fs&quot; or &quot;close all&quot;. Up/Down select, Enter executes, Esc closes.</value>
+  </data>
+  <data name="CommandPalette_NoMatches" xml:space="preserve">
+    <value>No commands match.</value>
+  </data>
+  <data name="ShortCutKeyF1" xml:space="preserve">
+    <value>F1</value>
+  </data>
 </root>

@@ -1,0 +1,22 @@
+<!--
+    Copyright (C) 2026- marinusmaurice@outlook.com
+-->
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <!--
+    Command palette test: compiles dnSpy's command palette matcher (it doesn't use WPF) and checks the fuzzy
+    matching, the order of the results and the access key removal.
+    check.ps1 runs it, see ../DecompilerStress/README.md.
+  -->
+  <PropertyGroup>
+    <OutputType>Exe</OutputType>
+    <TargetFramework>net10.0</TargetFramework>
+    <Nullable>enable</Nullable>
+    <LangVersion>13.0</LangVersion>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <Compile Include="..\..\dnSpy\dnSpy\MainApp\CommandPalette\CommandPaletteMatcher.cs" Link="CommandPalette\CommandPaletteMatcher.cs" />
+  </ItemGroup>
+
+</Project>
