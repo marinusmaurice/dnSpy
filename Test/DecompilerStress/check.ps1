@@ -108,48 +108,54 @@ try {
 	}
 
 	# BAML decompiler: the XAML events and x:Names that the compiler moves to the code-behind's Connect methods must be
-	# put back, and the exported project must build and wire up the same handlers (.NET and .NET Framework compilers)
-	$wpfProject = Join-Path $PSScriptRoot '..\WpfEvents\WpfEvents.csproj'
+	# put back, and the exported project must build and wire up the same handlers (.NET and .NET Framework compilers).
+	# WpfEventsVB is the same app in VB (its x:Names are properties, its Connect methods are renamed), exported as C#.
 	$msbuild = Get-Command msbuild -ErrorAction SilentlyContinue
-	function Get-Handlers([string]$file) {
-		$il = & $Console --no-color --no-tokens -l IL -t WpfEvents.MainWindow $file 2>&1
-		($il | Select-String 'ldftn\s+instance void WpfEvents\.MainWindow::(\w+)' -AllMatches | ForEach-Object { $_.Matches.Groups[1].Value } | Sort-Object) -join ','
+	function Get-Handlers([string]$file, [string]$app) {
+		$il = & $Console --no-color --no-tokens -l IL -t "$app.MainWindow" $file 2>&1
+		($il | Select-String "ldftn\s+instance void $app\.MainWindow::(\w+)" -AllMatches | ForEach-Object { $_.Matches.Groups[1].Value } | Sort-Object) -join ','
 	}
-	foreach ($tfm in 'net10.0-windows', 'net48') {
-		foreach ($configuration in 'Debug', 'Release') {
-			$name = "WPF $tfm $configuration"
-			Write-Host "== $name"
-			$origDir = Join-Path $work "wpf-$tfm-$configuration"
-			Invoke-Checked "build WpfEvents ($tfm, $configuration)" { dotnet build $wpfProject -c $configuration -f $tfm -o $origDir -v:q -nologo } > $null
-			$origFile = Join-Path $origDir 'WpfEvents.dll'
-			if (-not (Test-Path $origFile)) { $origFile = Join-Path $origDir 'WpfEvents.exe' }
-			$expected = Get-Handlers $origFile
+	foreach ($wpfProject in (Join-Path $PSScriptRoot '..\WpfEvents\WpfEvents.csproj'), (Join-Path $PSScriptRoot '..\WpfEventsVB\WpfEventsVB.vbproj')) {
+		$app = [IO.Path]::GetFileNameWithoutExtension($wpfProject)
+		$label = if ($app -eq 'WpfEvents') { 'WPF' } else { 'WPF VB' }
+		# dotnet build can't compile VB WPF apps for .NET Framework
+		$tfms = if ($app -eq 'WpfEvents') { 'net10.0-windows', 'net48' } else { 'net10.0-windows' }
+		foreach ($tfm in $tfms) {
+			foreach ($configuration in 'Debug', 'Release') {
+				$name = "$label $tfm $configuration"
+				Write-Host "== $name"
+				$origDir = Join-Path $work "$app-$tfm-$configuration"
+				Invoke-Checked "build $app ($tfm, $configuration)" { dotnet build $wpfProject -c $configuration -f $tfm -o $origDir -v:q -nologo } > $null
+				$origFile = Join-Path $origDir "$app.dll"
+				if (-not (Test-Path $origFile)) { $origFile = Join-Path $origDir "$app.exe" }
+				$expected = Get-Handlers $origFile $app
 
-			$exportDir = Join-Path $work "wpf-export-$tfm-$configuration"
-			Invoke-Checked "export WpfEvents" { & $Console --no-color -o $exportDir $origFile } > $null
-			$xaml = Get-Content (Get-ChildItem $exportDir -Recurse -Filter MainWindow.xaml | Select-Object -First 1).FullName -Raw
-			$count = ([regex]::Matches($xaml, '="\w+_\w+"')).Count
-			if ($count -ne 7) { Fail "$name`: $count of 7 event handlers in MainWindow.xaml" }
-			if ($xaml -match '<!--') { Fail "$name`: MainWindow.xaml has error comments" }
+				$exportDir = Join-Path $work "$app-export-$tfm-$configuration"
+				Invoke-Checked "export $app" { & $Console --no-color -o $exportDir $origFile } > $null
+				$xaml = Get-Content (Get-ChildItem $exportDir -Recurse -Filter MainWindow.xaml | Select-Object -First 1).FullName -Raw
+				$count = ([regex]::Matches($xaml, '="\w+_\w+"')).Count
+				if ($count -ne 7) { Fail "$name`: $count of 7 event handlers in MainWindow.xaml" }
+				if ($xaml -match '<!--') { Fail "$name`: MainWindow.xaml has error comments" }
 
-			# .NET Framework exports are classic projects, which need MSBuild for WPF
-			$exportProject = (Get-ChildItem $exportDir -Recurse -Filter *.csproj | Select-Object -First 1).FullName
-			$rebuiltDir = Join-Path $work "wpf-rebuilt-$tfm-$configuration\"
-			if ($tfm -eq 'net48') {
-				if (-not $msbuild) { Write-Host '  (export build skipped: msbuild not found)'; continue }
-				$build = & $msbuild.Source -nr:false -v:q -restore -p:Configuration=Release "-p:OutputPath=$rebuiltDir" $exportProject 2>&1
+				# .NET Framework exports are classic projects, which need MSBuild for WPF
+				$exportProject = (Get-ChildItem $exportDir -Recurse -Filter *.csproj | Select-Object -First 1).FullName
+				$rebuiltDir = Join-Path $work "$app-rebuilt-$tfm-$configuration\"
+				if ($tfm -eq 'net48') {
+					if (-not $msbuild) { Write-Host '  (export build skipped: msbuild not found)'; continue }
+					$build = & $msbuild.Source -nr:false -v:q -restore -p:Configuration=Release "-p:OutputPath=$rebuiltDir" $exportProject 2>&1
+				}
+				else {
+					$build = & dotnet build $exportProject -c Release -o $rebuiltDir -v:q -nologo 2>&1
+				}
+				if ($LASTEXITCODE) {
+					Fail "$name`: exported project doesn't build"
+					$build | Where-Object { $_ -match ' error ' } | Select-Object -First 10 | ForEach-Object { Write-Host "  $_" }
+					continue
+				}
+				$actual = Get-Handlers (Join-Path $rebuiltDir (Split-Path $origFile -Leaf)) $app
+				if ($actual -ne $expected) { Fail "$name`: rebuilt app wires up '$actual', expected '$expected'" }
+				else { Write-Host "  OK: $count XAML event handlers, export builds and wires up the same handlers" }
 			}
-			else {
-				$build = & dotnet build $exportProject -c Release -o $rebuiltDir -v:q -nologo 2>&1
-			}
-			if ($LASTEXITCODE) {
-				Fail "$name`: exported project doesn't build"
-				$build | Where-Object { $_ -match ' error ' } | Select-Object -First 10 | ForEach-Object { Write-Host "  $_" }
-				continue
-			}
-			$actual = Get-Handlers (Join-Path $rebuiltDir (Split-Path $origFile -Leaf))
-			if ($actual -ne $expected) { Fail "$name`: rebuilt app wires up '$actual', expected '$expected'" }
-			else { Write-Host "  OK: $count XAML event handlers, export builds and wires up the same handlers" }
 		}
 	}
 

@@ -60,14 +60,31 @@ namespace dnSpy.Decompiler.MSBuild {
 				yield return connMeth;
 				// IComponentConnector.Connect stores the x:Name fields, which are generated again too
 				if (isComponentConnector) {
-					foreach (var f in DotNetUtils.GetFields(connMeth))
-						yield return f;
+					foreach (var def in DotNetUtils.GetDefs(connMeth)) {
+						if (def is FieldDef)
+							yield return def;
+						// VB: x:Names are properties (the field is accessed through them), Connect calls their setters
+						else if (def is MethodDef setter && setter.IsSetter && FindProperty(setter) is PropertyDef prop) {
+							foreach (var m in DotNetUtils.GetMethodsAndSelf(prop))
+								yield return m;
+							foreach (var f in DotNetUtils.GetFields(setter))
+								yield return f;
+						}
+					}
 				}
 			}
 
 			var delMeth = FindCreateDelegateMethod();
 			if (delMeth is not null)
 				yield return delMeth;
+		}
+
+		PropertyDef? FindProperty(MethodDef setter) {
+			foreach (var p in Type.Properties) {
+				if (p.SetMethods.Contains(setter))
+					return p;
+			}
+			return null;
 		}
 
 		MethodDef? FindInitializeComponent() {

@@ -1,0 +1,15 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <!--
+    VB version of ../WpfEvents: exporting a VB WPF app as a C# project must build (see ../DecompilerStress/check.ps1).
+    .NET only: dotnet build can't compile VB WPF apps for .NET Framework (MC1000, mscorlib not found)
+  -->
+  <PropertyGroup>
+    <OutputType>WinExe</OutputType>
+    <TargetFramework>net10.0-windows</TargetFramework>
+    <UseWPF>true</UseWPF>
+    <RootNamespace>WpfEventsVB</RootNamespace>
+    <StartupObject>Sub Main</StartupObject>
+  </PropertyGroup>
+
+</Project>

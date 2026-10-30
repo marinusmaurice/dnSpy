@@ -1,0 +1,30 @@
+<Window x:Class="MainWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        Title="WpfEventsVB" Height="200" Width="300" Loaded="Window_Loaded">
+    <StackPanel>
+        <!-- x:Name and two CLR events (IComponentConnector.Connect) -->
+        <Button x:Name="okButton" Content="OK" Click="OkButton_Click" MouseEnter="OkButton_MouseEnter" />
+        <TextBox x:Name="input" TextChanged="Input_TextChanged" />
+        <!-- x:Name only -->
+        <ListBox x:Name="list">
+            <ListBox.ItemTemplate>
+                <DataTemplate>
+                    <!-- An event in a template (IStyleConnector.Connect) -->
+                    <Button Content="{Binding}" Click="ItemButton_Click" />
+                </DataTemplate>
+            </ListBox.ItemTemplate>
+        </ListBox>
+        <Button Content="Plain" />
+        <Button Content="Styled">
+            <Button.Style>
+                <Style TargetType="Button">
+                    <!-- A style's EventSetter (IStyleConnector.Connect, not in the BAML) -->
+                    <EventSetter Event="Click" Handler="StyledButton_Click" />
+                </Style>
+            </Button.Style>
+        </Button>
+        <!-- An attached event (UIElement.AddHandler) -->
+        <Border Mouse.MouseDown="Border_MouseDown" Height="5" />
+    </StackPanel>
+</Window>

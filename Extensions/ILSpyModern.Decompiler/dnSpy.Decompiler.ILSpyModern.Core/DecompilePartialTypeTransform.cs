@@ -53,6 +53,13 @@ namespace dnSpy.Decompiler.ILSpyModern.Core {
 
 		public void Run(AstNode rootNode, TransformContext context) {
 			foreach (var en in rootNode.Descendants.OfType<EntityDeclaration>().ToArray()) {
+				// The explicit implementations ICSharpCode.Decompiler adds for a removed interface's renamed methods
+				// (.override, eg. VB's System_Windows_Markup_IComponentConnector_Connect)
+				if (!info.ShowDefinitions && en is MethodDeclaration { PrivateImplementationType: { } implType } && implType.GetSymbol() is IType implIface &&
+					implIface.TypeParameterCount == 0 && ifacesToRemove.Contains((implIface.Namespace, implIface.Name))) {
+					en.Remove();
+					continue;
+				}
 				var def = modules.GetDefinition(en.GetSymbol());
 				if (def is null)
 					continue;
