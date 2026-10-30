@@ -84,25 +84,69 @@ namespace dnSpy.MainApp.CommandPalette {
 		/// </summary>
 		public CommandPaletteItem? ItemToExecute { get; private set; }
 
-		readonly List<CommandPaletteItem> allItems;
-		readonly string[] allTexts;
+		/// <summary>
+		/// A query that starts with this searches the types and members of the loaded assemblies
+		/// </summary>
+		public const string SymbolPrefix = "#";
 
-		public CommandPaletteVM(List<CommandPaletteItem> allItems) {
-			this.allItems = allItems;
-			allTexts = new string[allItems.Count];
-			for (int i = 0; i < allTexts.Length; i++)
-				allTexts[i] = allItems[i].Text;
+		/// <summary>
+		/// The most types and members shown (there can be hundreds of thousands)
+		/// </summary>
+		public const int MaxSymbolResults = 200;
+
+		/// <summary>
+		/// true if the query searches types and members
+		/// </summary>
+		public bool IsSymbolSearch => searchText.StartsWith(SymbolPrefix, StringComparison.Ordinal);
+
+		sealed class ItemList {
+			public readonly List<CommandPaletteItem> Items;
+			public readonly string[] Texts;
+			public readonly string[] LowerTexts;
+
+			public ItemList(List<CommandPaletteItem> items) {
+				Items = items;
+				Texts = new string[items.Count];
+				LowerTexts = new string[items.Count];
+				for (int i = 0; i < items.Count; i++) {
+					Texts[i] = items[i].Text;
+					LowerTexts[i] = Texts[i].ToLowerInvariant();
+				}
+			}
+		}
+
+		readonly ItemList commands;
+		readonly Func<List<CommandPaletteItem>>? getSymbols;
+		ItemList? symbols;
+
+		public CommandPaletteVM(List<CommandPaletteItem> commands, Func<List<CommandPaletteItem>>? getSymbols = null) {
+			this.commands = new ItemList(commands);
+			this.getSymbols = getSymbols;
 			Refilter();
 		}
 
 		void Refilter() {
+			ItemList list;
+			string query;
+			int maxResults;
+			if (IsSymbolSearch && getSymbols is not null) {
+				// Collected the first time they're searched, the palette is reopened to see newly loaded assemblies
+				symbols ??= new ItemList(getSymbols());
+				list = symbols;
+				query = searchText.Substring(SymbolPrefix.Length);
+				maxResults = MaxSymbolResults;
+			}
+			else {
+				list = commands;
+				query = searchText;
+				maxResults = int.MaxValue;
+			}
 			Items.Clear();
-			foreach (var index in CommandPaletteMatcher.Filter(allTexts, searchText))
-				Items.Add(allItems[index]);
+			foreach (var index in CommandPaletteMatcher.Filter(list.Texts, list.LowerTexts, query, maxResults))
+				Items.Add(list.Items[index]);
 			SelectedItem = Items.Count == 0 ? null : Items[0];
 			OnPropertyChanged(nameof(HasNoItems));
 		}
-
 		public void MoveSelection(int delta) {
 			if (Items.Count == 0)
 				return;

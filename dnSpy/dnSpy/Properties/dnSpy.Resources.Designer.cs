@@ -6285,7 +6285,7 @@ namespace dnSpy.Properties {
         }
         
         /// <summary>
-        ///   Looks up a localized string similar to Type words of a command&apos;s menu path, eg. &quot;full screen&quot;, &quot;view fs&quot; or &quot;close all&quot;. Up/Down select, Enter executes, Esc closes..
+        ///   Looks up a localized string similar to Type words of a command&apos;s menu path, eg. &quot;full screen&quot;, &quot;view fs&quot; or &quot;close all&quot;. Start with # to search the types and members of the loaded assemblies, eg. &quot;#list add&quot;. Up/Down select, Enter executes, Esc closes..
         /// </summary>
         public static string CommandPalette_Search_ToolTip {
             get {

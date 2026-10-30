@@ -45,10 +45,15 @@ namespace dnSpy.MainApp.CommandPalette {
 		/// Returns the score (higher is better) or -1 if <paramref name="text"/> doesn't match all words.
 		/// No words match everything with score 0.
 		/// </summary>
-		public static int GetScore(string[] words, string text) {
+		public static int GetScore(string[] words, string text) => GetScore(words, text, null);
+
+		/// <summary>
+		/// Same as <see cref="GetScore(string[], string)"/>, <paramref name="lower"/> is <paramref name="text"/> in lower case (or null)
+		/// </summary>
+		public static int GetScore(string[] words, string text, string? lower) {
 			if (words.Length == 0)
 				return 0;
-			var lower = text.ToLowerInvariant();
+			lower ??= text.ToLowerInvariant();
 			int total = 0;
 			foreach (var word in words) {
 				int score = GetWordScore(word, text, lower);
@@ -127,18 +132,25 @@ namespace dnSpy.MainApp.CommandPalette {
 		/// <summary>
 		/// Returns the indexes of the items that match, best first (same score: original order)
 		/// </summary>
-		public static List<int> Filter(IList<string> texts, string? query) {
+		public static List<int> Filter(IList<string> texts, string? query) => Filter(texts, null, query, int.MaxValue);
+
+		/// <summary>
+		/// Returns the indexes of the best <paramref name="maxResults"/> items that match, best first (same score: original order).
+		/// <paramref name="lowerTexts"/> are the texts in lower case (or null), so they're not lowered on each key press.
+		/// </summary>
+		public static List<int> Filter(IList<string> texts, IList<string>? lowerTexts, string? query, int maxResults) {
 			var words = GetWords(query);
 			var result = new List<(int index, int score)>();
 			for (int i = 0; i < texts.Count; i++) {
-				int score = GetScore(words, texts[i]);
+				int score = GetScore(words, texts[i], lowerTexts?[i]);
 				if (score >= 0)
 					result.Add((i, score));
 			}
 			result.Sort((a, b) => a.score != b.score ? b.score.CompareTo(a.score) : a.index.CompareTo(b.index));
-			var list = new List<int>(result.Count);
-			foreach (var r in result)
-				list.Add(r.index);
+			int count = Math.Min(result.Count, Math.Max(0, maxResults));
+			var list = new List<int>(count);
+			for (int i = 0; i < count; i++)
+				list.Add(result[i].index);
 			return list;
 		}
 	}

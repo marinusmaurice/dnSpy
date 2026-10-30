@@ -20,10 +20,15 @@
 using System;
 using System.Collections.Generic;
 using System.ComponentModel.Composition;
+using System.Linq;
 using System.Windows.Input;
 using System.Windows.Threading;
+using dnlib.DotNet;
 using dnSpy.Contracts.App;
+using dnSpy.Contracts.Documents;
+using dnSpy.Contracts.Documents.Tabs;
 using dnSpy.Contracts.Extension;
+using dnSpy.Contracts.Images;
 using dnSpy.Contracts.Menus;
 using dnSpy.Menus;
 
@@ -32,12 +37,23 @@ namespace dnSpy.MainApp.CommandPalette {
 	sealed class CommandPaletteService {
 		readonly IAppWindow appWindow;
 		readonly MenuService menuService;
+		readonly IDsDocumentService documentService;
+		readonly Lazy<IDocumentTabService> documentTabService;
+		readonly IDotNetImageService dotNetImageService;
 		bool isOpen;
 
+		/// <summary>
+		/// The most types and members collected from the loaded assemblies
+		/// </summary>
+		const int MaxSymbols = 1000000;
+
 		[ImportingConstructor]
-		CommandPaletteService(IAppWindow appWindow, MenuService menuService) {
+		CommandPaletteService(IAppWindow appWindow, MenuService menuService, IDsDocumentService documentService, Lazy<IDocumentTabService> documentTabService, IDotNetImageService dotNetImageService) {
 			this.appWindow = appWindow;
 			this.menuService = menuService;
+			this.documentService = documentService;
+			this.documentTabService = documentTabService;
+			this.dotNetImageService = dotNetImageService;
 		}
 
 		/// <summary>
@@ -55,7 +71,7 @@ namespace dnSpy.MainApp.CommandPalette {
 				isOpen = true;
 				// Read the commands before the dialog takes the keyboard focus: menu items check the focused element
 				var items = menuService.GetCommandPaletteItems(new Guid(MenuConstants.APP_MENU_GUID), mainWindow, contexts);
-				var vm = new CommandPaletteVM(items);
+				var vm = new CommandPaletteVM(items, GetSymbols);
 				var win = new CommandPaletteDlg { DataContext = vm, Owner = mainWindow };
 				if (win.ShowDialog() != true || vm.ItemToExecute is not CommandPaletteItem item)
 					return;
@@ -80,8 +96,28 @@ namespace dnSpy.MainApp.CommandPalette {
 				}
 			}
 		}
-	}
 
+		/// <summary>
+		/// Gets the types and members of the loaded modules: "Namespace.Type", "Namespace.Type.Method(Int32)", "Namespace.Outer.Nested.Field"
+		/// </summary>
+		List<CommandPaletteItem> GetSymbols() {
+			var result = new List<CommandPaletteItem>();
+			var modules = documentService.GetDocuments().SelectMany(a => a.GetAllChildrenAndSelf()).Select(a => a.ModuleDef).OfType<ModuleDef>().Distinct();
+			CommandPaletteSymbols.Collect(modules, MaxSymbols, (text, module, def) =>
+				result.Add(new CommandPaletteItem(text, module.Name?.String, GetImageReference(def), false, () => documentTabService.Value.FollowReference(def))));
+			return result;
+		}
+
+		ImageReference GetImageReference(IMemberDef def) =>
+			def switch {
+				TypeDef type => dotNetImageService.GetImageReference(type),
+				MethodDef method => dotNetImageService.GetImageReference(method),
+				PropertyDef property => dotNetImageService.GetImageReference(property),
+				EventDef @event => dotNetImageService.GetImageReference(@event),
+				FieldDef field => dotNetImageService.GetImageReference(field),
+				_ => default,
+			};
+	}
 	[ExportAutoLoaded]
 	sealed class CommandPaletteInit : IAutoLoaded {
 		static readonly RoutedCommand CommandPaletteCommand = new RoutedCommand("CommandPaletteCommand", typeof(CommandPaletteInit));

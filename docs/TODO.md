@@ -42,7 +42,7 @@ Each item gets its own branch from `master`, named after its target version (eg.
 Suggested first, in this order:
 
 0. [ ] ★ **L** Time-travel debugging (7.5.0.0, owner's request): record each stop of a debugged .NET process and go back through them (Debug History window, Step Back/Forward, value diff). Design: [TIME_TRAVEL_DEBUGGING.md](TIME_TRAVEL_DEBUGGING.md) (done); recording engine and options (done, not click-tested); Debug History window and Step Back/Forward/Return to Live (done, not click-tested); historical statement marker, toolbar buttons and Alt+[ / Alt+] shortcuts (done, not click-tested); value diff and per-variable time line (done, tested headlessly, window not click-tested); headless tests incl. a thread stress test and click-test steps (done). All steps done; needs the owner's click-test before release.
-1. [ ] ★ **S–M** Command palette: fuzzy search for commands, types and members (7.6.0.0). Commands: done, View → Command Palette... / F1 (Ctrl+Shift+P is already Collapse Tree View Nodes), tested headlessly, not click-tested. Types and members: to do.
+1. [x] ★ **S–M** Command palette: fuzzy search for commands, types and members (7.6.0.0; View → Command Palette... / F1, Ctrl+Shift+P is already Collapse Tree View Nodes; `#` searches the types and members of the loaded assemblies; tested headlessly by `Test/CommandPaletteCheck`, not click-tested).
 2. [ ] ★ **M** Side-by-side view: two decompilers (old vs new C#, or C# vs IL) in a split view, synced by member.
 3. [ ] ★ **M** Patch export/import: save edits as a patch file and re-apply them to a newer version of the DLL.
 4. [ ] ★ **M** Built-in de4dot: deobfuscate on open.

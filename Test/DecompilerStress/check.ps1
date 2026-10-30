@@ -192,11 +192,11 @@ try {
 	if (-not ($historyCheck -contains 'All history checks passed')) { Fail 'Debug History: checks failed'; $historyCheck | ForEach-Object { Write-Host "  $_" } }
 	else { Write-Host '  OK: ring buffer, Step Back/Forward, limits, value diff, time line' }
 
-	# Command palette: the fuzzy matcher compiled on its own (no WPF needed)
+	# Command palette: the fuzzy matcher and the type/member texts compiled on their own (no WPF needed)
 	Write-Host '== Command palette'
 	$paletteCheck = Invoke-Checked "run CommandPaletteCheck" { dotnet run --project (Join-Path $PSScriptRoot '..\CommandPaletteCheck\CommandPaletteCheck.csproj') -c Release -v:q -nologo }
 	if (-not ($paletteCheck -contains 'All command palette checks passed')) { Fail 'Command palette: checks failed'; $paletteCheck | ForEach-Object { Write-Host "  $_" } }
-	else { Write-Host '  OK: fuzzy matching, order, access keys' }
+	else { Write-Host '  OK: fuzzy matching, order, access keys, type/member texts' }
 
 	# Assembly diff: the two versions of Test/DiffCases differ exactly in the members marked V2; a lambda, an iterator
 	# and an unchanged type must not show up

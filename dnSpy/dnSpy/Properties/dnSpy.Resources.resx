@@ -2197,7 +2197,7 @@ Filter can be changed in Assembly Explorer options.</value>
     <value>Command Palette</value>
   </data>
   <data name="CommandPalette_Search_ToolTip" xml:space="preserve">
-    <value>Type words of a command&apos;s menu path, eg. &quot;full screen&quot;, &quot;view fs&quot; or &quot;close all&quot;. Up/Down select, Enter executes, Esc closes.</value>
+    <value>Type words of a command&apos;s menu path, eg. &quot;full screen&quot;, &quot;view fs&quot; or &quot;close all&quot;. Start with # to search the types and members of the loaded assemblies, eg. &quot;#list add&quot;. Up/Down select, Enter executes, Esc closes.</value>
   </data>
   <data name="CommandPalette_NoMatches" xml:space="preserve">
     <value>No commands match.</value>

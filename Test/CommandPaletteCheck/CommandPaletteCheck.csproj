@@ -4,8 +4,8 @@
 <Project Sdk="Microsoft.NET.Sdk">
 
   <!--
-    Command palette test: compiles dnSpy's command palette matcher (it doesn't use WPF) and checks the fuzzy
-    matching, the order of the results and the access key removal.
+    Command palette test: compiles dnSpy's command palette matcher and symbol names (they don't use WPF) and checks the fuzzy
+    matching, the order of the results, the access key removal and the type/member texts.
     check.ps1 runs it, see ../DecompilerStress/README.md.
   -->
   <PropertyGroup>
@@ -17,6 +17,8 @@
 
   <ItemGroup>
     <Compile Include="..\..\dnSpy\dnSpy\MainApp\CommandPalette\CommandPaletteMatcher.cs" Link="CommandPalette\CommandPaletteMatcher.cs" />
+    <Compile Include="..\..\dnSpy\dnSpy\MainApp\CommandPalette\CommandPaletteSymbols.cs" Link="CommandPalette\CommandPaletteSymbols.cs" />
+    <PackageReference Include="dnlib" Version="4.5.0" />
   </ItemGroup>
 
 </Project>
