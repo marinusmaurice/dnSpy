@@ -25,8 +25,10 @@ using System.ComponentModel.Composition;
 using System.Globalization;
 using System.Windows;
 using System.Windows.Input;
+using dnSpy.Contracts.Controls;
 using dnSpy.Contracts.Debugger.Code;
 using dnSpy.Contracts.Documents;
+using dnSpy.Contracts.Extension;
 using dnSpy.Contracts.Images;
 using dnSpy.Contracts.Menus;
 using dnSpy.Contracts.MVVM;
@@ -346,7 +348,7 @@ namespace dnSpy.Debugger.History {
 		public override void Execute(IMenuItemContext context) => navigator.Value.ShowToolWindow();
 	}
 
-	[ExportMenuItem(OwnerGuid = MenuConstants.APP_MENU_DEBUG_GUID, Header = "res:DbgHistory_StepBackCommand", Icon = DsImagesAttribute.Backwards, Group = MenuConstants.GROUP_APP_MENU_DEBUG_STEP, Order = 100)]
+	[ExportMenuItem(OwnerGuid = MenuConstants.APP_MENU_DEBUG_GUID, Header = "res:DbgHistory_StepBackCommand", Icon = DsImagesAttribute.Backwards, InputGestureText = "res:ShortCutKeyAltOpenBracket", Group = MenuConstants.GROUP_APP_MENU_DEBUG_STEP, Order = 100)]
 	sealed class DebugHistoryStepBackCommand : DebugHistoryMainMenuCommand {
 		[ImportingConstructor]
 		DebugHistoryStepBackCommand(Lazy<DebugHistoryNavigator> navigator, Lazy<DbgHistorySettings> dbgHistorySettings) : base(navigator, dbgHistorySettings) { }
@@ -354,7 +356,7 @@ namespace dnSpy.Debugger.History {
 		public override bool IsEnabled(IMenuItemContext context) => navigator.Value.CanStepBack;
 	}
 
-	[ExportMenuItem(OwnerGuid = MenuConstants.APP_MENU_DEBUG_GUID, Header = "res:DbgHistory_StepForwardCommand", Icon = DsImagesAttribute.Forwards, Group = MenuConstants.GROUP_APP_MENU_DEBUG_STEP, Order = 110)]
+	[ExportMenuItem(OwnerGuid = MenuConstants.APP_MENU_DEBUG_GUID, Header = "res:DbgHistory_StepForwardCommand", Icon = DsImagesAttribute.Forwards, InputGestureText = "res:ShortCutKeyAltCloseBracket", Group = MenuConstants.GROUP_APP_MENU_DEBUG_STEP, Order = 110)]
 	sealed class DebugHistoryStepForwardCommand : DebugHistoryMainMenuCommand {
 		[ImportingConstructor]
 		DebugHistoryStepForwardCommand(Lazy<DebugHistoryNavigator> navigator, Lazy<DbgHistorySettings> dbgHistorySettings) : base(navigator, dbgHistorySettings) { }
@@ -368,5 +370,17 @@ namespace dnSpy.Debugger.History {
 		DebugHistoryReturnToLiveCommand(Lazy<DebugHistoryNavigator> navigator, Lazy<DbgHistorySettings> dbgHistorySettings) : base(navigator, dbgHistorySettings) { }
 		public override void Execute(IMenuItemContext context) => navigator.Value.ReturnToLive();
 		public override bool IsEnabled(IMenuItemContext context) => navigator.Value.CanReturnToLive;
+	}
+
+	// Alt+[ / Alt+] like Visual Studio's IntelliTrace step back/forward. The command isn't executed
+	// (and the key isn't handled) when there's nothing to move to.
+	[ExportAutoLoaded]
+	sealed class DebugHistoryKeyboardShortcutCommands : IAutoLoaded {
+		[ImportingConstructor]
+		DebugHistoryKeyboardShortcutCommands(IWpfCommandService wpfCommandService, Lazy<DebugHistoryNavigator> navigator) {
+			var cmds = wpfCommandService.GetCommands(ControlConstants.GUID_MAINWINDOW);
+			cmds.Add(new RelayCommand(a => navigator.Value.StepBack(), a => navigator.Value.CanStepBack), ModifierKeys.Alt, Key.OemOpenBrackets);
+			cmds.Add(new RelayCommand(a => navigator.Value.StepForward(), a => navigator.Value.CanStepForward), ModifierKeys.Alt, Key.OemCloseBrackets);
+		}
 	}
 }

@@ -28,6 +28,7 @@ using dnSpy.Contracts.Images;
 using dnSpy.Contracts.Text.Classification;
 using dnSpy.Contracts.Text.Editor;
 using dnSpy.Contracts.ToolBars;
+using dnSpy.Contracts.Utilities;
 using dnSpy.Debugger.Properties;
 using dnSpy.Debugger.UI;
 using Microsoft.VisualStudio.Text.Classification;
@@ -143,7 +144,7 @@ namespace dnSpy.Debugger.History {
 
 			public override void Execute(IToolBarItemContext context) => navigator.Value.StepBack();
 			public override bool IsEnabled(IToolBarItemContext context) => navigator.Value.CanStepBack;
-			public override string? GetToolTip(IToolBarItemContext context) => dnSpy_Debugger_Resources.DbgHistory_StepBack;
+			public override string? GetToolTip(IToolBarItemContext context) => ToolTipHelper.AddKeyboardShortcut(dnSpy_Debugger_Resources.DbgHistory_StepBack, dnSpy_Debugger_Resources.ShortCutKeyAltOpenBracket);
 		}
 
 		[ExportToolBarButton(Icon = DsImagesAttribute.Forwards, Group = ToolBarConstants.GROUP_APP_TB_MAIN_DEBUG_STEP, Order = 110)]
@@ -153,7 +154,7 @@ namespace dnSpy.Debugger.History {
 
 			public override void Execute(IToolBarItemContext context) => navigator.Value.StepForward();
 			public override bool IsEnabled(IToolBarItemContext context) => navigator.Value.CanStepForward;
-			public override string? GetToolTip(IToolBarItemContext context) => dnSpy_Debugger_Resources.DbgHistory_StepForward;
+			public override string? GetToolTip(IToolBarItemContext context) => ToolTipHelper.AddKeyboardShortcut(dnSpy_Debugger_Resources.DbgHistory_StepForward, dnSpy_Debugger_Resources.ShortCutKeyAltCloseBracket);
 		}
 	}
 }

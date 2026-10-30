@@ -4433,6 +4433,24 @@ namespace dnSpy.Debugger.Properties {
         }
         
         /// <summary>
+        ///   Looks up a localized string similar to Alt+[.
+        /// </summary>
+        public static string ShortCutKeyAltOpenBracket {
+            get {
+                return ResourceManager.GetString("ShortCutKeyAltOpenBracket", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Alt+].
+        /// </summary>
+        public static string ShortCutKeyAltCloseBracket {
+            get {
+                return ResourceManager.GetString("ShortCutKeyAltCloseBracket", resourceCulture);
+            }
+        }
+        
+        /// <summary>
         ///   Looks up a localized string similar to Return to Live.
         /// </summary>
         public static string DbgHistory_ReturnToLive {
