@@ -318,4 +318,13 @@
   <data name="MissingArgument" xml:space="preserve">
     <value>Missing argument</value>
   </data>
+  <data name="CmdLineDescription_Diff" xml:space="preserve">
+    <value>compare two versions of an assembly: dnSpy.Console --diff old.dll new.dll</value>
+  </data>
+  <data name="CmdLineDescription_DiffCode" xml:space="preserve">
+    <value>like --diff, also show the decompiled code diff of each changed type</value>
+  </data>
+  <data name="DiffNeedsTwoFiles" xml:space="preserve">
+    <value>--diff needs two files: the old and the new version</value>
+  </data>
 </root>

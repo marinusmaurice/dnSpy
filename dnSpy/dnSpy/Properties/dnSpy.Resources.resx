@@ -2076,9 +2076,6 @@ Filter can be changed in Assembly Explorer options.</value>
   <data name="OpenNuGetCommand" xml:space="preserve">
     <value>Open from _NuGet...</value>
   </data>
-  <data name="OpenNuGet_Label" xml:space="preserve">
-    <value>Package ID [version]:</value>
-  </data>
   <data name="OpenNuGet_Title" xml:space="preserve">
     <value>Open from NuGet</value>
   </data>
@@ -2091,7 +2088,52 @@ Filter can be changed in Assembly Explorer options.</value>
   <data name="NuGetPackages" xml:space="preserve">
     <value>NuGet Packages</value>
   </data>
-  <data name="OpenNuGet_Invalid" xml:space="preserve">
-    <value>Enter a package ID, optionally followed by a version (eg. Newtonsoft.Json 13.0.3)</value>
+  <data name="AssemblyDiff_NodeName" xml:space="preserve">
+    <value>Diff:</value>
+  </data>
+  <data name="AssemblyDiff_CompareCommand" xml:space="preserve">
+    <value>Compare Assemblies</value>
+  </data>
+  <data name="AssemblyDiff_CompareWithFileCommand" xml:space="preserve">
+    <value>Compare with File...</value>
+  </data>
+  <data name="AssemblyDiff_NotDotNetFile" xml:space="preserve">
+    <value>{0} isn't a .NET file.</value>
+  </data>
+  <data name="OpenNuGet_Description" xml:space="preserve">
+    <value>Search nuget.org for a NuGet package (the libraries .NET projects use), pick a version and open its assemblies. dnSpy uses the copy in your NuGet cache if it's there, otherwise it downloads the package.</value>
+  </data>
+  <data name="OpenNuGet_Search_Label" xml:space="preserve">
+    <value>_Search:</value>
+  </data>
+  <data name="OpenNuGet_Search_ToolTip" xml:space="preserve">
+    <value>Package name or keywords, eg. Newtonsoft.Json or json (Ctrl+F)</value>
+  </data>
+  <data name="OpenNuGet_Prerelease" xml:space="preserve">
+    <value>Include _prerelease</value>
+  </data>
+  <data name="OpenNuGet_Package_Column" xml:space="preserve">
+    <value>Package</value>
+  </data>
+  <data name="OpenNuGet_Version_Column" xml:space="preserve">
+    <value>Latest version</value>
+  </data>
+  <data name="OpenNuGet_Downloads_Column" xml:space="preserve">
+    <value>Downloads</value>
+  </data>
+  <data name="OpenNuGet_Description_Column" xml:space="preserve">
+    <value>Description</value>
+  </data>
+  <data name="OpenNuGet_Version_Label" xml:space="preserve">
+    <value>_Version to open:</value>
+  </data>
+  <data name="OpenNuGet_Open_Button" xml:space="preserve">
+    <value>_Open</value>
+  </data>
+  <data name="OpenNuGet_PackagesShown" xml:space="preserve">
+    <value>{0} packages</value>
+  </data>
+  <data name="OpenNuGet_SearchError" xml:space="preserve">
+    <value>Couldn't search nuget.org: {0}</value>
   </data>
 </root>

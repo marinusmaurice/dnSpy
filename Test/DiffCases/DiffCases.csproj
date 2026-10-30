@@ -1,0 +1,20 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <!--
+    Assembly diff test library (see ../DecompilerStress/check.ps1): built twice, as is and with DiffVersion=2, and
+    dnSpy.Console's diff option must report exactly the differences marked V2 in Library.cs
+  -->
+  <PropertyGroup>
+    <TargetFramework>net10.0</TargetFramework>
+    <LangVersion>latest</LangVersion>
+    <Nullable>disable</Nullable>
+    <Deterministic>true</Deterministic>
+    <AssemblyVersion>1.0.0.0</AssemblyVersion>
+  </PropertyGroup>
+
+  <PropertyGroup Condition=" '$(DiffVersion)' == '2' ">
+    <DefineConstants>$(DefineConstants);V2</DefineConstants>
+    <AssemblyVersion>2.0.0.0</AssemblyVersion>
+  </PropertyGroup>
+
+</Project>

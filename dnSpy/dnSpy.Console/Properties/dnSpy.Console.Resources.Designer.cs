@@ -187,6 +187,33 @@ namespace dnSpy.Console.Properties {
         }
         
         /// <summary>
+        ///   Looks up a localized string similar to compare two versions of an assembly: dnSpy.Console --diff old.dll new.dll.
+        /// </summary>
+        internal static string CmdLineDescription_Diff {
+            get {
+                return ResourceManager.GetString("CmdLineDescription_Diff", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to like --diff, also show the decompiled code diff of each changed type.
+        /// </summary>
+        internal static string CmdLineDescription_DiffCode {
+            get {
+                return ResourceManager.GetString("CmdLineDescription_DiffCode", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to --diff needs two files: the old and the new version.
+        /// </summary>
+        internal static string DiffNeedsTwoFiles {
+            get {
+                return ResourceManager.GetString("DiffNeedsTwoFiles", resourceCulture);
+            }
+        }
+        
+        /// <summary>
         ///   Looks up a localized string similar to project guid.
         /// </summary>
         internal static string CmdLineDescription_ProjectGUID {

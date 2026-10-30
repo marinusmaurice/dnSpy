@@ -182,6 +182,43 @@ try {
 		if (Compare-Object $original $rerun) { Fail "$name`: exported program prints something different" }
 		else { Write-Host "  OK: export builds and prints the same ($($original.Count) lines)" }
 	}
+
+	# Assembly diff: the two versions of Test/DiffCases differ exactly in the members marked V2; a lambda, an iterator
+	# and an unchanged type must not show up
+	Write-Host "== Assembly diff"
+	$diffProject = Join-Path $PSScriptRoot '..\DiffCases\DiffCases.csproj'
+	$diffV1 = Join-Path $work 'diff-v1'
+	$diffV2 = Join-Path $work 'diff-v2'
+	Invoke-Checked "build DiffCases v1" { dotnet build $diffProject -c Release -o $diffV1 -v:q -nologo } > $null
+	Invoke-Checked "build DiffCases v2" { dotnet build $diffProject -c Release -p:DiffVersion=2 -o $diffV2 -v:q -nologo } > $null
+	$diffFile1 = Join-Path $diffV1 'DiffCases.dll'
+	$diffFile2 = Join-Path $diffV2 'DiffCases.dll'
+	$expectedDiff = @(
+		'// Types: 1 added, 1 removed, 2 changed'
+		'// Assembly version: 1.0.0.0 -> 2.0.0.0'
+		''
+		'~ type DiffCases.Calculator'
+		'    ~ method <>c::System.Int32 <SumOfSquares>b__4_0(System.Int32)  // body'
+		'    ~ method System.Int32 Add(System.Int32,System.Int32)  // body'
+		'    - method System.Int32 Divide(System.Int32,System.Int32)'
+		'    + method System.Int32 Multiply(System.Int32,System.Int32)'
+		'+ type DiffCases.Logger'
+		'- type DiffCases.OldHelper'
+		'~ type DiffCases.Settings'
+		'    ~ field System.Int32 Timeout  // value'
+		'    + property System.String Name'
+	)
+	# The first two lines are the old and new assembly names and paths
+	$actualDiff = @(Invoke-Checked "diff DiffCases" { & $Console --no-color --diff $diffFile1 $diffFile2 } | Select-Object -Skip 2)
+	$sameDiff = @(Invoke-Checked "diff DiffCases with itself" { & $Console --no-color --diff $diffFile1 $diffFile1 } | Select-Object -Skip 2)
+	$codeDiff = @(Invoke-Checked "code diff DiffCases" { & $Console --no-color --diff-code $diffFile1 $diffFile2 })
+	if (Compare-Object $expectedDiff $actualDiff) {
+		Fail 'Assembly diff: unexpected differences'
+		$actualDiff | ForEach-Object { Write-Host "  $_" }
+	}
+	elseif (-not ($sameDiff -contains '// No differences')) { Fail 'Assembly diff: an assembly differs from itself' }
+	elseif (-not ($codeDiff -contains '+ 		lastResult = checked(a + b);' -and $codeDiff -contains '- 		lastResult = a + b;')) { Fail 'Assembly diff: the code diff is missing the change in Add' }
+	else { Write-Host "  OK: $($expectedDiff.Count - 3) lines of differences, none with itself, code diff" }
 }
 catch {
 	Fail $_.Exception.Message

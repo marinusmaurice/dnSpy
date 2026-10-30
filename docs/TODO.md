@@ -34,9 +34,9 @@ Each item gets its own branch from `master`, named after its target version (eg.
 
 - [ ] ★ **S–M** Sign release binaries (free for open source via SignPath.io).
 
-## Next feature releases (7.2.0.0 and later)
+## Next feature releases (7.3.0.0 and later)
 
-Assembly diff is planned for 7.2.0.0 (see Decompiler below). Suggested after that, in this order:
+Suggested first, in this order:
 
 1. [ ] ★ **S–M** Command palette (Ctrl+Shift+P): fuzzy search for commands, types and members.
 2. [ ] ★ **M** Side-by-side view: two decompilers (old vs new C#, or C# vs IL) in a split view, synced by member.
@@ -49,7 +49,9 @@ Assembly diff is planned for 7.2.0.0 (see Decompiler below). Suggested after tha
 
 ### Decompiler
 
-- [ ] **M–L** Assembly diff: compare two versions of a DLL (added, removed and changed members with code diff).
+- [x] **M–L** Assembly diff: compare two versions of a DLL (added, removed and changed members with code diff) (7.2.0.0; context menu Compare Assemblies / Compare with File..., `dnSpy.Console --diff`/`--diff-code`, `Test/DiffCases` in `check.ps1`).
+- [ ] **S** Translate the 7.2.0.0 strings (Compare Assemblies, Compare with File..., the diff node, the Open from NuGet dialog, `dnSpy.Console --diff`/`--diff-code` help) in `dnSpy/dnSpy/Properties` and `dnSpy/dnSpy.Console/Properties`; they show in English for now.
+- [ ] **S** Assembly diff: compare the resources too, and match renamed members (today a renamed member is removed + added).
 - [ ] **M** Generate a PDB from decompiled code, to debug third-party DLLs in Visual Studio.
 - [ ] **M** ReadyToRun / NativeAOT viewer: show the precompiled native code next to the IL.
 - [x] **M** Single-file bundles: open a .NET 6+ single-file `.exe` and browse the DLLs inside (7.1.0.0; .NET Core 3.x to .NET 10 bundles, also compressed ones; references between the bundle's assemblies, eg. a self-contained app's runtime, resolve to the bundle's copies).
@@ -99,7 +101,8 @@ Assembly diff is planned for 7.2.0.0 (see Decompiler below). Suggested after tha
 - [x] **S** Open `.nupkg` files (drag and drop) and browse the DLLs inside (7.1.0.0; grouped by folder, eg. lib/net8.0).
 - [x] **M** "Open from NuGet": download a package by ID/version and open it (7.1.0.0; File menu; uses NuGet's global packages folder when the package is there, else downloads from nuget.org to `%LOCALAPPDATA%\dnSpy\NuGet`).
 - [ ] **S** Translate the 7.1.0.0 strings (Open from NuGet, NuGet Packages) in `dnSpy/dnSpy/Properties/dnSpy.Resources.*.resx`; they show in English for now.
-- [ ] **S** Open from NuGet: search nuget.org (today: ID and optional version) and use private feeds from NuGet.config.
+- [x] **S** Open from NuGet: search nuget.org (7.2.0.0: a search dialog with versions and prereleases).
+- [ ] **S** Open from NuGet: private feeds from NuGet.config.
 - [ ] **S** Update checker based on GitHub releases.
 
 ### Extensibility and scripting
@@ -107,7 +110,7 @@ Assembly diff is planned for 7.2.0.0 (see Decompiler below). Suggested after tha
 - [ ] **M** Scripting with dnSpy's own API (C# Interactive with access to the open assemblies).
 - [ ] **M** Extension manager: browse, install and update extensions from a GitHub-based list.
 - [ ] **S** `dotnet new dnspy-extension` template + docs.
-- [ ] **S–M** dnSpy.Console: JSON output, batch export, `--diff`, headless scripts.
+- [ ] **S–M** dnSpy.Console: JSON output, batch export, headless scripts (`--diff`/`--diff-code` are in 7.2.0.0).
 
 ### Platform
 

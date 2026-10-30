@@ -33,6 +33,7 @@ using dnSpy.Console.Properties;
 using dnSpy.Contracts.Decompiler;
 using dnSpy.Contracts.Text;
 using dnSpy.Contracts.Utilities;
+using dnSpy.Decompiler.Diff;
 using dnSpy.Decompiler.MSBuild;
 
 namespace dnSpy_Console {
@@ -172,6 +173,8 @@ namespace dnSpy_Console {
 		bool createResX = true;
 		bool decompileBaml = true;
 		bool colorizeOutput;
+		bool diff;
+		bool diffCode;
 		Guid projectGuid = Guid.NewGuid();
 		int numThreads;
 		int mdToken;
@@ -353,6 +356,8 @@ namespace dnSpy_Console {
 			new UsageInfo("--type", dnSpy_Console_Resources.CmdLineName, dnSpy_Console_Resources.CmdLineDescription_Type2),
 			new UsageInfo("--md", "N", dnSpy_Console_Resources.CmdLineDescription_MDToken),
 			new UsageInfo("--gac-file", dnSpy_Console_Resources.CmdLineAssembly, dnSpy_Console_Resources.CmdLineDescription_GACFile),
+			new UsageInfo("--diff", null, dnSpy_Console_Resources.CmdLineDescription_Diff),
+			new UsageInfo("--diff-code", null, dnSpy_Console_Resources.CmdLineDescription_DiffCode),
 			new UsageInfo("-r", null, dnSpy_Console_Resources.CmdLineDescription_RecursiveSearch),
 			new UsageInfo("-o", dnSpy_Console_Resources.CmdLineOutputDir, dnSpy_Console_Resources.CmdLineDescription_OutputDirectory),
 			new UsageInfo("-l", dnSpy_Console_Resources.CmdLineLanguage, dnSpy_Console_Resources.CmdLineDescription_Language),
@@ -448,6 +453,8 @@ namespace dnSpy_Console {
 			"md",
 			"gac-file",
 			"project-guid",
+			"diff",
+			"diff-code",
 		};
 
 		void ParseCommandLine(string[] args) {
@@ -619,6 +626,15 @@ namespace dnSpy_Console {
 						gacFiles.Add(next);
 						break;
 
+					case "--diff":
+						diff = true;
+						break;
+
+					case "--diff-code":
+						diff = true;
+						diffCode = true;
+						break;
+
 					case "--project-guid":
 						if (next is null || !Guid.TryParse(next, out projectGuid))
 							throw new ErrorException(dnSpy_Console_Resources.InvalidGuid);
@@ -701,7 +717,20 @@ namespace dnSpy_Console {
 			foreach (var file in files.OrderBy(a => a.Module.Location, StringComparer.InvariantCultureIgnoreCase))
 				file.ProjectGuid = new Guid(string.Format(guidFormat, guidNum++));
 
-			if (mdToken != 0 || typeName is not null) {
+			if (diff) {
+				if (files.Count != 2)
+					throw new ErrorException(dnSpy_Console_Resources.DiffNeedsTwoFiles);
+				var diffOutput = CreateConsoleOutput();
+				var result = AssemblyDiff.Compare(files[0].Module, files[1].Module);
+				AssemblyDiffWriter.WriteSummary(diffOutput, result);
+				if (diffCode) {
+					foreach (var type in result.Types) {
+						diffOutput.WriteLine();
+						AssemblyDiffWriter.WriteCodeDiff(diffOutput, GetLanguage(), type, decompilationContext.CancellationToken);
+					}
+				}
+			}
+			else if (mdToken != 0 || typeName is not null) {
 				if (files.Count == 0)
 					throw new ErrorException(dnSpy_Console_Resources.MissingDotNetFilename);
 				if (files.Count != 1)
@@ -718,12 +747,7 @@ namespace dnSpy_Console {
 					throw new ErrorException(dnSpy_Console_Resources.InvalidToken);
 				}
 
-				var writer = Console.Out;
-				IDecompilerOutput output;
-				if (colorizeOutput)
-					output = new ConsoleColorizerOutput(writer, CreateColorProvider(), GetIndenter());
-				else
-					output = new TextWriterDecompilerOutput(writer, GetIndenter());
+				var output = CreateConsoleOutput();
 
 				var lang = GetLanguage();
 				if (member is MethodDef)
@@ -813,6 +837,13 @@ namespace dnSpy_Console {
 			if (i < 0)
 				return s;
 			return s.Substring(0, i);
+		}
+
+		IDecompilerOutput CreateConsoleOutput() {
+			var writer = Console.Out;
+			if (colorizeOutput)
+				return new ConsoleColorizerOutput(writer, CreateColorProvider(), GetIndenter());
+			return new TextWriterDecompilerOutput(writer, GetIndenter());
 		}
 
 		IEnumerable<ProjectModuleOptions> GetDotNetFiles() {

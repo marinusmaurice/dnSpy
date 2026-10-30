@@ -3441,24 +3441,6 @@ namespace dnSpy.Properties {
         }
         
         /// <summary>
-        ///   Looks up a localized string similar to Enter a package ID, optionally followed by a version (eg. Newtonsoft.Json 13.0.3).
-        /// </summary>
-        public static string OpenNuGet_Invalid {
-            get {
-                return ResourceManager.GetString("OpenNuGet_Invalid", resourceCulture);
-            }
-        }
-        
-        /// <summary>
-        ///   Looks up a localized string similar to Package ID [version]:.
-        /// </summary>
-        public static string OpenNuGet_Label {
-            get {
-                return ResourceManager.GetString("OpenNuGet_Label", resourceCulture);
-            }
-        }
-        
-        /// <summary>
         ///   Looks up a localized string similar to Open from NuGet.
         /// </summary>
         public static string OpenNuGet_Title {
@@ -3491,6 +3473,150 @@ namespace dnSpy.Properties {
         public static string NuGetPackages {
             get {
                 return ResourceManager.GetString("NuGetPackages", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Diff:.
+        /// </summary>
+        public static string AssemblyDiff_NodeName {
+            get {
+                return ResourceManager.GetString("AssemblyDiff_NodeName", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Compare Assemblies.
+        /// </summary>
+        public static string AssemblyDiff_CompareCommand {
+            get {
+                return ResourceManager.GetString("AssemblyDiff_CompareCommand", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Compare with File....
+        /// </summary>
+        public static string AssemblyDiff_CompareWithFileCommand {
+            get {
+                return ResourceManager.GetString("AssemblyDiff_CompareWithFileCommand", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to {0} isn't a .NET file..
+        /// </summary>
+        public static string AssemblyDiff_NotDotNetFile {
+            get {
+                return ResourceManager.GetString("AssemblyDiff_NotDotNetFile", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Search nuget.org for a NuGet package (the libraries .NET projects use), pick a version and open its assemblies. dnSpy uses the copy in your NuGet cache if it's there, otherwise it downloads the package..
+        /// </summary>
+        public static string OpenNuGet_Description {
+            get {
+                return ResourceManager.GetString("OpenNuGet_Description", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to _Search:.
+        /// </summary>
+        public static string OpenNuGet_Search_Label {
+            get {
+                return ResourceManager.GetString("OpenNuGet_Search_Label", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Package name or keywords, eg. Newtonsoft.Json or json (Ctrl+F).
+        /// </summary>
+        public static string OpenNuGet_Search_ToolTip {
+            get {
+                return ResourceManager.GetString("OpenNuGet_Search_ToolTip", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Include _prerelease.
+        /// </summary>
+        public static string OpenNuGet_Prerelease {
+            get {
+                return ResourceManager.GetString("OpenNuGet_Prerelease", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Package.
+        /// </summary>
+        public static string OpenNuGet_Package_Column {
+            get {
+                return ResourceManager.GetString("OpenNuGet_Package_Column", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Latest version.
+        /// </summary>
+        public static string OpenNuGet_Version_Column {
+            get {
+                return ResourceManager.GetString("OpenNuGet_Version_Column", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Downloads.
+        /// </summary>
+        public static string OpenNuGet_Downloads_Column {
+            get {
+                return ResourceManager.GetString("OpenNuGet_Downloads_Column", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Description.
+        /// </summary>
+        public static string OpenNuGet_Description_Column {
+            get {
+                return ResourceManager.GetString("OpenNuGet_Description_Column", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to _Version to open:.
+        /// </summary>
+        public static string OpenNuGet_Version_Label {
+            get {
+                return ResourceManager.GetString("OpenNuGet_Version_Label", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to _Open.
+        /// </summary>
+        public static string OpenNuGet_Open_Button {
+            get {
+                return ResourceManager.GetString("OpenNuGet_Open_Button", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to {0} packages.
+        /// </summary>
+        public static string OpenNuGet_PackagesShown {
+            get {
+                return ResourceManager.GetString("OpenNuGet_PackagesShown", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Couldn't search nuget.org: {0}.
+        /// </summary>
+        public static string OpenNuGet_SearchError {
+            get {
+                return ResourceManager.GetString("OpenNuGet_SearchError", resourceCulture);
             }
         }
         
