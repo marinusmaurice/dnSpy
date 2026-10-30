@@ -11,6 +11,7 @@
 	  - the debugger info lets the debugger stop at every statement and step over awaits (../DebugInfoCheck, .NET builds only)
 	  - the Debug History (time-travel debugging) ring buffer and Step Back/Forward (../DebugHistoryCheck)
 	  - the command palette's fuzzy matching (../CommandPaletteCheck)
+	  - the side-by-side view's language choice and tab sync (../SideBySideCheck)
 	Exits with 1 when a check fails.
 #>
 param(
@@ -197,6 +198,12 @@ try {
 	$paletteCheck = Invoke-Checked "run CommandPaletteCheck" { dotnet run --project (Join-Path $PSScriptRoot '..\CommandPaletteCheck\CommandPaletteCheck.csproj') -c Release -v:q -nologo }
 	if (-not ($paletteCheck -contains 'All command palette checks passed')) { Fail 'Command palette: checks failed'; $paletteCheck | ForEach-Object { Write-Host "  $_" } }
 	else { Write-Host '  OK: fuzzy matching, order, access keys, type/member texts' }
+
+	# Side-by-side view: the language shown next to the current one and the tab pair, compiled on their own (no WPF needed)
+	Write-Host '== Side-by-side view'
+	$sideCheck = Invoke-Checked "run SideBySideCheck" { dotnet run --project (Join-Path $PSScriptRoot '..\SideBySideCheck\SideBySideCheck.csproj') -c Release -v:q -nologo }
+	if (-not ($sideCheck -contains 'All side-by-side checks passed')) { Fail 'Side-by-side view: checks failed'; $sideCheck | ForEach-Object { Write-Host "  $_" } }
+	else { Write-Host '  OK: language picked for the second view, tab pair and sync guard' }
 
 	# Assembly diff: the two versions of Test/DiffCases differ exactly in the members marked V2; a lambda, an iterator
 	# and an unchanged type must not show up

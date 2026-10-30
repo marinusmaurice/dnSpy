@@ -7,6 +7,14 @@ What changed in each release of this fork, newest first. The release workflow pu
 
 Each section starts with a short summary, then **New Features** (new things you can do), **Enhancements** (existing things that work better) and **Bug Fixes**, with a link to the commit for each item. Technical details are in [All changes in detail](docs/CHANGES.md#all-changes-in-detail) and in [docs/MODERNIZATION_PLAN.md](docs/MODERNIZATION_PLAN.md).
 
+## 7.7.0.0
+
+A side-by-side view, to compare two languages (the new and the old C#, or C# and IL) of the same code. Also has everything in 7.6.0.0 and 7.5.0.0.
+
+### New Features
+
+- Side-by-side view: Window → Compare Side by Side shows the active tab's code in a second language next to it, in the next tab group (a new vertical tab group if there's only one). C# (ILSpy 11) is shown next to the old C# and the other way around, C# next to IL, VB and the other languages, IL if only one C# is there; the toolbar's language box changes the language of either side. The two tabs stay on the same node: select another type or member in one of them (in the tree view, by clicking a reference, Back/Forward) and the other one shows it too, in its own language. Run Compare Side by Side again (it's checked) to stop syncing; closing one of the tabs ends it too. Tested headlessly (`Test/SideBySideCheck`); not click-tested yet.
+
 ## 7.6.0.0
 
 A command palette, to find and run any menu command, type or member by typing part of its name. Also has everything in 7.5.0.0.

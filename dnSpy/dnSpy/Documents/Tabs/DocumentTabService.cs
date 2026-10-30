@@ -1,4 +1,4 @@
-/*
+﻿/*
     Copyright (C) 2014-2019 de4dot@gmail.com
 
     This file is part of dnSpy
@@ -402,6 +402,25 @@ namespace dnSpy.Documents.Tabs {
 		}
 
 		int disableSelectTreeNodes;
+
+		/// <summary>
+		/// Raised when a tab shows new content (not when it's refreshed). Used by the side-by-side view.
+		/// </summary>
+		internal event EventHandler<IDocumentTab>? NewTabContentShown;
+
+		/// <summary>
+		/// Raised when a tab is closed
+		/// </summary>
+		internal event EventHandler<IDocumentTab>? TabRemoved;
+
+		internal void OnNewTabContentShown(IDocumentTab? documentTab, bool isRefresh) {
+			if (documentTab is null)
+				return;
+			if (!isRefresh)
+				NewTabContentShown?.Invoke(this, documentTab);
+			OnNewTabContentShown(documentTab);
+		}
+
 		internal void OnNewTabContentShown(IDocumentTab? documentTab) {
 			if (documentTab is null)
 				return;
@@ -537,6 +556,7 @@ namespace dnSpy.Documents.Tabs {
 		}
 
 		internal void OnRemoved(TabContentImpl impl) {
+			TabRemoved?.Invoke(this, impl);
 			if (ActiveTabContentImpl is null)
 				DocumentTreeView.TreeView.SelectItems(Array.Empty<TreeNodeData>());
 		}

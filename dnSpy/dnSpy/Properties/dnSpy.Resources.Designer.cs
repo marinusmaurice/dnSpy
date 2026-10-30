@@ -6267,6 +6267,15 @@ namespace dnSpy.Properties {
         }
         
         /// <summary>
+        ///   Looks up a localized string similar to Compare _Side by Side.
+        /// </summary>
+        public static string SideBySideCommand {
+            get {
+                return ResourceManager.GetString("SideBySideCommand", resourceCulture);
+            }
+        }
+        
+        /// <summary>
         ///   Looks up a localized string similar to Command _Palette....
         /// </summary>
         public static string CommandPaletteCommand {

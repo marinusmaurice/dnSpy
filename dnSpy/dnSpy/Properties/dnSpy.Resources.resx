@@ -2190,6 +2190,9 @@ Filter can be changed in Assembly Explorer options.</value>
   <data name="Update_BadZip" xml:space="preserve">
     <value>The downloaded zip has no {0}.</value>
   </data>
+  <data name="SideBySideCommand" xml:space="preserve">
+    <value>Compare _Side by Side</value>
+  </data>
   <data name="CommandPaletteCommand" xml:space="preserve">
     <value>Command _Palette...</value>
   </data>
