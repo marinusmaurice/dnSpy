@@ -5,6 +5,7 @@
 // Prints "All history checks passed" and exits with 0, or lists the failed checks and exits with 1.
 using System;
 using System.Collections.Generic;
+using System.Linq;
 using dnSpy.Debugger.History;
 int fails = 0;
 void Check(bool ok, string what) { if (!ok) { fails++; Console.WriteLine("FAIL: " + what); } }
@@ -124,5 +125,48 @@ for (int i = 0; i < longList.Length; i++) longList[i] = D(7, main, L("x", i.ToSt
 var tlong = DbgHistoryTimeline.Create(longList, longList.Length - 1, keysAt2[0].KeyPath)!;
 Check(tlong.Entries.Count == DbgHistoryTimeline.MaxEntries && tlong.IsTruncated && tlong.Entries[0].Value.Value == "100" && tlong.Entries[^1].IsSelected, "timeline: max entries");
 Check(tlong.GetText(ds).StartsWith("x: ... → 1080 → ") && tlong.GetText(ds).EndsWith("→ 1099"), "timeline: long text '" + tlong.GetText(ds) + "'");
+
+// Threads: the recorder adds on the debugger thread while the UI thread moves and reads. Every dropped stop
+// is passed to SnapshotRemoved exactly once (it closes the code locations), the history never grows past its capacity.
+var removedOnce = new System.Collections.Concurrent.ConcurrentDictionary<long, int>();
+var th = new DbgHistory(50) { SnapshotRemoved = s => removedOnce.AddOrUpdate(s.Index, 1, (_, n) => n + 1) };
+int threadErrors = 0; const int adds = 20000;
+var adder = new System.Threading.Thread(() => {
+	try {
+		for (int i = 0; i < adds; i++) {
+			th.Add(S(i, i));
+			if (i % 997 == 0) th.Capacity = 20 + i % 61;
+		}
+	}
+	catch { System.Threading.Interlocked.Increment(ref threadErrors); }
+});
+var reader = new System.Threading.Thread(() => {
+	try {
+		while (adder.IsAlive) {
+			th.MoveBack(); th.MoveBack(); th.MoveForward();
+			var all = th.GetSnapshots();
+			if (all.Length > DbgHistory.MaxCapacity || all.Length > 81)
+				System.Threading.Interlocked.Increment(ref threadErrors);
+			for (int i = 1; i < all.Length; i++) {
+				if (all[i].Index != all[i - 1].Index + 1)
+					System.Threading.Interlocked.Increment(ref threadErrors);
+			}
+			var cur = th.Current;
+			if (cur is null && th.TotalCount > 0)
+				System.Threading.Interlocked.Increment(ref threadErrors);
+			if (th.CurrentIndex % 7 == 0) th.ReturnToLive();
+		}
+	}
+	catch { System.Threading.Interlocked.Increment(ref threadErrors); }
+});
+adder.Start(); reader.Start(); adder.Join(); reader.Join();
+Check(threadErrors == 0, "threads: no errors or inconsistent reads (" + threadErrors + ")");
+Check(th.TotalCount == adds && th.Count <= th.Capacity && th.Count + th.DroppedCount == adds, "threads: counts");
+Check(removedOnce.Count == th.DroppedCount && !removedOnce.Values.Any(n => n != 1), "threads: each dropped stop removed once");
+var kept = th.GetSnapshots();
+Check(kept.Length > 0 && kept[^1].Index == adds && !kept.Any(s => removedOnce.ContainsKey(s.Index)), "threads: kept stops weren't removed");
+th.Clear();
+Check(removedOnce.Count == adds && removedOnce.Values.All(n => n == 1), "threads: clear removes the rest once");
+
 Console.WriteLine(fails == 0 ? "All history checks passed" : $"{fails} history checks failed");
 return fails == 0 ? 0 : 1;
