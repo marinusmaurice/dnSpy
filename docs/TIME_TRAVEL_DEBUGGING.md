@@ -3,7 +3,7 @@
 -->
 # Time-travel debugging (Debug History)
 
-Version 7.5.0.0, branch `7.5.0.0/time-travel-debugging`. Status: **recording engine** done (step b of a-e, see the bottom of this page); not click-tested.
+Version 7.5.0.0, branch `7.5.0.0/time-travel-debugging`. Status: **recording engine** (step b) and the first part of the **UI** (step c: Debug History window, Step Back/Forward/Return to Live) done, see the bottom of this page; not click-tested.
 
 ## Goal
 
@@ -75,6 +75,8 @@ Steps (each its own commit on the branch):
 - [x] a. Design (this page).
 - [x] b. Recording engine: model, history, recorder, settings (`History/DbgHistorySnapshot.cs`, `DbgHistory.cs`, `DbgHistoryRecorder.cs`, `DbgHistorySettings.cs`, `DbgHistoryAppSettingsPage.cs`). The history and model are tested headlessly by `Test/DebugHistoryCheck` (run by `check.ps1`); the recorder needs a debugged process and isn't tested yet. The contract `DbgHistoryService` isn't added yet (the UI uses the internal `DbgHistoryRecorder.History`); it can be added once the UI shows what other extensions need.
 - [ ] c. UI: Debug History window, Step Back/Forward, historical statement marker.
+  - [x] c1. `History/DebugHistoryToolWindowContent.cs` + DataTemplates in `Themes/wpf.styles.templates.xaml`: Debug → Windows → Debug History (stops list; the selected stop's call stack and value tree; double-click a frame to open its code; status line live/historical/dropped; Step Back, Step Forward, Return to Live, Clear buttons). Debug → Step Back / Step Forward / Return to Live (Debug History), shown when recording is on or there's a history; moving opens the viewed stop's top frame in the code view (`ReferenceNavigatorService.GoTo`, like the Call Stack window). The view returns to live when the process runs. The window only refreshes while visible. The XAML templates were load-tested headlessly (`DataTemplate.LoadContent`); nothing was click-tested. Stop reasons are shown as the English enum names.
+  - [ ] c2. Historical statement marker (own color, like `CallStackMarker`), toolbar buttons (Backwards/Forwards images), keyboard shortcuts.
 - [ ] d. Value diff and per-variable time line.
 - [ ] e. Tests: headless console probe of the model/history/diff classes (in a scratch project); click-test steps below.
 
@@ -82,7 +84,7 @@ The branch is ready to release once b + c work (the first usable feature).
 
 ## Click-test steps for the owner
 
-The debugger UI can't be click-tested unattended. To be filled in with step c; planned:
+The debugger UI can't be click-tested unattended. Steps 1-5 and 7 can be tested now (step c1); step 4's historical marker is still the normal code view (the method is opened at the stop's IL offset), and step 6 needs step d:
 
 1. Options → Debugger → Debug History: turn on "Record debug history".
 2. Debug a small .NET 10 console app with a loop (`for (int i = 0; i < 5; i++) x += i;`), set a breakpoint in the loop, press F5 a few times, then step with F10.

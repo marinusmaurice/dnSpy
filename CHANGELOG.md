@@ -14,7 +14,9 @@ Work in progress: time-travel debugging (a history of the stops of a debugged .N
 ### New Features
 
 - Time-travel debugging ([docs/TIME_TRAVEL_DEBUGGING.md](docs/TIME_TRAVEL_DEBUGGING.md)), in progress:
-  - Recording: with Options → Debugger → Debug History → "Record debug history" on (off by default), dnSpy records each stop of a .NET process: why it stopped, the thread, the call stack and the top frame's exceptions, return values, parameters and locals (with one level of children), read without calling code in the debugged process. The newest 500 stops are kept; the limits can be changed on the same page. Not click-tested yet, and there's no window to look at the history yet (next step).
+  - Recording: with Options → Debugger → Debug History → "Record debug history" on (off by default), dnSpy records each stop of a .NET process: why it stopped, the thread, the call stack and the top frame's exceptions, return values, parameters and locals (with one level of children), read without calling code in the debugged process. The newest 500 stops are kept; the limits can be changed on the same page. Not click-tested yet.
+  - Debug → Windows → Debug History: a list of the recorded stops (#, time, reason, thread, method, location), and the selected stop's call stack and parameters/locals (read-only, from the recording). Double-click a frame to open its code. Status line: live or "viewing stop 12 of 40 (historical)", dropped stops.
+  - Debug → Step Back / Step Forward / Return to Live (Debug History) move through the recorded stops and open the viewed stop's code; the buttons are also in the Debug History window. Continue and Step always continue the live process and return the view to the live stop. Shown when recording is on or there's a history. Not click-tested yet; a separate "historical statement" marker in the code view, toolbar buttons and the value diff are still to do.
 
 ### Enhancements
 

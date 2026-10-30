@@ -1560,4 +1560,64 @@ Are you sure you want to expand it?</value>
   <data name="DbgHistory_Settings_TimeLimit" xml:space="preserve">
     <value>Time limit per stop (ms):</value>
   </data>
+  <data name="Window_DebugHistory" xml:space="preserve">
+    <value>Debug History</value>
+  </data>
+  <data name="DebugHistoryCommand" xml:space="preserve">
+    <value>Debug _History</value>
+  </data>
+  <data name="DbgHistory_StepBackCommand" xml:space="preserve">
+    <value>Step _Back (Debug History)</value>
+  </data>
+  <data name="DbgHistory_StepForwardCommand" xml:space="preserve">
+    <value>Step _Forward (Debug History)</value>
+  </data>
+  <data name="DbgHistory_ReturnToLiveCommand" xml:space="preserve">
+    <value>_Return to Live (Debug History)</value>
+  </data>
+  <data name="DbgHistory_StepBack" xml:space="preserve">
+    <value>Step Back</value>
+  </data>
+  <data name="DbgHistory_StepForward" xml:space="preserve">
+    <value>Step Forward</value>
+  </data>
+  <data name="DbgHistory_ReturnToLive" xml:space="preserve">
+    <value>Return to Live</value>
+  </data>
+  <data name="DbgHistory_Clear" xml:space="preserve">
+    <value>Clear</value>
+  </data>
+  <data name="DbgHistory_Column_Time" xml:space="preserve">
+    <value>Time</value>
+  </data>
+  <data name="DbgHistory_Column_Reason" xml:space="preserve">
+    <value>Reason</value>
+  </data>
+  <data name="DbgHistory_Column_Thread" xml:space="preserve">
+    <value>Thread</value>
+  </data>
+  <data name="DbgHistory_Column_Method" xml:space="preserve">
+    <value>Method</value>
+  </data>
+  <data name="DbgHistory_Column_Location" xml:space="preserve">
+    <value>Location</value>
+  </data>
+  <data name="DbgHistory_Status_Off" xml:space="preserve">
+    <value>Recording is off. Turn it on in Options, Debugger, Debug History.</value>
+  </data>
+  <data name="DbgHistory_Status_Empty" xml:space="preserve">
+    <value>No stops recorded yet.</value>
+  </data>
+  <data name="DbgHistory_Status_Live" xml:space="preserve">
+    <value>{0} stops, viewing the live stop.</value>
+  </data>
+  <data name="DbgHistory_Status_Historical" xml:space="preserve">
+    <value>Viewing stop {0} of {1} (historical, read-only). Continue and Step continue from the live stop.</value>
+  </data>
+  <data name="DbgHistory_Status_Dropped" xml:space="preserve">
+    <value>{0} older stops were dropped.</value>
+  </data>
+  <data name="DbgHistory_Partial" xml:space="preserve">
+    <value>(partial: a time or value limit was reached)</value>
+  </data>
 </root>

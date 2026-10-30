@@ -167,4 +167,75 @@
         </Grid>
     </DataTemplate>
 
+    <!-- Debug History tool window: a recorded value and its children -->
+    <HierarchicalDataTemplate DataType="{x:Type hist:DbgHistoryValue}" ItemsSource="{Binding Children}">
+        <StackPanel Orientation="Horizontal">
+            <TextBlock Text="{Binding Name}" FontWeight="Bold" />
+            <TextBlock Text=" = " />
+            <TextBlock Text="{Binding Value}" />
+            <TextBlock Text="{Binding Type, StringFormat='  ({0})'}" Opacity="0.7" />
+        </StackPanel>
+    </HierarchicalDataTemplate>
+
+    <!-- Debug History tool window: stops, and the selected stop's call stack and values (read-only) -->
+    <DataTemplate DataType="{x:Type hist:DebugHistoryVM}">
+        <Grid>
+            <Grid.RowDefinitions>
+                <RowDefinition Height="Auto" />
+                <RowDefinition Height="*" MinHeight="40" />
+                <RowDefinition Height="Auto" />
+                <RowDefinition Height="*" MinHeight="40" />
+            </Grid.RowDefinitions>
+            <DockPanel Grid.Row="0" Margin="2">
+                <Button DockPanel.Dock="Left" Margin="0 0 2 0" Padding="4 1" Command="{Binding StepBackCommand}" Content="{x:Static p:dnSpy_Debugger_Resources.DbgHistory_StepBack}" />
+                <Button DockPanel.Dock="Left" Margin="0 0 2 0" Padding="4 1" Command="{Binding StepForwardCommand}" Content="{x:Static p:dnSpy_Debugger_Resources.DbgHistory_StepForward}" />
+                <Button DockPanel.Dock="Left" Margin="0 0 2 0" Padding="4 1" Command="{Binding ReturnToLiveCommand}" Content="{x:Static p:dnSpy_Debugger_Resources.DbgHistory_ReturnToLive}" />
+                <Button DockPanel.Dock="Left" Margin="0 0 8 0" Padding="4 1" Command="{Binding ClearCommand}" Content="{x:Static p:dnSpy_Debugger_Resources.DbgHistory_Clear}" />
+                <TextBlock VerticalAlignment="Center" TextTrimming="CharacterEllipsis" Text="{Binding StatusText}" />
+            </DockPanel>
+            <ListView Grid.Row="1" ItemsSource="{Binding Stops}" SelectedItem="{Binding SelectedStop}" SelectionMode="Single">
+                <ListView.View>
+                    <GridView>
+                        <GridViewColumn Header="#" Width="40" DisplayMemberBinding="{Binding Index}" />
+                        <GridViewColumn Header="{x:Static p:dnSpy_Debugger_Resources.DbgHistory_Column_Time}" Width="90" DisplayMemberBinding="{Binding Time}" />
+                        <GridViewColumn Header="{x:Static p:dnSpy_Debugger_Resources.DbgHistory_Column_Reason}" Width="80" DisplayMemberBinding="{Binding Reason}" />
+                        <GridViewColumn Header="{x:Static p:dnSpy_Debugger_Resources.DbgHistory_Column_Thread}" Width="90" DisplayMemberBinding="{Binding Thread}" />
+                        <GridViewColumn Header="{x:Static p:dnSpy_Debugger_Resources.DbgHistory_Column_Method}" Width="350" DisplayMemberBinding="{Binding Method}" />
+                        <GridViewColumn Header="{x:Static p:dnSpy_Debugger_Resources.DbgHistory_Column_Location}" Width="160" DisplayMemberBinding="{Binding Location}" />
+                    </GridView>
+                </ListView.View>
+            </ListView>
+            <GridSplitter Grid.Row="2" Height="4" HorizontalAlignment="Stretch" ResizeDirection="Rows" ResizeBehavior="PreviousAndNext" />
+            <Grid Grid.Row="3">
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="*" MinWidth="40" />
+                    <ColumnDefinition Width="Auto" />
+                    <ColumnDefinition Width="*" MinWidth="40" />
+                </Grid.ColumnDefinitions>
+                <DockPanel Grid.Column="0">
+                    <TextBlock DockPanel.Dock="Top" Margin="2" FontWeight="Bold" Text="{x:Static p:dnSpy_Debugger_Resources.Window_CallStack}" />
+                    <ListBox ItemsSource="{Binding Frames}">
+                        <ListBox.ItemTemplate>
+                            <DataTemplate>
+                                <TextBlock Text="{Binding Name}">
+                                    <TextBlock.InputBindings>
+                                        <MouseBinding Gesture="LeftDoubleClick" Command="{Binding DataContext.GoToFrameCommand, RelativeSource={RelativeSource AncestorType=ListBox}}" CommandParameter="{Binding}" />
+                                    </TextBlock.InputBindings>
+                                </TextBlock>
+                            </DataTemplate>
+                        </ListBox.ItemTemplate>
+                    </ListBox>
+                </DockPanel>
+                <GridSplitter Grid.Column="1" Width="4" VerticalAlignment="Stretch" ResizeDirection="Columns" ResizeBehavior="PreviousAndNext" />
+                <DockPanel Grid.Column="2">
+                    <StackPanel DockPanel.Dock="Top" Orientation="Horizontal" Margin="2">
+                        <TextBlock FontWeight="Bold" Text="{x:Static p:dnSpy_Debugger_Resources.Window_Locals}" />
+                        <TextBlock Margin="8 0 0 0" Text="{Binding PartialText}" />
+                    </StackPanel>
+                    <TreeView ItemsSource="{Binding Values}" />
+                </DockPanel>
+            </Grid>
+        </Grid>
+    </DataTemplate>
+
 </ResourceDictionary>

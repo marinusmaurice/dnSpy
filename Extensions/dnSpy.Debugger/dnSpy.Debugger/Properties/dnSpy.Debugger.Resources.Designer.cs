@@ -4368,5 +4368,185 @@ namespace dnSpy.Debugger.Properties {
                 return ResourceManager.GetString("DbgHistory_Settings_TimeLimit", resourceCulture);
             }
         }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Debug History.
+        /// </summary>
+        public static string Window_DebugHistory {
+            get {
+                return ResourceManager.GetString("Window_DebugHistory", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Debug _History.
+        /// </summary>
+        public static string DebugHistoryCommand {
+            get {
+                return ResourceManager.GetString("DebugHistoryCommand", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Step _Back (Debug History).
+        /// </summary>
+        public static string DbgHistory_StepBackCommand {
+            get {
+                return ResourceManager.GetString("DbgHistory_StepBackCommand", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Step _Forward (Debug History).
+        /// </summary>
+        public static string DbgHistory_StepForwardCommand {
+            get {
+                return ResourceManager.GetString("DbgHistory_StepForwardCommand", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to _Return to Live (Debug History).
+        /// </summary>
+        public static string DbgHistory_ReturnToLiveCommand {
+            get {
+                return ResourceManager.GetString("DbgHistory_ReturnToLiveCommand", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Step Back.
+        /// </summary>
+        public static string DbgHistory_StepBack {
+            get {
+                return ResourceManager.GetString("DbgHistory_StepBack", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Step Forward.
+        /// </summary>
+        public static string DbgHistory_StepForward {
+            get {
+                return ResourceManager.GetString("DbgHistory_StepForward", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Return to Live.
+        /// </summary>
+        public static string DbgHistory_ReturnToLive {
+            get {
+                return ResourceManager.GetString("DbgHistory_ReturnToLive", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Clear.
+        /// </summary>
+        public static string DbgHistory_Clear {
+            get {
+                return ResourceManager.GetString("DbgHistory_Clear", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Time.
+        /// </summary>
+        public static string DbgHistory_Column_Time {
+            get {
+                return ResourceManager.GetString("DbgHistory_Column_Time", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Reason.
+        /// </summary>
+        public static string DbgHistory_Column_Reason {
+            get {
+                return ResourceManager.GetString("DbgHistory_Column_Reason", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Thread.
+        /// </summary>
+        public static string DbgHistory_Column_Thread {
+            get {
+                return ResourceManager.GetString("DbgHistory_Column_Thread", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Method.
+        /// </summary>
+        public static string DbgHistory_Column_Method {
+            get {
+                return ResourceManager.GetString("DbgHistory_Column_Method", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Location.
+        /// </summary>
+        public static string DbgHistory_Column_Location {
+            get {
+                return ResourceManager.GetString("DbgHistory_Column_Location", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Recording is off. Turn it on in Options, Debugger, Debug History..
+        /// </summary>
+        public static string DbgHistory_Status_Off {
+            get {
+                return ResourceManager.GetString("DbgHistory_Status_Off", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to No stops recorded yet..
+        /// </summary>
+        public static string DbgHistory_Status_Empty {
+            get {
+                return ResourceManager.GetString("DbgHistory_Status_Empty", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to {0} stops, viewing the live stop..
+        /// </summary>
+        public static string DbgHistory_Status_Live {
+            get {
+                return ResourceManager.GetString("DbgHistory_Status_Live", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Viewing stop {0} of {1} (historical, read-only). Continue and Step continue from the live stop..
+        /// </summary>
+        public static string DbgHistory_Status_Historical {
+            get {
+                return ResourceManager.GetString("DbgHistory_Status_Historical", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to {0} older stops were dropped..
+        /// </summary>
+        public static string DbgHistory_Status_Dropped {
+            get {
+                return ResourceManager.GetString("DbgHistory_Status_Dropped", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to (partial: a time or value limit was reached).
+        /// </summary>
+        public static string DbgHistory_Partial {
+            get {
+                return ResourceManager.GetString("DbgHistory_Partial", resourceCulture);
+            }
+        }
     }
 }

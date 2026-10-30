@@ -72,6 +72,7 @@ namespace dnSpy.Debugger.History {
 		void IDbgManagerStartListener.OnStart(DbgManager dbgManager) {
 			this.dbgManager = dbgManager;
 			dbgManager.IsDebuggingChanged += DbgManager_IsDebuggingChanged;
+			dbgManager.IsRunningChanged += DbgManager_IsRunningChanged;
 			dbgManager.Message += DbgManager_Message;
 			dbgManager.ProcessPaused += DbgManager_ProcessPaused;
 		}
@@ -80,6 +81,12 @@ namespace dnSpy.Debugger.History {
 		void DbgManager_IsDebuggingChanged(object? sender, EventArgs e) {
 			if (dbgManager?.IsDebugging == true)
 				History.Clear();
+		}
+
+		// Continue and Step always continue the live process, so the view returns to the live stop
+		void DbgManager_IsRunningChanged(object? sender, EventArgs e) {
+			if (dbgManager?.IsRunning == true)
+				History.ReturnToLive();
 		}
 
 		void DbgManager_Message(object? sender, DbgMessageEventArgs e) {
