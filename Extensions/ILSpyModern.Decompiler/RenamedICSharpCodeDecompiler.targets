@@ -24,7 +24,9 @@
 			one at the same time, and with a shared file one build's compiler couldn't open it while the other one wrote
 			it (CS0009), so the .NET release builds silently lost C# (ILSpy 11).
 		-->
-		<_RenamedDecompilerDir>$(BaseIntermediateOutputPath)$(Configuration)\$(TargetFramework)\$(RuntimeIdentifier)\RenamedDecompiler\</_RenamedDecompilerDir>
+		<!-- The package version is part of the path too: the package's files keep their old timestamps, so after a version
+			 change the old renamed file would look up to date -->
+		<_RenamedDecompilerDir>$(BaseIntermediateOutputPath)$(Configuration)\$(TargetFramework)\$(RuntimeIdentifier)\RenamedDecompiler\$(ICSharpCodeDecompilerVersion)\</_RenamedDecompilerDir>
 		<_RenamedDecompilerDir>$(_RenamedDecompilerDir.Replace('\\', '\'))</_RenamedDecompilerDir>
 		<_RenamedDecompilerFile>$(_RenamedDecompilerDir)$(_RenamedDecompilerName).dll</_RenamedDecompilerFile>
 	</PropertyGroup>

@@ -4,6 +4,23 @@ What changed in each release of this fork, newest first. The release workflow pu
 
 Each section starts with a short summary, then **New Features** (new things you can do), **Enhancements** (existing things that work better) and **Bug Fixes**, with a link to the commit for each item. Technical details are in the README's [All changes in detail](README.md#all-changes-in-detail) and in [docs/MODERNIZATION_PLAN.md](docs/MODERNIZATION_PLAN.md).
 
+## 7.4.0.0
+
+The C# (ILSpy 11) decompiler is updated to ILSpy 11.2's engine (ICSharpCode.Decompiler 11.2), which decompiles more code correctly. See [ILSpy 11.2's release notes](https://github.com/icsharpcode/ILSpy/releases/tag/v11.2) for everything that changed in the engine.
+
+### Enhancements
+
+- C# (ILSpy 11) uses ICSharpCode.Decompiler 11.2 (was 11.1). Among the engine's changes:
+  - `value with { }` for records copied without changes ([ILSpy#4236](https://github.com/icsharpcode/ILSpy/pull/4236)), required members on record copy constructors ([ILSpy#4185](https://github.com/icsharpcode/ILSpy/pull/4185))
+  - VB.NET closures and VB `WithEvents` WinForms code decompile better ([ILSpy#4222](https://github.com/icsharpcode/ILSpy/pull/4222), [ILSpy#4201](https://github.com/icsharpcode/ILSpy/pull/4201))
+  - Extension method calls, generated closure cache types and property backing fields are recognized more often ([ILSpy#4160](https://github.com/icsharpcode/ILSpy/pull/4160), [ILSpy#4188](https://github.com/icsharpcode/ILSpy/pull/4188), [ILSpy#4171](https://github.com/icsharpcode/ILSpy/pull/4171))
+  - Error comments in decompiled code say which member they're about ([ILSpy#4179](https://github.com/icsharpcode/ILSpy/pull/4179))
+
+### Bug Fixes
+
+- Engine fixes from ILSpy 11.2, among them: `?.` chains with `GetValueOrDefault()` ([ILSpy#4253](https://github.com/icsharpcode/ILSpy/pull/4253)), `await` on `ref` values ([ILSpy#4251](https://github.com/icsharpcode/ILSpy/pull/4251)), `foreach` with named arguments ([ILSpy#4228](https://github.com/icsharpcode/ILSpy/pull/4228)), `nint` in conditionals ([ILSpy#4232](https://github.com/icsharpcode/ILSpy/pull/4232)), `continue` through `try`/`finally` ([ILSpy#4225](https://github.com/icsharpcode/ILSpy/pull/4225)), invalid null-conditional extension calls ([ILSpy#4220](https://github.com/icsharpcode/ILSpy/pull/4220)), mixed array initializers ([ILSpy#4202](https://github.com/icsharpcode/ILSpy/pull/4202)), captured local names ([ILSpy#4200](https://github.com/icsharpcode/ILSpy/pull/4200)), UTF-8 literal spans ([ILSpy#4194](https://github.com/icsharpcode/ILSpy/pull/4194)) and exceptions on obfuscated code ([ILSpy#4288](https://github.com/icsharpcode/ILSpy/pull/4288)).
+- A build of dnSpy after a decompiler package update could keep the previous version's renamed decompiler (the package's files keep their old timestamps).
+
 ## 7.3.0.0
 
 dnSpy can now keep itself up to date: it tells you when a new version is out, shows what changed, and installs it for you. Release notes like these now come with every release.

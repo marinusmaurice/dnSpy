@@ -123,7 +123,7 @@ Suggested first, in this order:
 
 - [ ] ★ **S** winget, Scoop and Chocolatey manifests.
 - [x] **S** Report the `let` + switch expression bug upstream to ILSpy (submitted 2026-10-29: [icsharpcode/ILSpy#4300](https://github.com/icsharpcode/ILSpy/issues/4300), text in [upstream/ILSpy-let-switch-expression.md](upstream/ILSpy-let-switch-expression.md)).
-- [ ] **S** When a fixed ICSharpCode.Decompiler ships (icsharpcode/ILSpy#4300), update the package and drop dnSpy's `let` workaround if `check.ps1` still passes without it.
+- [ ] **S** When a fixed ICSharpCode.Decompiler ships (icsharpcode/ILSpy#4300), update the package and drop dnSpy's `let` workaround if `check.ps1` still passes without it. (7.4.0.0 updated to 11.2: the issue is still open and 11.2 still needs the workaround.)
 - [ ] ⏸ ★ **S** Dependabot or Renovate for NuGet packages and GitHub Actions.
 - [ ] ⏸ **S** CodeQL security scanning in CI.
 - [ ] ⏸ **S** Issue/PR templates, CONTRIBUTING.md, CHANGELOG.md.
