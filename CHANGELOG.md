@@ -2,7 +2,19 @@
 
 What changed in each release of this fork, newest first. The release workflow puts the section of the version being released on its GitHub release page (with a link to the full list of commits), and dnSpy's update dialog shows it, so every release needs a section here.
 
-Each section starts with a short summary, then **New Features** (new things you can do), **Enhancements** (existing things that work better) and **Bug Fixes**, with a link to the commit for each item. Technical details are in the README's [All changes in detail](README.md#all-changes-in-detail) and in [docs/MODERNIZATION_PLAN.md](docs/MODERNIZATION_PLAN.md).
+Each section starts with a short summary, then **New Features** (new things you can do), **Enhancements** (existing things that work better) and **Bug Fixes**, with a link to the commit for each item. Technical details are in [All changes in detail](docs/CHANGES.md#all-changes-in-detail) and in [docs/MODERNIZATION_PLAN.md](docs/MODERNIZATION_PLAN.md).
+
+## 7.4.1.0
+
+A shorter title bar and a shorter README.
+
+### Bug Fixes
+
+- The title bar showed the full commit hash (`dnSpy v7.3.0.0+fd14f75aa01f9b23fa9a5b04cb2fec5384522649 (64-bit, ...)`); it shows `dnSpy v7.4.1.0 (64-bit, ...)` now.
+
+### Enhancements
+
+- The README says why this fork exists and lists its most important changes, with a link to the original dnSpy; the details moved to [docs/CHANGES.md](docs/CHANGES.md).
 
 ## 7.4.0.0
 
@@ -138,7 +150,7 @@ A bug-fix release for WPF apps' XAML.
 
 ## 7.0.0
 
-The first release of this fork: dnSpy for .NET 10 and .NET Framework 4.8 (was .NET 5 / .NET Framework 4.8), with the current ILSpy decompiler and Roslyn. See the README's [What's new in 7.0](README.md#whats-new-in-70) for the full list.
+The first release of this fork: dnSpy for .NET 10 and .NET Framework 4.8 (was .NET 5 / .NET Framework 4.8), with the current ILSpy decompiler and Roslyn. See [What's new in 7.0](docs/CHANGES.md#whats-new-in-70) for the full list.
 
 ### New Features
 
