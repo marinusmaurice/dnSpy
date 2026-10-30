@@ -1,5 +1,6 @@
 <!--
     Copyright (C) 2014-2019 de4dot@gmail.com
+    Copyright (C) 2026- marinusmaurice@outlook.com
 
     This file is part of dnSpy
 
@@ -19,7 +20,8 @@
 <ResourceDictionary xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
                     xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
                     xmlns:p="clr-namespace:dnSpy.Debugger.Properties;assembly=dnSpy.Debugger.x"
-                    xmlns:dbg="clr-namespace:dnSpy.Debugger.Settings">
+                    xmlns:dbg="clr-namespace:dnSpy.Debugger.Settings"
+                    xmlns:hist="clr-namespace:dnSpy.Debugger.History">
 
     <Style x:Key="DbgTableGridViewScrollViewerStyle"
            BasedOn="{StaticResource {x:Static GridView.GridViewScrollViewerStyleKey}}"
@@ -128,6 +130,40 @@
                     <ComboBox Grid.Row="1" Grid.Column="1" Margin="0 0 5 0" HorizontalAlignment="Stretch" DisplayMemberPath="Name" ItemsSource="{Binding Runtimes.SelectedItem.Languages}" SelectedItem="{Binding Runtimes.SelectedItem.SelectedItem}" VerticalContentAlignment="Center" />
                 </Grid>
             </GroupBox>
+        </Grid>
+    </DataTemplate>
+
+    <DataTemplate DataType="{x:Type hist:DbgHistoryAppSettingsPage}">
+        <Grid Margin="5">
+            <Grid.RowDefinitions>
+                <RowDefinition Height="Auto" />
+                <RowDefinition Height="Auto" />
+                <RowDefinition Height="Auto" />
+                <RowDefinition Height="Auto" />
+                <RowDefinition Height="Auto" />
+                <RowDefinition Height="Auto" />
+                <RowDefinition Height="Auto" />
+                <RowDefinition Height="Auto" />
+            </Grid.RowDefinitions>
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="Auto" />
+                <ColumnDefinition Width="100" />
+                <ColumnDefinition Width="*" />
+            </Grid.ColumnDefinitions>
+            <CheckBox Grid.Row="0" Grid.ColumnSpan="3" Margin="0 5 0 0" IsChecked="{Binding Settings.IsEnabled}" Content="{x:Static p:dnSpy_Debugger_Resources.DbgHistory_Settings_Record}" />
+            <TextBlock Grid.Row="1" Grid.ColumnSpan="3" Margin="0 5 0 5" TextWrapping="Wrap" Text="{x:Static p:dnSpy_Debugger_Resources.DbgHistory_Settings_Info}" />
+            <Label Grid.Row="2" Grid.Column="0" Margin="0 5 5 0" Target="{Binding ElementName=histHistorySize}" Content="{x:Static p:dnSpy_Debugger_Resources.DbgHistory_Settings_HistorySize}" IsEnabled="{Binding Settings.IsEnabled}" />
+            <TextBox Grid.Row="2" Grid.Column="1" Margin="0 5 0 0" Name="histHistorySize" VerticalContentAlignment="Center" Text="{Binding Settings.HistorySize}" IsEnabled="{Binding Settings.IsEnabled}" />
+            <Label Grid.Row="3" Grid.Column="0" Margin="0 5 5 0" Target="{Binding ElementName=histMaxFrames}" Content="{x:Static p:dnSpy_Debugger_Resources.DbgHistory_Settings_MaxFrames}" IsEnabled="{Binding Settings.IsEnabled}" />
+            <TextBox Grid.Row="3" Grid.Column="1" Margin="0 5 0 0" Name="histMaxFrames" VerticalContentAlignment="Center" Text="{Binding Settings.MaxFrames}" IsEnabled="{Binding Settings.IsEnabled}" />
+            <Label Grid.Row="4" Grid.Column="0" Margin="0 5 5 0" Target="{Binding ElementName=histMaxValues}" Content="{x:Static p:dnSpy_Debugger_Resources.DbgHistory_Settings_MaxValues}" IsEnabled="{Binding Settings.IsEnabled}" />
+            <TextBox Grid.Row="4" Grid.Column="1" Margin="0 5 0 0" Name="histMaxValues" VerticalContentAlignment="Center" Text="{Binding Settings.MaxValues}" IsEnabled="{Binding Settings.IsEnabled}" />
+            <Label Grid.Row="5" Grid.Column="0" Margin="0 5 5 0" Target="{Binding ElementName=histMaxChildren}" Content="{x:Static p:dnSpy_Debugger_Resources.DbgHistory_Settings_MaxChildren}" IsEnabled="{Binding Settings.IsEnabled}" />
+            <TextBox Grid.Row="5" Grid.Column="1" Margin="0 5 0 0" Name="histMaxChildren" VerticalContentAlignment="Center" Text="{Binding Settings.MaxChildren}" IsEnabled="{Binding Settings.IsEnabled}" />
+            <Label Grid.Row="6" Grid.Column="0" Margin="0 5 5 0" Target="{Binding ElementName=histChildDepth}" Content="{x:Static p:dnSpy_Debugger_Resources.DbgHistory_Settings_ChildDepth}" IsEnabled="{Binding Settings.IsEnabled}" />
+            <TextBox Grid.Row="6" Grid.Column="1" Margin="0 5 0 0" Name="histChildDepth" VerticalContentAlignment="Center" Text="{Binding Settings.ChildDepth}" IsEnabled="{Binding Settings.IsEnabled}" />
+            <Label Grid.Row="7" Grid.Column="0" Margin="0 5 5 0" Target="{Binding ElementName=histTimeLimitMilliseconds}" Content="{x:Static p:dnSpy_Debugger_Resources.DbgHistory_Settings_TimeLimit}" IsEnabled="{Binding Settings.IsEnabled}" />
+            <TextBox Grid.Row="7" Grid.Column="1" Margin="0 5 0 0" Name="histTimeLimitMilliseconds" VerticalContentAlignment="Center" Text="{Binding Settings.TimeLimitMilliseconds}" IsEnabled="{Binding Settings.IsEnabled}" />
         </Grid>
     </DataTemplate>
 

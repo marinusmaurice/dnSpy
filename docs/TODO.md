@@ -41,7 +41,7 @@ Each item gets its own branch from `master`, named after its target version (eg.
 
 Suggested first, in this order:
 
-0. [ ] ★ **L** Time-travel debugging (7.5.0.0, owner's request): record each stop of a debugged .NET process and go back through them (Debug History window, Step Back/Forward, value diff). Design: [TIME_TRAVEL_DEBUGGING.md](TIME_TRAVEL_DEBUGGING.md) (done); engine, UI, diff, tests to do.
+0. [ ] ★ **L** Time-travel debugging (7.5.0.0, owner's request): record each stop of a debugged .NET process and go back through them (Debug History window, Step Back/Forward, value diff). Design: [TIME_TRAVEL_DEBUGGING.md](TIME_TRAVEL_DEBUGGING.md) (done); recording engine and options (done, not click-tested); UI, diff, tests to do.
 1. [ ] ★ **S–M** Command palette (Ctrl+Shift+P): fuzzy search for commands, types and members.
 2. [ ] ★ **M** Side-by-side view: two decompilers (old vs new C#, or C# vs IL) in a split view, synced by member.
 3. [ ] ★ **M** Patch export/import: save edits as a patch file and re-apply them to a newer version of the DLL.

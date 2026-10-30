@@ -1,0 +1,23 @@
+<!--
+    Copyright (C) 2026- marinusmaurice@outlook.com
+-->
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <!--
+    Time-travel debugging (Debug History) test: compiles dnSpy.Debugger's snapshot and history classes
+    (they don't use WPF or debugger objects) and checks the ring buffer and Step Back/Forward.
+    check.ps1 runs it, see ../DecompilerStress/README.md.
+  -->
+  <PropertyGroup>
+    <OutputType>Exe</OutputType>
+    <TargetFramework>net10.0</TargetFramework>
+    <Nullable>enable</Nullable>
+    <LangVersion>13.0</LangVersion>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <Compile Include="..\..\Extensions\dnSpy.Debugger\dnSpy.Debugger\History\DbgHistory.cs" Link="History\DbgHistory.cs" />
+    <Compile Include="..\..\Extensions\dnSpy.Debugger\dnSpy.Debugger\History\DbgHistorySnapshot.cs" Link="History\DbgHistorySnapshot.cs" />
+  </ItemGroup>
+
+</Project>

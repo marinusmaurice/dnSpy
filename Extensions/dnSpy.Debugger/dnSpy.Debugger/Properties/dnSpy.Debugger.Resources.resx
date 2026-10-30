@@ -1,4 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
+<!--
+    Copyright (C) 2026- marinusmaurice@outlook.com
+-->
 <root>
   <!-- 
     Microsoft ResX Schema 
@@ -1529,5 +1532,32 @@ Are you sure you want to expand it?</value>
   </data>
   <data name="Column_LoadModule" xml:space="preserve">
     <value>Load</value>
+  </data>
+  <data name="DbgHistory_SettingsTitle" xml:space="preserve">
+    <value>Debug History</value>
+  </data>
+  <data name="DbgHistory_Settings_Record" xml:space="preserve">
+    <value>Record debug history (the call stack and locals at each stop)</value>
+  </data>
+  <data name="DbgHistory_Settings_Info" xml:space="preserve">
+    <value>Values are read without calling code in the debugged process (no property getters or ToString()).</value>
+  </data>
+  <data name="DbgHistory_Settings_HistorySize" xml:space="preserve">
+    <value>History size (stops):</value>
+  </data>
+  <data name="DbgHistory_Settings_MaxFrames" xml:space="preserve">
+    <value>Frames per stop:</value>
+  </data>
+  <data name="DbgHistory_Settings_MaxValues" xml:space="preserve">
+    <value>Values per stop:</value>
+  </data>
+  <data name="DbgHistory_Settings_MaxChildren" xml:space="preserve">
+    <value>Children per value:</value>
+  </data>
+  <data name="DbgHistory_Settings_ChildDepth" xml:space="preserve">
+    <value>Child depth:</value>
+  </data>
+  <data name="DbgHistory_Settings_TimeLimit" xml:space="preserve">
+    <value>Time limit per stop (ms):</value>
   </data>
 </root>

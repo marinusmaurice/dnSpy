@@ -1,4 +1,5 @@
 <#
+	Copyright (C) 2026- marinusmaurice@outlook.com
 	Decompiler regression test for C# (ILSpy 11), run by CI and by hand:
 
 		./Test/DecompilerStress/check.ps1 [-Console <path to dnSpy.Console.exe>]
@@ -8,6 +9,7 @@
 	  - every `let` clause is restored (sections 4 and 11)
 	  - the decompiled code compiles and prints the same as the original (HashCode.Combine values are random per process)
 	  - the debugger info lets the debugger stop at every statement and step over awaits (../DebugInfoCheck, .NET builds only)
+	  - the Debug History (time-travel debugging) ring buffer and Step Back/Forward (../DebugHistoryCheck)
 	Exits with 1 when a check fails.
 #>
 param(
@@ -182,6 +184,12 @@ try {
 		if (Compare-Object $original $rerun) { Fail "$name`: exported program prints something different" }
 		else { Write-Host "  OK: export builds and prints the same ($($original.Count) lines)" }
 	}
+
+	# Debug History: dnSpy.Debugger's snapshot/history classes compiled on their own (no debugged process needed)
+	Write-Host '== Debug History'
+	$historyCheck = Invoke-Checked "run DebugHistoryCheck" { dotnet run --project (Join-Path $PSScriptRoot '..\DebugHistoryCheck\DebugHistoryCheck.csproj') -c Release -v:q -nologo }
+	if (-not ($historyCheck -contains 'All history checks passed')) { Fail 'Debug History: checks failed'; $historyCheck | ForEach-Object { Write-Host "  $_" } }
+	else { Write-Host '  OK: ring buffer, Step Back/Forward, limits' }
 
 	# Assembly diff: the two versions of Test/DiffCases differ exactly in the members marked V2; a lambda, an iterator
 	# and an unchanged type must not show up

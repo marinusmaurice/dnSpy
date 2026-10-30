@@ -13,7 +13,8 @@ Work in progress: time-travel debugging (a history of the stops of a debugged .N
 
 ### New Features
 
-- Time-travel debugging: design written ([docs/TIME_TRAVEL_DEBUGGING.md](docs/TIME_TRAVEL_DEBUGGING.md)); not implemented yet.
+- Time-travel debugging ([docs/TIME_TRAVEL_DEBUGGING.md](docs/TIME_TRAVEL_DEBUGGING.md)), in progress:
+  - Recording: with Options → Debugger → Debug History → "Record debug history" on (off by default), dnSpy records each stop of a .NET process: why it stopped, the thread, the call stack and the top frame's exceptions, return values, parameters and locals (with one level of children), read without calling code in the debugged process. The newest 500 stops are kept; the limits can be changed on the same page. Not click-tested yet, and there's no window to look at the history yet (next step).
 
 ### Enhancements
 

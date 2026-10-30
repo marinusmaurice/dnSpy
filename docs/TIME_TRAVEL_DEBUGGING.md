@@ -3,7 +3,7 @@
 -->
 # Time-travel debugging (Debug History)
 
-Version 7.5.0.0, branch `7.5.0.0/time-travel-debugging`. Status: **design** (step a of a-e, see the bottom of this page).
+Version 7.5.0.0, branch `7.5.0.0/time-travel-debugging`. Status: **recording engine** done (step b of a-e, see the bottom of this page); not click-tested.
 
 ## Goal
 
@@ -73,7 +73,7 @@ New code lives in `Extensions/dnSpy.Debugger/dnSpy.Debugger/History` (engine and
 Steps (each its own commit on the branch):
 
 - [x] a. Design (this page).
-- [ ] b. Recording engine: model, history, recorder, settings.
+- [x] b. Recording engine: model, history, recorder, settings (`History/DbgHistorySnapshot.cs`, `DbgHistory.cs`, `DbgHistoryRecorder.cs`, `DbgHistorySettings.cs`, `DbgHistoryAppSettingsPage.cs`). The history and model are tested headlessly by `Test/DebugHistoryCheck` (run by `check.ps1`); the recorder needs a debugged process and isn't tested yet. The contract `DbgHistoryService` isn't added yet (the UI uses the internal `DbgHistoryRecorder.History`); it can be added once the UI shows what other extensions need.
 - [ ] c. UI: Debug History window, Step Back/Forward, historical statement marker.
 - [ ] d. Value diff and per-variable time line.
 - [ ] e. Tests: headless console probe of the model/history/diff classes (in a scratch project); click-test steps below.
