@@ -36,6 +36,7 @@ using dnSpy.Contracts.Text;
 using dnSpy.Contracts.Utilities;
 using dnSpy.Decompiler.Diff;
 using dnSpy.Decompiler.Listing;
+using dnSpy.Decompiler.Protection;
 using dnSpy.Decompiler.Patch;
 using dnSpy.Decompiler.MSBuild;
 
@@ -180,6 +181,7 @@ namespace dnSpy_Console {
 		bool diffCode;
 		bool json;
 		bool list;
+		bool protection;
 		string? patchCreateFile;
 		string? patchApplyFile;
 		Guid projectGuid = Guid.NewGuid();
@@ -366,6 +368,7 @@ namespace dnSpy_Console {
 			new UsageInfo("--diff", null, dnSpy_Console_Resources.CmdLineDescription_Diff),
 			new UsageInfo("--diff-code", null, dnSpy_Console_Resources.CmdLineDescription_DiffCode),
 			new UsageInfo("--list", null, dnSpy_Console_Resources.CmdLineDescription_List),
+			new UsageInfo("--protection", null, dnSpy_Console_Resources.CmdLineDescription_Protection),
 			new UsageInfo("--json", null, dnSpy_Console_Resources.CmdLineDescription_Json),
 			new UsageInfo("--patch-create", dnSpy_Console_Resources.CmdLinePatchFile, dnSpy_Console_Resources.CmdLineDescription_PatchCreate),
 			new UsageInfo("--patch-apply", dnSpy_Console_Resources.CmdLinePatchFile, dnSpy_Console_Resources.CmdLineDescription_PatchApply),
@@ -468,6 +471,7 @@ namespace dnSpy_Console {
 			"diff-code",
 			"json",
 			"list",
+			"protection",
 			"patch-create",
 			"patch-apply",
 		};
@@ -658,6 +662,10 @@ namespace dnSpy_Console {
 						list = true;
 						break;
 
+					case "--protection":
+						protection = true;
+						break;
+
 					case "--patch-create":
 					case "--patch-apply":
 						if (next is null)
@@ -788,6 +796,15 @@ namespace dnSpy_Console {
 					AssemblyListWriter.WriteJson(Console.Out, modules, decompilationContext.CancellationToken);
 				else
 					AssemblyListWriter.WriteText(Console.Out, modules, decompilationContext.CancellationToken);
+			}
+			else if (protection) {
+				if (files.Count == 0)
+					throw new ErrorException(dnSpy_Console_Resources.ProtectionNeedsFiles);
+				var reports = files.OrderBy(a => a.Module.Location, StringComparer.InvariantCultureIgnoreCase).Select(a => ProtectionDetector.Detect(a.Module, decompilationContext.CancellationToken)).ToList();
+				if (json)
+					ProtectionDetector.WriteJson(Console.Out, reports);
+				else
+					ProtectionDetector.WriteText(Console.Out, reports);
 			}
 			else if (mdToken != 0 || typeName is not null) {
 				if (files.Count == 0)

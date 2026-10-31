@@ -223,6 +223,24 @@ namespace dnSpy.Console.Properties {
         }
 
         /// <summary>
+        ///   Looks up a localized string similar to look for signs of obfuscators and packers (marker attributes, unreadable names, encrypted method bodies, embedded assemblies): dnSpy.Console --protection file.dll.
+        /// </summary>
+        internal static string CmdLineDescription_Protection {
+            get {
+                return ResourceManager.GetString("CmdLineDescription_Protection", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   Looks up a localized string similar to --protection needs at least one assembly.
+        /// </summary>
+        internal static string ProtectionNeedsFiles {
+            get {
+                return ResourceManager.GetString("ProtectionNeedsFiles", resourceCulture);
+            }
+        }
+
+        /// <summary>
         ///   Looks up a localized string similar to --list needs at least one assembly.
         /// </summary>
         internal static string ListNeedsFiles {

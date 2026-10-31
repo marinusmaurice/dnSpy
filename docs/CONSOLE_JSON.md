@@ -93,6 +93,35 @@ New fields may be added in later versions without changing `formatVersion`; a ch
 
 The text output (without `--json`) has one line per type (`class public DiffCases.Calculator  // 0x02000003`) and member (`    method public System.Int32 Add(System.Int32,System.Int32)  // 0x06000004`), and `// N types, M members` at the end of each module.
 
+## Obfuscator/packer detection (`--protection --json`, formatVersion 1)
+
+```json
+{
+	"formatVersion": 1,
+	"modules": [
+		{
+			"name": "ProtectionCases, Version=1.0.0.0, Culture=neutral, PublicKeyToken=null",
+			"location": "C:\\work\\ProtectionCases.dll",
+			"protected": true,
+			"names": 43,
+			"unreadableNames": 40,
+			"findings": [
+				{ "kind": "obfuscator", "name": "ConfuserEx / Confuser", "evidence": "attribute ConfusedByAttribute" },
+				{ "kind": "embeddedAssemblies", "name": "Costura.Fody", "evidence": "1 resources: costura.helper.dll.compressed" },
+				{ "kind": "hint", "name": "Loads assemblies from bytes", "evidence": "1 calls to System.Reflection.Assembly.Load(System.Byte[]...) (packers and embedded assemblies do this)" }
+			]
+		}
+	]
+}
+```
+
+(Shortened from the output for the test assembly that `Test/ProtectionCases` writes.)
+
+- `protected`: true when there's a finding other than a hint. `names`: the type, field, property, event and method names that were checked (compiler-generated and special names like `.ctor` aren't); `unreadableNames`: those with control, format, private use or unassigned characters, white space, or symbols other than `` _ ` . $ @ - + ``. 10 or more unreadable names that are at least 5% of all names give an `obfuscatedNames` finding.
+- `kind`: `obfuscator` (a marker attribute or type; `name` is the obfuscator), `antiDisassembly` (`SuppressIldasmAttribute`), `obfuscatedNames`, `invalidMethodBodies` (IL methods with an RVA whose body can't be read), `embeddedAssemblies` (`.dll`/`.exe`/`.dll.compressed` resources; `name` is `Costura.Fody` when there's a `costura.*` resource) or `hint` (not protection by itself: `Assembly.Load(byte[])` calls, a `<Module>` static constructor, `[Obfuscation]` attributes, native code). Hints come last. `evidence` says what was found; characters outside printable ASCII are written as `\uXXXX`.
+
+The text output (without `--json`) has one line per finding (`found: SuppressIldasm  // attribute System.Runtime.CompilerServices.SuppressIldasmAttribute`, `hint: ...`), and `// protected` or `// No protection found` at the end of each module.
+
 ## Example: fail a CI build when a type was removed
 
 ```powershell

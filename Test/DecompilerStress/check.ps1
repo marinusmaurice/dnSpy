@@ -18,6 +18,7 @@
 	  - portable mode: where the settings and data go with a dnSpy.xml next to dnSpy.exe or in bin (../PortableCheck)
 	  - the assembly diff of ../DiffCases as text and as JSON (--json)
 	  - the type and member list of ../DiffCases as text and as JSON (--list, --list --json)
+	  - obfuscator/packer detection of ../ProtectionCases' assembly and of DiffCases (--protection, --protection --json)
 	Exits with 1 when a check fails.
 #>
 param(
@@ -367,6 +368,30 @@ try {
 	elseif ($jsonOldHelperName.Count -ne 1 -or -not $jsonOldHelperName[0].static) { Fail 'List JSON: the static property OldHelper.Name is missing or not static' }
 	elseif (-not @($listTypes | Where-Object { $_.compilerGenerated }).Count -or @($listTypes | Where-Object { $_.fullName -eq 'DiffCases.Unchanged' -and $_.compilerGenerated }).Count) { Fail 'List JSON: compilerGenerated is wrong' }
 	else { Write-Host "  OK: $($listTypes.Count) types and $($listMembers.Count) members, the same in text and JSON, visibility and static" }
+
+	# --protection: ../ProtectionCases writes an assembly with an obfuscator's marker, SuppressIldasm, unreadable names,
+	# a Costura resource and an Assembly.Load(byte[]) call; DiffCases has none of them
+	Write-Host "== Obfuscator/packer detection"
+	$cleanText = @(Invoke-Checked "protection of DiffCases" { & $Console --protection $diffFile1 })
+	if ($cleanText[-1] -ne '// No protection found') { Fail "Protection: DiffCases isn't clean: '$($cleanText[-1])'"; $cleanText | ForEach-Object { Write-Host "  $_" } }
+	elseif (-not $debugInfoCheck) { Write-Host '  OK: DiffCases is clean (the protected test assembly needs a .NET build of dnSpy)' }
+	else {
+		$protectionDir = Join-Path $work 'ProtectionCases'
+		$protectedFile = Join-Path $work 'ProtectionCases.dll'
+		Invoke-Checked "build ProtectionCases" { dotnet build (Join-Path $PSScriptRoot '..\ProtectionCases\ProtectionCases.csproj') -c Release -o $protectionDir -v:q -nologo "-p:DnSpyBin=$dllDir" } > $null
+		Invoke-Checked "run ProtectionCases" { dotnet (Join-Path $protectionDir 'ProtectionCases.dll') $dllDir $protectedFile } > $null
+		$protectedText = @(Invoke-Checked "protection of ProtectionCases" { & $Console --protection $protectedFile })
+		$protectedJson = (@(Invoke-Checked "protection of ProtectionCases as JSON" { & $Console --protection --json $protectedFile }) -join "`n") | ConvertFrom-Json
+		$kinds = @($protectedJson.modules[0].findings | ForEach-Object { "$($_.kind):$($_.name)" })
+		$expectedKinds = @('obfuscator:ConfuserEx / Confuser', 'antiDisassembly:SuppressIldasm', 'obfuscatedNames:Obfuscated names', 'embeddedAssemblies:Costura.Fody', 'hint:Loads assemblies from bytes')
+		$missing = @($expectedKinds | Where-Object { $kinds -notcontains $_ })
+		$extra = @($kinds | Where-Object { $expectedKinds -notcontains $_ })
+		if ($protectedText[-1] -ne '// protected') { Fail "Protection: ProtectionCases isn't reported as protected: '$($protectedText[-1])'"; $protectedText | ForEach-Object { Write-Host "  $_" } }
+		elseif ($missing.Count -or $extra.Count) { Fail "Protection JSON: missing [$($missing -join ', ')], not expected [$($extra -join ', ')]" }
+		elseif ($protectedJson.formatVersion -ne 1 -or -not $protectedJson.modules[0].protected -or $protectedJson.modules[0].unreadableNames -ne 40) { Fail "Protection JSON: formatVersion/protected/unreadableNames ($($protectedJson.modules[0].unreadableNames), expected 40) wrong" }
+		elseif (@($protectedText | Where-Object { $_ -like 'found: *' -or $_ -like 'hint: *' }).Count -ne $kinds.Count) { Fail 'Protection: the text and JSON output have a different number of findings' }
+		else { Write-Host "  OK: DiffCases is clean; ProtectionCases: $($kinds.Count) findings, the same in text and JSON" }
+	}
 }
 catch {
 	Fail $_.Exception.Message

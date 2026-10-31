@@ -325,10 +325,16 @@
     <value>like --diff, also show the decompiled code diff of each changed type</value>
   </data>
   <data name="CmdLineDescription_Json" xml:space="preserve">
-    <value>with --diff or --diff-code, write the differences as JSON (the code diff too with --diff-code); with --list, the list as JSON</value>
+    <value>with --diff or --diff-code, write the differences as JSON (the code diff too with --diff-code); with --list, the list as JSON; with --protection, the findings as JSON</value>
   </data>
   <data name="CmdLineDescription_List" xml:space="preserve">
     <value>list the types and members of the assemblies with their visibility and metadata tokens: dnSpy.Console --list file.dll</value>
+  </data>
+  <data name="CmdLineDescription_Protection" xml:space="preserve">
+    <value>look for signs of obfuscators and packers (marker attributes, unreadable names, encrypted method bodies, embedded assemblies): dnSpy.Console --protection file.dll</value>
+  </data>
+  <data name="ProtectionNeedsFiles" xml:space="preserve">
+    <value>--protection needs at least one assembly</value>
   </data>
   <data name="ListNeedsFiles" xml:space="preserve">
     <value>--list needs at least one assembly</value>

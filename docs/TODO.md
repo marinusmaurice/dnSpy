@@ -86,7 +86,7 @@ Suggested first, in this order:
 ### Obfuscated code and reverse engineering
 
 - [ ] **M** String decryption helper: run a decryptor through dnSpy's interpreter and inline the results.
-- [ ] **S–M** Packer/obfuscator detection ("Protection" tab).
+- [ ] **S–M** Packer/obfuscator detection ("Protection" tab). 7.15.0.0 has the detection and `dnSpy.Console --protection` (`dnSpy.Decompiler.Protection.ProtectionDetector`); the Protection tab in the UI is still to do.
 - [ ] **M** Optional AI assist: "explain this method" and "suggest names", with an API key the user supplies.
 - [ ] **L** Unity IL2CPP: load `global-metadata.dat` + the game binary and rebuild stub assemblies.
 

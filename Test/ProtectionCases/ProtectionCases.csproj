@@ -1,0 +1,23 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <!--
+    Copyright (C) 2026- marinusmaurice@outlook.com
+
+    Obfuscator/packer detection test (dnSpy.Console protection option): writes an assembly with the signs that
+    ProtectionDetector looks for, made with the dnSpy build's dnlib (pass -p:DnSpyBin=<folder>), and run with the
+    same folder: ProtectionCases <dnSpy DLL folder> <output file>. check.ps1 runs it, see ../DecompilerStress/README.md.
+  -->
+  <PropertyGroup>
+    <OutputType>Exe</OutputType>
+    <TargetFramework>net10.0</TargetFramework>
+    <Nullable>enable</Nullable>
+    <LangVersion>latest</LangVersion>
+    <DnSpyBin Condition=" '$(DnSpyBin)' == '' ">$(MSBuildThisFileDirectory)..\..\dnSpy\dnSpy\bin\Release\net10.0-windows\</DnSpyBin>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <!-- Loaded from the dnSpy build at runtime (Program.cs), not copied -->
+    <Reference Include="$(DnSpyBin)\dnlib.dll" Private="false" />
+  </ItemGroup>
+
+</Project>

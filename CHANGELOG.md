@@ -7,6 +7,14 @@ What changed in each release of this fork, newest first. The release workflow pu
 
 Each section starts with a short summary, then **New Features** (new things you can do), **Enhancements** (existing things that work better) and **Bug Fixes**, with a link to the commit for each item. Technical details are in [All changes in detail](docs/CHANGES.md#all-changes-in-detail) and in [docs/MODERNIZATION_PLAN.md](docs/MODERNIZATION_PLAN.md).
 
+## 7.15.0.0
+
+dnSpy.Console can tell whether an assembly looks obfuscated or packed. Also has everything in 7.14.0.0, 7.13.0.0, 7.12.0.0, 7.11.0.0, 7.10.0.0, 7.9.0.0, 7.8.0.0, 7.7.0.0, 7.6.0.0 and 7.5.0.0.
+
+### New Features
+
+- `dnSpy.Console --protection file.dll` looks for signs of obfuscators and packers: the marker attributes that ConfuserEx, Dotfuscator, SmartAssembly, Babel, Crypto Obfuscator, Agile.NET and others leave, `[SuppressIldasm]`, many unreadable type and member names, method bodies that can't be read, and embedded assemblies (eg. Costura.Fody); `Assembly.Load(byte[])` calls, a module initializer, `[Obfuscation]` attributes and native code are listed as hints. `--protection --json` writes the same as JSON ([docs/CONSOLE_JSON.md](docs/CONSOLE_JSON.md)). These are heuristics: an obfuscator can remove its marker. Tested by `check.ps1` (a test assembly with the signs, written with dnlib, and `Test/DiffCases`, which has none); the "method bodies that can't be read" check isn't covered by a test assembly yet. No UI yet (a Protection tab is planned).
+
 ## 7.14.0.0
 
 dnSpy.Console can list the types and members of an assembly, as text or as JSON. Also has everything in 7.13.0.0, 7.12.0.0, 7.11.0.0, 7.10.0.0, 7.9.0.0, 7.8.0.0, 7.7.0.0, 7.6.0.0 and 7.5.0.0.
