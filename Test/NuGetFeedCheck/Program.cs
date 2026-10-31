@@ -220,9 +220,11 @@ try {
 }
 finally {
 	foreach (var f in cachedFiles) {
-		try { File.Delete(f); } catch (IOException) { }
+		try { File.Delete(f); } catch (Exception ex) when (ex is IOException || ex is UnauthorizedAccessException) { }
 	}
-	try { Directory.Delete(work, true); } catch (IOException) { }
+	// Fails if a package file is still open (eg. notapackage.nupkg after a ZipArchive constructor threw)
+	try { Directory.Delete(work, true); }
+	catch (Exception ex) when (ex is IOException || ex is UnauthorizedAccessException) { Check(false, "delete the work folder (a file is still open?): " + ex.Message); }
 }
 
 if (fails == 0)

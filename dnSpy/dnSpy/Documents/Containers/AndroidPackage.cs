@@ -63,7 +63,9 @@ namespace dnSpy.Documents.Containers {
 			var files = new List<AndroidPackageFile>();
 			var blobs = new List<string>();
 			var manifests = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase);
-			using (var zip = new ZipArchive(openPackage(), ZipArchiveMode.Read)) {
+			// The package stream is disposed by its own using: ZipArchive's constructor doesn't close it when it throws (not a zip file)
+			using (var package = openPackage())
+			using (var zip = new ZipArchive(package, ZipArchiveMode.Read)) {
 				foreach (var entry in zip.Entries) {
 					var entryName = entry.FullName;
 					var name = entry.Name;
@@ -116,7 +118,8 @@ namespace dnSpy.Documents.Containers {
 		}
 
 		static byte[] ReadEntry(Func<Stream> openPackage, string entryName) {
-			using (var zip = new ZipArchive(openPackage(), ZipArchiveMode.Read)) {
+			using (var package = openPackage())
+			using (var zip = new ZipArchive(package, ZipArchiveMode.Read)) {
 				var entry = zip.GetEntry(entryName) ?? throw new InvalidDataException();
 				using (var stream = entry.Open()) {
 					var result = new MemoryStream();

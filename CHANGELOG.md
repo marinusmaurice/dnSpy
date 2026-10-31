@@ -7,6 +7,14 @@ What changed in each release of this fork, newest first. The release workflow pu
 
 Each section starts with a short summary, then **New Features** (new things you can do), **Enhancements** (existing things that work better) and **Bug Fixes**, with a link to the commit for each item. Technical details are in [All changes in detail](docs/CHANGES.md#all-changes-in-detail) and in [docs/MODERNIZATION_PLAN.md](docs/MODERNIZATION_PLAN.md).
 
+## 7.18.1.0
+
+Fixes a file being left locked after dnSpy tried to read a broken package. Also has everything in 7.18.0.0, 7.17.0.0, 7.16.0.0, 7.15.0.0, 7.14.0.0, 7.13.0.0, 7.12.0.0, 7.11.0.0, 7.10.0.0, 7.9.0.0, 7.8.0.0, 7.7.0.0, 7.6.0.0 and 7.5.0.0.
+
+### Bug Fixes
+
+- Open from NuGet: a `.nupkg` file in a folder package source that isn't a valid zip file was left open (locked, so it couldn't be deleted or replaced) until .NET happened to clean it up. Opening an `.apk`/`.aab` file that isn't a valid zip file had the same problem. Both now close the file straight away. Tested by `check.ps1` (`Test/NuGetFeedCheck` now fails if its test folder, which holds a broken `.nupkg`, can't be deleted; this also fixes the `%TEMP%\dnspy-nugetfeedcheck-*` folder that each test run left behind).
+
 ## 7.18.0.0
 
 dnSpy.Console can read its options from files and run many command lines in one go. Also has everything in 7.17.0.0, 7.16.0.0, 7.15.0.0, 7.14.0.0, 7.13.0.0, 7.12.0.0, 7.11.0.0, 7.10.0.0, 7.9.0.0, 7.8.0.0, 7.7.0.0, 7.6.0.0 and 7.5.0.0.

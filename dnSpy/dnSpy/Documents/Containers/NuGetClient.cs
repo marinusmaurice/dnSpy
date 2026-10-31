@@ -251,7 +251,9 @@ namespace dnSpy.Documents.Containers {
 		// The .nuspec file in the root of the package; null if it's not a package
 		static NuSpecInfo? ReadNuSpec(string nupkgFile) {
 			try {
-				using (var zip = new ZipArchive(File.OpenRead(nupkgFile), ZipArchiveMode.Read)) {
+				// The file is disposed by its own using: ZipArchive's constructor doesn't close it when it throws (not a zip file)
+				using (var file = File.OpenRead(nupkgFile))
+				using (var zip = new ZipArchive(file, ZipArchiveMode.Read)) {
 					var entry = zip.Entries.FirstOrDefault(a => a.FullName.IndexOf('/') < 0 && a.FullName.EndsWith(".nuspec", StringComparison.OrdinalIgnoreCase));
 					if (entry is null)
 						return null;
