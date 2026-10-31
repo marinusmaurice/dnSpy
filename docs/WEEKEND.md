@@ -29,3 +29,5 @@ Unattended weekend work, for the owner to review and release in order (fast-forw
 ## Stopped: weekly token budget
 
 The 2026-10-31 18:02 run found the weekly limit (all models) at 74%, one point under the 75% stop line, so it started no new feature: a full feature run (two builds, tests, CI) would cross it. Later runs stop at 75%. Nothing is in progress; the next item would be the next S-sized item in `docs/TODO.md` "Later feature releases", branched from `7.20.0.0/recent-files-pinning`.
+
+The 2026-10-31 20:02 run found it still at 74% (5-hour limit at 2%) and also started nothing.
