@@ -281,7 +281,7 @@ try {
 		'~ type DiffCases.Settings'
 		'    ~ field System.Int32 Timeout  // value'
 		'    + property System.String Name'
-		'~ resource DiffCases.Data.txt  // data (10 -> 15 bytes)'
+		'~ resource DiffCases.Data.txt  // data (9 -> 14 bytes)'
 		'+ resource DiffCases.New.txt'
 		'- resource DiffCases.Old.txt'
 		'~ resource DiffCases.Strings.resources  // data (261 -> 274 bytes)'
