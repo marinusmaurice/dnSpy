@@ -1,5 +1,6 @@
 /*
     Copyright (C) 2014-2019 de4dot@gmail.com
+    Copyright (C) 2026- marinusmaurice@outlook.com
 
     This file is part of dnSpy
 
@@ -38,6 +39,7 @@ namespace dnSpy.AsmEditor.Compiler {
 			yield return CommandShortcut.CtrlShift(Key.B, EditCodeIds.Compile.ToCommandInfo());
 			yield return CommandShortcut.CtrlAlt(Key.F7, EditCodeIds.Compile.ToCommandInfo());
 			yield return CommandShortcut.Alt(Key.F8, EditCodeIds.Compile.ToCommandInfo());
+			yield return CommandShortcut.Shift(Key.F6, EditCodeIds.TestCompile.ToCommandInfo());
 		}
 	}
 }

@@ -1,5 +1,6 @@
 /*
     Copyright (C) 2014-2019 de4dot@gmail.com
+    Copyright (C) 2026- marinusmaurice@outlook.com
 
     This file is part of dnSpy
 
@@ -62,6 +63,8 @@ namespace dnSpy.AsmEditor.Compiler {
 		public event EventHandler? CodeCompiled;
 		public bool HasDecompiled { get; private set; }
 		public ICommand CompileCommand => new RelayCommand(a => CompileCode(), a => CanCompile);
+		public ICommand TestCompileCommand => new RelayCommand(a => TestCompileCode(), a => CanCompile);
+		public string TestCompileToolTip => ToolTipHelper.AddKeyboardShortcut(dnSpy_AsmEditor_Resources.TestCompileToolTip, dnSpy_AsmEditor_Resources.ShortCutKeyShiftF6);
 		public ICommand AddAssemblyReferenceCommand => new RelayCommand(a => AddAssemblyReference(), a => CanAddAssemblyReference);
 		public ICommand AddGacReferenceCommand => new RelayCommand(a => AddGacReference(), a => CanAddGacReference);
 		public ICommand AddDocumentsCommand => new RelayCommand(a => AddDocuments(), a => CanAddDocuments);
@@ -383,14 +386,21 @@ namespace dnSpy.AsmEditor.Compiler {
 		protected abstract DecompileCodeState CreateDecompileCodeState();
 		protected abstract Task<DecompileAsyncResult> DecompileAsync(DecompileCodeState decompileCodeState);
 
-		public void CompileCode() {
+		public void CompileCode() => CompileCode(testOnly: false);
+
+		/// <summary>
+		/// Compiles the code and shows the errors, but doesn't apply it (the dialog box stays open)
+		/// </summary>
+		public void TestCompileCode() => CompileCode(testOnly: true);
+
+		void CompileCode(bool testOnly) {
 			if (!CanCompile)
 				return;
 			CanCompile = false;
 
 			DnSpyEventSource.Log.CompileStart();
 			ProfileOptimizationHelper.StartProfile("compile-" + decompiler.UniqueGuid.ToString());
-			StartCompileAsync().ContinueWith(t => {
+			StartCompileAsync(testOnly).ContinueWith(t => {
 				DnSpyEventSource.Log.CompileStop();
 				var ex = t.Exception;
 				Debug2.Assert(ex is null);
@@ -420,7 +430,7 @@ namespace dnSpy.AsmEditor.Compiler {
 			return Task.FromResult(mdRefs.ToArray());
 		}
 
-		async Task StartCompileAsync() {
+		async Task StartCompileAsync(bool testOnly) {
 			Result = null;
 			SetDiagnostics(Array.Empty<CompilerDiagnostic>());
 
@@ -471,6 +481,13 @@ namespace dnSpy.AsmEditor.Compiler {
 				finally {
 					asmResolver?.Dispose();
 				}
+			}
+
+			// A test compile only shows the diagnostics: nothing is imported into the module
+			if (testOnly && importer is not null) {
+				importer = null;
+				var info = new CompilerDiagnostic(CompilerDiagnosticSeverity.Info, dnSpy_AsmEditor_Resources.TestCompileSucceeded, "DSTEST", null, null, null);
+				compilerDiagnostics = new[] { info }.Concat(compilerDiagnostics).ToArray();
 			}
 
 			SetDiagnostics(compilerDiagnostics);

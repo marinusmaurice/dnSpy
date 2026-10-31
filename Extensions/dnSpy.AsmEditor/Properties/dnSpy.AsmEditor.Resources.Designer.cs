@@ -456,7 +456,43 @@ namespace dnSpy.AsmEditor.Properties {
                 return ResourceManager.GetString("Button_Compile", resourceCulture);
             }
         }
-        
+
+        /// <summary>
+        ///   Looks up a localized string similar to Test Compile.
+        /// </summary>
+        public static string Button_TestCompile {
+            get {
+                return ResourceManager.GetString("Button_TestCompile", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   Looks up a localized string similar to Compile the code and show the errors without changing the assembly.
+        /// </summary>
+        public static string TestCompileToolTip {
+            get {
+                return ResourceManager.GetString("TestCompileToolTip", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   Looks up a localized string similar to Test compile: no errors. Nothing was changed; click Compile to apply the code..
+        /// </summary>
+        public static string TestCompileSucceeded {
+            get {
+                return ResourceManager.GetString("TestCompileSucceeded", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   Looks up a localized string similar to Shift+F6.
+        /// </summary>
+        public static string ShortCutKeyShiftF6 {
+            get {
+                return ResourceManager.GetString("ShortCutKeyShiftF6", resourceCulture);
+            }
+        }
+
         /// <summary>
         ///   Looks up a localized string similar to _Delete.
         /// </summary>

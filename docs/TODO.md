@@ -62,7 +62,7 @@ Suggested first, in this order:
 - [x] **S–M** Xamarin/MAUI Android: unpack compressed `XALZ` assemblies from APKs (7.17.0.0: `.apk`/`.aab` open like a NuGet package; `XALZ` (LZ4) assemblies and .NET 6–8 assembly stores (format 1) with `assemblies.manifest`; `Test/AndroidPackageCheck` in `check.ps1`, not click-tested). Not yet: .NET 9+ stores in `libassemblies.<abi>.blob.so` (format 2).
 - [ ] **S** C# language version picker in the toolbar.
 - [ ] **M** Decompile a whole namespace (all its types in one view; both C# languages only list the types today).
-- [ ] **S** `using` aliases in C# (ILSpy 11)'s debugger info (the old language's `ImportInfo` aliases), for Watch expressions that use an alias.
+- [x] **S** `using` aliases in C# (ILSpy 11)'s debugger info (the old language's `ImportInfo` aliases), for Watch expressions that use an alias. Not needed (checked 2026-10-31): neither language writes `using X = Y;`. ICSharpCode.Decompiler 11.2's `IntroduceUsingDeclarations` only adds `UsingDeclaration`s (its `UseAliases = true` is `TypeSystemAstBuilder`'s `int`-for-`System.Int32` keywords), and the old language also records namespaces only (`TextTokenWriter.EndNode`). Aliases from a real PDB's import scopes don't go through the decompiler.
 - [ ] **M** Source Link and symbol servers: fetch real source and PDBs (Microsoft/NuGet symbol servers), fall back to decompiling.
 - [ ] **M** Remove the old ILSpy 2.3 decompiler and its submodules (ICSharpCode.Decompiler 2.3, NRefactory) after a release or two with both. Note it in the release: extensions that use the old `ICSharpCode.Decompiler` stop working.
 
@@ -80,7 +80,7 @@ Suggested first, in this order:
 
 - [ ] **S–M** Undo history panel: list of edits, jump to and revert each one.
 - [ ] **M** IL editor: syntax highlighting, branch arrows, stack validation before saving.
-- [ ] **S** Edit Method "test compile only" (compile without applying).
+- [x] **S** Edit Method "test compile only" (compile without applying): Test Compile button / Shift+F6 / context menu in the code editing dialog boxes (7.19.0.0; not click-tested).
 - [ ] **M** Rename refactoring for obfuscated members, with a saved rename map that can be re-applied.
 
 ### Obfuscated code and reverse engineering

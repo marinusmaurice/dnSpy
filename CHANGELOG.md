@@ -7,6 +7,14 @@ What changed in each release of this fork, newest first. The release workflow pu
 
 Each section starts with a short summary, then **New Features** (new things you can do), **Enhancements** (existing things that work better) and **Bug Fixes**, with a link to the commit for each item. Technical details are in [All changes in detail](docs/CHANGES.md#all-changes-in-detail) and in [docs/MODERNIZATION_PLAN.md](docs/MODERNIZATION_PLAN.md).
 
+## 7.19.0.0
+
+Edit Method/Class can check your code without changing the assembly. Also has everything in 7.18.1.0, 7.18.0.0, 7.17.0.0, 7.16.0.0, 7.15.0.0, 7.14.0.0, 7.13.0.0, 7.12.0.0, 7.11.0.0, 7.10.0.0, 7.9.0.0, 7.8.0.0, 7.7.0.0, 7.6.0.0 and 7.5.0.0.
+
+### New Features
+
+- Edit Method (C#/VB), Edit Class and the other code editing dialog boxes have a **Test Compile** button (also Shift+F6, and in the code editor's context menu): it compiles the code and shows the errors and warnings like Compile does, but doesn't change the assembly and keeps the dialog box open. When there are no errors, the list says so. Compile (F6) still compiles and applies the code. Builds and the decompiler checks pass; the dialog box is not click-tested. The new texts are in English only.
+
 ## 7.18.1.0
 
 Fixes a file being left locked after dnSpy tried to read a broken package. Also has everything in 7.18.0.0, 7.17.0.0, 7.16.0.0, 7.15.0.0, 7.14.0.0, 7.13.0.0, 7.12.0.0, 7.11.0.0, 7.10.0.0, 7.9.0.0, 7.8.0.0, 7.7.0.0, 7.6.0.0 and 7.5.0.0.

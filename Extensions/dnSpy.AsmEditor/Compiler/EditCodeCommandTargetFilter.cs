@@ -1,5 +1,6 @@
 /*
     Copyright (C) 2014-2019 de4dot@gmail.com
+    Copyright (C) 2026- marinusmaurice@outlook.com
 
     This file is part of dnSpy
 
@@ -50,6 +51,7 @@ namespace dnSpy.AsmEditor.Compiler {
 			if (group == EditCodeCommandConstants.EditCodeGroup) {
 				switch ((EditCodeIds)cmdId) {
 				case EditCodeIds.Compile:
+				case EditCodeIds.TestCompile:
 					return vm.CanCompile ? CommandTargetStatus.Handled : CommandTargetStatus.NotHandled;
 
 				default:
@@ -73,6 +75,10 @@ namespace dnSpy.AsmEditor.Compiler {
 				switch ((EditCodeIds)cmdId) {
 				case EditCodeIds.Compile:
 					vm.CompileCode();
+					return CommandTargetStatus.Handled;
+
+				case EditCodeIds.TestCompile:
+					vm.TestCompileCode();
 					return CommandTargetStatus.Handled;
 
 				default:

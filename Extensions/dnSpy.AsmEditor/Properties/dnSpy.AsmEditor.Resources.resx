@@ -2156,6 +2156,18 @@ Most options will be re-initialized when this checkbox is clicked</value>
   <data name="Button_Compile" xml:space="preserve">
     <value>Compile</value>
   </data>
+  <data name="Button_TestCompile" xml:space="preserve">
+    <value>Test Compile</value>
+  </data>
+  <data name="TestCompileToolTip" xml:space="preserve">
+    <value>Compile the code and show the errors without changing the assembly</value>
+  </data>
+  <data name="TestCompileSucceeded" xml:space="preserve">
+    <value>Test compile: no errors. Nothing was changed; click Compile to apply the code.</value>
+  </data>
+  <data name="ShortCutKeyShiftF6" xml:space="preserve">
+    <value>Shift+F6</value>
+  </data>
   <data name="StatusError" xml:space="preserve">
     <value>Error</value>
   </data>

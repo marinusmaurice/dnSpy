@@ -1,5 +1,6 @@
 /*
     Copyright (C) 2014-2019 de4dot@gmail.com
+    Copyright (C) 2026- marinusmaurice@outlook.com
 
     This file is part of dnSpy
 
@@ -26,5 +27,10 @@ namespace dnSpy.AsmEditor.Compiler {
 		/// Compiles the code
 		/// </summary>
 		Compile,
+
+		/// <summary>
+		/// Compiles the code but doesn't apply it
+		/// </summary>
+		TestCompile,
 	}
 }

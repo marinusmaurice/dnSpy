@@ -1,5 +1,6 @@
 /*
     Copyright (C) 2014-2019 de4dot@gmail.com
+    Copyright (C) 2026- marinusmaurice@outlook.com
 
     This file is part of dnSpy
 
@@ -64,6 +65,13 @@ namespace dnSpy.AsmEditor.Compiler {
 	sealed class CompileContextMenuEntry : CodeEditorCommandTargetMenuItemBase {
 		CompileContextMenuEntry()
 			: base(EditCodeIds.Compile) {
+		}
+	}
+
+	[ExportMenuItem(Header = "res:Button_TestCompile", InputGestureText = "res:ShortCutKeyShiftF6", Group = MenuConstants.GROUP_CTX_CODEEDITOR_COMPILE, Order = 10)]
+	sealed class TestCompileContextMenuEntry : CodeEditorCommandTargetMenuItemBase {
+		TestCompileContextMenuEntry()
+			: base(EditCodeIds.TestCompile) {
 		}
 	}
 
