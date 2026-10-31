@@ -7,6 +7,14 @@ What changed in each release of this fork, newest first. The release workflow pu
 
 Each section starts with a short summary, then **New Features** (new things you can do), **Enhancements** (existing things that work better) and **Bug Fixes**, with a link to the commit for each item. Technical details are in [All changes in detail](docs/CHANGES.md#all-changes-in-detail) and in [docs/MODERNIZATION_PLAN.md](docs/MODERNIZATION_PLAN.md).
 
+## 7.16.0.0
+
+dnSpy shows whether an assembly looks obfuscated or packed. Also has everything in 7.15.0.0, 7.14.0.0, 7.13.0.0, 7.12.0.0, 7.11.0.0, 7.10.0.0, 7.9.0.0, 7.8.0.0, 7.7.0.0, 7.6.0.0 and 7.5.0.0.
+
+### New Features
+
+- Right-click one or more assemblies in the assembly explorer → **Detect Protection**: a "Protection:" node is added at the end of the tree; select it to see, for each assembly, the signs of obfuscators and packers that `dnSpy.Console --protection` finds (marker attributes, `[SuppressIldasm]`, unreadable names, unreadable method bodies, embedded assemblies, and hints), and how many names are unreadable. The node isn't saved; remove it like any other node. Built and compiled for both .NET 10 and .NET Framework 4.8; the detection is the tested one from 7.15.0.0, the menu command and node are not click-tested.
+
 ## 7.15.0.0
 
 dnSpy.Console can tell whether an assembly looks obfuscated or packed. Also has everything in 7.14.0.0, 7.13.0.0, 7.12.0.0, 7.11.0.0, 7.10.0.0, 7.9.0.0, 7.8.0.0, 7.7.0.0, 7.6.0.0 and 7.5.0.0.

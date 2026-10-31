@@ -2100,6 +2100,12 @@ Filter can be changed in Assembly Explorer options.</value>
   <data name="AssemblyDiff_NotDotNetFile" xml:space="preserve">
     <value>{0} isn't a .NET file.</value>
   </data>
+  <data name="Protection_NodeName" xml:space="preserve">
+    <value>Protection:</value>
+  </data>
+  <data name="Protection_DetectCommand" xml:space="preserve">
+    <value>Detect Protection</value>
+  </data>
   <data name="OpenNuGet_Description" xml:space="preserve">
     <value>Search nuget.org (or the package sources in your NuGet.config) for a NuGet package (the libraries .NET projects use), pick a version and open its assemblies. dnSpy uses the copy in your NuGet cache if it's there, otherwise it downloads the package.</value>
   </data>

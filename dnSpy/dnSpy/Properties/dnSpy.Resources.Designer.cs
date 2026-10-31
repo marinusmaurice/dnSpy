@@ -3486,6 +3486,24 @@ namespace dnSpy.Properties {
         }
         
         /// <summary>
+        ///   Looks up a localized string similar to Detect Protection.
+        /// </summary>
+        public static string Protection_DetectCommand {
+            get {
+                return ResourceManager.GetString("Protection_DetectCommand", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Protection:.
+        /// </summary>
+        public static string Protection_NodeName {
+            get {
+                return ResourceManager.GetString("Protection_NodeName", resourceCulture);
+            }
+        }
+        
+        /// <summary>
         ///   Looks up a localized string similar to Compare Assemblies.
         /// </summary>
         public static string AssemblyDiff_CompareCommand {
