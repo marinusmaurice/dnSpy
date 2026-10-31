@@ -13,6 +13,7 @@
 | `../DebugHistoryCheck` | Debug History (time-travel debugging) test that `check.ps1` runs: compiles dnSpy.Debugger's snapshot and history classes on their own and checks the ring buffer (drop oldest, shrink, clear) and Step Back/Forward/Return to Live. |
 | `../CommandPaletteCheck` | Command palette test that `check.ps1` runs: compiles dnSpy's command palette matcher on its own and checks the fuzzy matching (words, initials, word order), the order of the results, the access key removal and the type/member texts (`#` search) of a real module. |
 | `../SideBySideCheck` | Side-by-side view test that `check.ps1` runs: compiles dnSpy's side-by-side language picker and tab pair on their own and checks which language is shown next to which (new C# ↔ old C#, C# next to IL/VB, IL when there's one C#) and that a sync doesn't bounce back or survive a closed tab. |
+| `../TracepointCheck` | Tracepoint test that `check.ps1` runs: compiles dnSpy.Debugger's tracepoint message parser on its own and checks the keywords (`$HITCOUNT`, `$TICK`, `$TIME` and the older ones), escapes and `{expressions}`, and that every keyword in the breakpoint settings dialog's help is known. |
 | `../WpfEvents` | BAML decompiler test app that `check.ps1` exports and rebuilds: see below. |
 | `../ExportCases` | Export to Project test program that `check.ps1` exports, rebuilds and runs: see below. |
 | `ilspy-reference.cs.txt` | ILSpy's output for sections 1–10 (provided by the repo owner). This is the target: dnSpy should be at least this good. |

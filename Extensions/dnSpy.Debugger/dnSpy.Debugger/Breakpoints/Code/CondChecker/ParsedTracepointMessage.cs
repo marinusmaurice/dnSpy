@@ -1,5 +1,6 @@
 /*
     Copyright (C) 2014-2019 de4dot@gmail.com
+    Copyright (C) 2026- marinusmaurice@outlook.com
 
     This file is part of dnSpy
 
@@ -45,6 +46,9 @@ namespace dnSpy.Debugger.Breakpoints.Code.CondChecker {
 				case TracepointMessageKind.WriteProcessName:
 				case TracepointMessageKind.WriteThreadId:
 				case TracepointMessageKind.WriteThreadName:
+				case TracepointMessageKind.WriteHitCount:
+				case TracepointMessageKind.WriteTickCount:
+				case TracepointMessageKind.WriteTime:
 					break;
 
 				case TracepointMessageKind.WriteEvaluatedExpression:
@@ -117,5 +121,8 @@ namespace dnSpy.Debugger.Breakpoints.Code.CondChecker {
 		WriteProcessName,
 		WriteThreadId,
 		WriteThreadName,
+		WriteHitCount,
+		WriteTickCount,
+		WriteTime,
 	}
 }

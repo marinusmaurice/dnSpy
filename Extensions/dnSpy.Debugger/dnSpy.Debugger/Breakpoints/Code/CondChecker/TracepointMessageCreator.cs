@@ -1,5 +1,6 @@
 /*
     Copyright (C) 2014-2019 de4dot@gmail.com
+    Copyright (C) 2026- marinusmaurice@outlook.com
 
     This file is part of dnSpy
 
@@ -83,6 +84,7 @@ namespace dnSpy.Debugger.Breakpoints.Code.CondChecker {
 		readonly DbgLanguageService dbgLanguageService;
 		readonly DebuggerSettings debuggerSettings;
 		readonly DbgEvalFormatterSettings dbgEvalFormatterSettings;
+		readonly Lazy<DbgCodeBreakpointHitCountService> dbgCodeBreakpointHitCountService;
 		readonly TracepointMessageParser tracepointMessageParser;
 		readonly StringBuilderTextColorWriter stringBuilderTextColorWriter;
 		Dictionary<string, ParsedTracepointMessage> toParsedMessage;
@@ -95,12 +97,13 @@ namespace dnSpy.Debugger.Breakpoints.Code.CondChecker {
 		DbgStackFrame[]? stackFrames;
 
 		[ImportingConstructor]
-		TracepointMessageCreatorImpl(DbgLanguageService dbgLanguageService, DebuggerSettings debuggerSettings, DbgEvalFormatterSettings dbgEvalFormatterSettings) {
+		TracepointMessageCreatorImpl(DbgLanguageService dbgLanguageService, DebuggerSettings debuggerSettings, DbgEvalFormatterSettings dbgEvalFormatterSettings, Lazy<DbgCodeBreakpointHitCountService> dbgCodeBreakpointHitCountService) {
 			lockObj = new object();
 			output = new StringBuilder();
 			this.dbgLanguageService = dbgLanguageService;
 			this.debuggerSettings = debuggerSettings;
 			this.dbgEvalFormatterSettings = dbgEvalFormatterSettings;
+			this.dbgCodeBreakpointHitCountService = dbgCodeBreakpointHitCountService;
 			tracepointMessageParser = new TracepointMessageParser();
 			stringBuilderTextColorWriter = new StringBuilderTextColorWriter();
 			stringBuilderTextColorWriter.SetStringBuilder(output);
@@ -302,6 +305,21 @@ namespace dnSpy.Debugger.Breakpoints.Code.CondChecker {
 						WriteError();
 					else
 						Write(name);
+					break;
+
+				case TracepointMessageKind.WriteHitCount:
+					if (dbgCodeBreakpointHitCountService.Value.GetHitCount(boundBreakpoint.Breakpoint) is int hitCount)
+						Write(hitCount.ToString());
+					else
+						WriteError();
+					break;
+
+				case TracepointMessageKind.WriteTickCount:
+					Write(Environment.TickCount.ToString());
+					break;
+
+				case TracepointMessageKind.WriteTime:
+					Write(DateTime.Now.ToString("HH:mm:ss.fff", CultureInfo.InvariantCulture));
 					break;
 
 				default: throw new InvalidOperationException();

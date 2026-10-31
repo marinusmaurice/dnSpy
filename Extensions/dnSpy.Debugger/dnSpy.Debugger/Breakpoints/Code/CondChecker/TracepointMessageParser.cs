@@ -1,5 +1,6 @@
 /*
     Copyright (C) 2014-2019 de4dot@gmail.com
+    Copyright (C) 2026- marinusmaurice@outlook.com
 
     This file is part of dnSpy
 
@@ -100,10 +101,13 @@ namespace dnSpy.Debugger.Breakpoints.Code.CondChecker {
 				new KeywordInfo("FUNCTION2", TracepointMessageKind.WriteFunction, 2),
 				new KeywordInfo("FUNCTION1", TracepointMessageKind.WriteFunction, 1),
 				new KeywordInfo("FUNCTION", TracepointMessageKind.WriteFunction, 0),
+				new KeywordInfo("HITCOUNT", TracepointMessageKind.WriteHitCount),
 				new KeywordInfo("MID", TracepointMessageKind.WriteManagedId),
 				new KeywordInfo("PID", TracepointMessageKind.WriteProcessId),
 				new KeywordInfo("PNAME", TracepointMessageKind.WriteProcessName),
+				new KeywordInfo("TICK", TracepointMessageKind.WriteTickCount),
 				new KeywordInfo("TID", TracepointMessageKind.WriteThreadId),
+				new KeywordInfo("TIME", TracepointMessageKind.WriteTime),
 				new KeywordInfo("TNAME", TracepointMessageKind.WriteThreadName),
 			};
 		}

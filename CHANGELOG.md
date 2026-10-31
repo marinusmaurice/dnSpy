@@ -7,6 +7,14 @@ What changed in each release of this fork, newest first. The release workflow pu
 
 Each section starts with a short summary, then **New Features** (new things you can do), **Enhancements** (existing things that work better) and **Bug Fixes**, with a link to the commit for each item. Technical details are in [All changes in detail](docs/CHANGES.md#all-changes-in-detail) and in [docs/MODERNIZATION_PLAN.md](docs/MODERNIZATION_PLAN.md).
 
+## 7.9.0.0
+
+Better tracepoints: new keywords for the breakpoint messages. Also has everything in 7.8.0.0, 7.7.0.0, 7.6.0.0 and 7.5.0.0.
+
+### Enhancements
+
+- Tracepoints ([docs/TRACEPOINTS.md](docs/TRACEPOINTS.md)): a breakpoint's message (Settings... → Actions) can use `$HITCOUNT` (the breakpoint's hit count, this hit included), `$TICK` (milliseconds, like Visual Studio's) and `$TIME` (the local time, `HH:mm:ss.fff`), eg. `[$TIME] #$HITCOUNT $FUNCTION x={x}`; they're in the message help too. Conditions, hit counts, process/thread filters and log-without-stopping were already there. Tested headlessly (`Test/TracepointCheck`); **not click-tested** yet.
+
 ## 7.8.0.0
 
 Patch export/import, to keep the edits of an assembly in a file and apply them to a newer version of it. Also has everything in 7.7.0.0, 7.6.0.0 and 7.5.0.0.

@@ -45,9 +45,9 @@ Suggested first, in this order:
 1. [x] ★ **S–M** Command palette: fuzzy search for commands, types and members (7.6.0.0; View → Command Palette... / F1, Ctrl+Shift+P is already Collapse Tree View Nodes; `#` searches the types and members of the loaded assemblies; tested headlessly by `Test/CommandPaletteCheck`, not click-tested).
 2. [x] ★ **M** Side-by-side view: two decompilers (old vs new C#, or C# vs IL) in a split view, synced by member (7.7.0.0; Window → Compare Side by Side; the two tabs follow each other's node, each in its own language; tested headlessly by `Test/SideBySideCheck`, not click-tested; syncing the caret inside one decompiled type is left for later, see [SIDE_BY_SIDE.md](SIDE_BY_SIDE.md)).
 3. [x] ★ **M** Patch export/import: save edits as a patch file and re-apply them to a newer version of the DLL (7.8.0.0, [PATCH_EXPORT_IMPORT.md](PATCH_EXPORT_IMPORT.md); method bodies only; the patch engine and `dnSpy.Console --patch-create`/`--patch-apply` tested headlessly by `Test/PatchCheck` and `check.ps1`; File → Export Patch... / Apply Patch... (undoable) not click-tested). Later: added members, attributes and resources in patches.
-4. [ ] ★ **M** Built-in de4dot: deobfuscate on open.
+4. [ ] ★ **M** Built-in de4dot: deobfuscate on open. Waiting for the owner: which de4dot to bring in (see Questions for the owner in [MODERNIZATION_PLAN.md](MODERNIZATION_PLAN.md)).
 5. [ ] ⏸ **M** Immediate window (`int x = 1` statements; needs the `out var` fix above).
-6. [ ] ★ **S–M** Tracepoints and better conditional breakpoints (log without stopping, hit counts, thread/process filters).
+6. [ ] ★ **S–M** Tracepoints and better conditional breakpoints (log without stopping, hit counts, thread/process filters). Conditions, hit counts, filters and log-without-stopping were already there; 7.9.0.0 adds the `$HITCOUNT`, `$TICK` and `$TIME` message keywords ([TRACEPOINTS.md](TRACEPOINTS.md), tested headlessly by `Test/TracepointCheck`, not click-tested). Next: dependent breakpoints (break only after another one was hit), remove-once-hit.
 
 ## Later feature releases (7.x.0.0)
 
