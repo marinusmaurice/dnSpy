@@ -2085,6 +2085,9 @@ Filter can be changed in Assembly Explorer options.</value>
   <data name="OpenNuGet_Error" xml:space="preserve">
     <value>Couldn&apos;t download {0}: {1}</value>
   </data>
+  <data name="AndroidPackages" xml:space="preserve">
+    <value>Android Packages</value>
+  </data>
   <data name="NuGetPackages" xml:space="preserve">
     <value>NuGet Packages</value>
   </data>

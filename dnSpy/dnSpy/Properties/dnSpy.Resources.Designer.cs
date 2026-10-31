@@ -3468,6 +3468,15 @@ namespace dnSpy.Properties {
         }
         
         /// <summary>
+        ///   Looks up a localized string similar to Android Packages.
+        /// </summary>
+        public static string AndroidPackages {
+            get {
+                return ResourceManager.GetString("AndroidPackages", resourceCulture);
+            }
+        }
+        
+        /// <summary>
         ///   Looks up a localized string similar to NuGet Packages.
         /// </summary>
         public static string NuGetPackages {

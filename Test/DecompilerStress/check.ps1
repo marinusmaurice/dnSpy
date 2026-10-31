@@ -16,6 +16,7 @@
 	  - the tracepoint message keywords ($HITCOUNT, $TICK, $TIME, ...) (../TracepointCheck)
 	  - Open from NuGet's package sources from NuGet.config, search and download over V3, V2 and folder feeds (../NuGetFeedCheck)
 	  - portable mode: where the settings and data go with a dnSpy.xml next to dnSpy.exe or in bin (../PortableCheck)
+	  - the assemblies in Android packages: XALZ (LZ4) compressed files and assembly stores (../AndroidPackageCheck)
 	  - the assembly diff of ../DiffCases as text and as JSON (--json)
 	  - the type and member list of ../DiffCases as text and as JSON (--list, --list --json)
 	  - obfuscator/packer detection of ../ProtectionCases' assembly and of DiffCases (--protection, --protection --json)
@@ -229,6 +230,12 @@ try {
 	$portableCheck = Invoke-Checked "run PortableCheck" { dotnet run --project (Join-Path $PSScriptRoot '..\PortableCheck\PortableCheck.csproj') -c Release -v:q -nologo }
 	if (-not ($portableCheck -contains 'All portable mode checks passed')) { Fail 'Portable mode: checks failed'; $portableCheck | ForEach-Object { Write-Host "  $_" } }
 	else { Write-Host '  OK: dnSpy.xml next to dnSpy.exe or in bin keeps settings and data in the dnSpy folder, otherwise %APPDATA%' }
+
+	# Android packages: the reader compiled on its own, test .apk/.aab files written in memory
+	Write-Host '== Android packages (.apk, .aab)'
+	$androidCheck = Invoke-Checked "run AndroidPackageCheck" { dotnet run --project (Join-Path $PSScriptRoot '..\AndroidPackageCheck\AndroidPackageCheck.csproj') -c Release -v:q -nologo }
+	if (-not ($androidCheck -contains 'All Android package checks passed')) { Fail 'Android packages: checks failed'; $androidCheck | ForEach-Object { Write-Host "  $_" } }
+	else { Write-Host '  OK: plain and XALZ (LZ4) assemblies, assembly stores with assemblies.manifest, .aab and Unity layouts, broken data' }
 
 	# Patch export/import: a patch made from PatchCases v1 and edited v1, applied to v2 (more members, other tokens), must
 	# give the same method bodies as edited v2 and print the same

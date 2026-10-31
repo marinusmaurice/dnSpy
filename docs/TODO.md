@@ -59,7 +59,7 @@ Suggested first, in this order:
 - [ ] **M** Generate a PDB from decompiled code, to debug third-party DLLs in Visual Studio.
 - [ ] **M** ReadyToRun / NativeAOT viewer: show the precompiled native code next to the IL.
 - [x] **M** Single-file bundles: open a .NET 6+ single-file `.exe` and browse the DLLs inside (7.1.0.0; .NET Core 3.x to .NET 10 bundles, also compressed ones; references between the bundle's assemblies, eg. a self-contained app's runtime, resolve to the bundle's copies).
-- [ ] **S–M** Xamarin/MAUI Android: unpack compressed `XALZ` assemblies from APKs.
+- [x] **S–M** Xamarin/MAUI Android: unpack compressed `XALZ` assemblies from APKs (7.17.0.0: `.apk`/`.aab` open like a NuGet package; `XALZ` (LZ4) assemblies and .NET 6–8 assembly stores (format 1) with `assemblies.manifest`; `Test/AndroidPackageCheck` in `check.ps1`, not click-tested). Not yet: .NET 9+ stores in `libassemblies.<abi>.blob.so` (format 2).
 - [ ] **S** C# language version picker in the toolbar.
 - [ ] **M** Decompile a whole namespace (all its types in one view; both C# languages only list the types today).
 - [ ] **S** `using` aliases in C# (ILSpy 11)'s debugger info (the old language's `ImportInfo` aliases), for Watch expressions that use an alias.

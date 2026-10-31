@@ -1,0 +1,22 @@
+<!--
+    Copyright (C) 2026- marinusmaurice@outlook.com
+-->
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <!--
+    Android package (.apk/.aab) test: compiles dnSpy's Android package reader (it doesn't use WPF) and checks the
+    assemblies it finds in test packages it writes: plain and XALZ (LZ4) compressed assembly files, assembly stores
+    (format 1) with assemblies.manifest, the .aab layout and invalid data. check.ps1 runs it, see ../DecompilerStress/README.md.
+  -->
+  <PropertyGroup>
+    <OutputType>Exe</OutputType>
+    <TargetFramework>net10.0</TargetFramework>
+    <Nullable>enable</Nullable>
+    <LangVersion>13.0</LangVersion>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <Compile Include="..\..\dnSpy\dnSpy\Documents\Containers\AndroidPackage.cs" Link="Containers\AndroidPackage.cs" />
+  </ItemGroup>
+
+</Project>

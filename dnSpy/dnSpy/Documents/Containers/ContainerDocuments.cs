@@ -194,6 +194,30 @@ namespace dnSpy.Documents.Containers {
 	}
 
 	/// <summary>
+	/// An Android package (.apk, .aab): its .NET assemblies, decompressed (Xamarin.Android, .NET for Android, Unity)
+	/// </summary>
+	sealed class AndroidPackageDocument : ContainerDocument {
+		public override DsDocumentInfo? SerializedDocument => DsDocumentInfo.CreateDocument(Filename);
+		public override IDsDocumentNameKey Key => FilenameKey.CreateFullPath(Filename);
+
+		AndroidPackageDocument(IDsDocumentService documentService, string filename, List<ContainerFile> files)
+			: base(documentService, filename, files) => Filename = filename;
+
+		public static AndroidPackageDocument? TryCreate(IDsDocumentService documentService, string filename) {
+			var files = new List<ContainerFile>();
+			try {
+				// Packages can be big: the file is read again when an assembly is needed instead of being kept in memory
+				foreach (var file in AndroidPackage.GetAssemblies(() => new FileStream(filename, FileMode.Open, FileAccess.Read, FileShare.Read)))
+					files.Add(new ContainerFile(file.Path, file.GetData));
+			}
+			catch (Exception ex) when (ex is IOException || ex is InvalidDataException || ex is UnauthorizedAccessException) {
+				return null;
+			}
+			return new AndroidPackageDocument(documentService, filename, files);
+		}
+	}
+
+	/// <summary>
 	/// A .NET single-file bundle: the app host (a native PE file) and the assemblies in it
 	/// </summary>
 	sealed class SingleFileBundleDocument : ContainerDocument, IDsPEDocument, IDisposable {
@@ -230,6 +254,8 @@ namespace dnSpy.Documents.Containers {
 			var filename = documentInfo.Name;
 			if (filename.EndsWith(".nupkg", StringComparison.OrdinalIgnoreCase))
 				return NuGetPackageDocument.TryCreate(documentService, filename);
+			if (AndroidPackage.IsAndroidPackage(filename))
+				return AndroidPackageDocument.TryCreate(documentService, filename);
 
 			// Single-file bundles are .exe files on Windows, files without an extension on Linux/macOS
 			var extension = Path.GetExtension(filename);
@@ -253,6 +279,8 @@ namespace dnSpy.Documents.Containers {
 		public DsDocumentNode? Create(IDocumentTreeView documentTreeView, DsDocumentNode? owner, IDsDocument document) {
 			if (document is NuGetPackageDocument)
 				return new ContainerDocumentNodeImpl(document, ContainerDocumentNodeImpl.NuGetPackageGuid, DsImages.NuGet);
+			if (document is AndroidPackageDocument)
+				return new ContainerDocumentNodeImpl(document, ContainerDocumentNodeImpl.AndroidPackageGuid, DsImages.Library);
 			if (document is ContainerFolderDocument)
 				return new ContainerDocumentNodeImpl(document, ContainerDocumentNodeImpl.FolderGuid, DsImages.FolderClosed);
 			// The default provider creates module nodes for documents with an owner
@@ -265,6 +293,7 @@ namespace dnSpy.Documents.Containers {
 	sealed class ContainerDocumentNodeImpl : UnknownDocumentNode {
 		public static readonly Guid NuGetPackageGuid = new Guid("5C4DF7E6-41A0-4C42-9B7C-1F0B8F4E8D21");
 		public static readonly Guid FolderGuid = new Guid("1E6A2B53-8E0C-4F5D-A1C6-3D7F2E9B4A10");
+		public static readonly Guid AndroidPackageGuid = new Guid("8B3F1C2D-6E4A-4D7B-9A15-2C0E7F3B5D94");
 
 		readonly Guid guid;
 		readonly ImageReference icon;

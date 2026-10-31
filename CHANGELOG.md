@@ -7,6 +7,14 @@ What changed in each release of this fork, newest first. The release workflow pu
 
 Each section starts with a short summary, then **New Features** (new things you can do), **Enhancements** (existing things that work better) and **Bug Fixes**, with a link to the commit for each item. Technical details are in [All changes in detail](docs/CHANGES.md#all-changes-in-detail) and in [docs/MODERNIZATION_PLAN.md](docs/MODERNIZATION_PLAN.md).
 
+## 7.17.0.0
+
+dnSpy opens Android packages (.apk, .aab) and shows the .NET assemblies in them, decompressed. Also has everything in 7.16.0.0, 7.15.0.0, 7.14.0.0, 7.13.0.0, 7.12.0.0, 7.11.0.0, 7.10.0.0, 7.9.0.0, 7.8.0.0, 7.7.0.0, 7.6.0.0 and 7.5.0.0.
+
+### New Features
+
+- Open an `.apk` or `.aab` file (File → Open has a new "Android Packages" filter, or drag and drop it): its .NET assemblies are listed by folder, like a NuGet package's. Xamarin.Android's LZ4-compressed assemblies (`XALZ`) are decompressed, and the assembly stores of .NET 6 to 8 for Android/MAUI apps (`assemblies/assemblies*.blob`, format 1) are unpacked with their names from `assemblies.manifest`; other `.dll`/`.exe` files in the package (eg. a Unity game's `assets/bin/Data/Managed`) are listed too. The package isn't kept in memory: it's read again when an assembly is opened. Not supported yet: the assembly stores of .NET 9 and later (`lib/<abi>/libassemblies.<abi>.blob.so`, format 2). Tested by `check.ps1` (`Test/AndroidPackageCheck`: test packages and LZ4 data written by the test, not packages from real apps); opening a package in the UI is not click-tested. The new filter name is in English only.
+
 ## 7.16.0.0
 
 dnSpy shows whether an assembly looks obfuscated or packed. Also has everything in 7.15.0.0, 7.14.0.0, 7.13.0.0, 7.12.0.0, 7.11.0.0, 7.10.0.0, 7.9.0.0, 7.8.0.0, 7.7.0.0, 7.6.0.0 and 7.5.0.0.
