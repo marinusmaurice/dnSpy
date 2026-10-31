@@ -3504,6 +3504,15 @@ namespace dnSpy.Properties {
         }
         
         /// <summary>
+        ///   Looks up a localized string similar to Pin to Recent Files.
+        /// </summary>
+        public static string PinToRecentFilesCommand {
+            get {
+                return ResourceManager.GetString("PinToRecentFilesCommand", resourceCulture);
+            }
+        }
+        
+        /// <summary>
         ///   Looks up a localized string similar to Protection:.
         /// </summary>
         public static string Protection_NodeName {

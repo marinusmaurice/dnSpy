@@ -7,6 +7,15 @@ What changed in each release of this fork, newest first. The release workflow pu
 
 Each section starts with a short summary, then **New Features** (new things you can do), **Enhancements** (existing things that work better) and **Bug Fixes**, with a link to the commit for each item. Technical details are in [All changes in detail](docs/CHANGES.md#all-changes-in-detail) and in [docs/MODERNIZATION_PLAN.md](docs/MODERNIZATION_PLAN.md).
 
+## 7.20.0.0
+
+Files you use often can be pinned to the top of File → Recent Files. Also has everything in 7.19.0.0, 7.18.1.0, 7.18.0.0, 7.17.0.0, 7.16.0.0, 7.15.0.0, 7.14.0.0, 7.13.0.0, 7.12.0.0, 7.11.0.0, 7.10.0.0, 7.9.0.0, 7.8.0.0, 7.7.0.0, 7.6.0.0 and 7.5.0.0.
+
+### New Features
+
+- Pinned recent files: right-click an assembly in the assembly explorer → **Pin to Recent Files** (click it again to unpin; it's checked when the file is pinned). Pinned files are at the top of File → Recent Files (checked, above a separator), stay in the order you pinned them, don't move when you open them and are never pushed out by other files (up to 30 pinned files, plus the 30 most recent other files). An unpinned file becomes the most recent of the other files. The recent files list in the settings keeps its format (a new `pinned` attribute), so older dnSpy versions still read it (they show the pinned files first, unpinned). The list logic is tested by `check.ps1` (`Test/RecentFilesCheck`); the menus are not click-tested. The new text is in English only.
+- "Restore last session" (the other half of this TODO item) was already there: dnSpy reopens the assemblies you had open, and the tabs when Options → General → "Restore tabs at startup" is on.
+
 ## 7.19.0.0
 
 Edit Method/Class can check your code without changing the assembly. Also has everything in 7.18.1.0, 7.18.0.0, 7.17.0.0, 7.16.0.0, 7.15.0.0, 7.14.0.0, 7.13.0.0, 7.12.0.0, 7.11.0.0, 7.10.0.0, 7.9.0.0, 7.8.0.0, 7.7.0.0, 7.6.0.0 and 7.5.0.0.

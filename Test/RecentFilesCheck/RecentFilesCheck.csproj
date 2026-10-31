@@ -1,0 +1,22 @@
+<!--
+    Copyright (C) 2026- marinusmaurice@outlook.com
+-->
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <!--
+    Recent files test: compiles dnSpy's recent file list (pinned files and the other recent files, no settings or WPF)
+    and checks pinning, unpinning, the order and the limits.
+    check.ps1 runs it, see ../DecompilerStress/README.md.
+  -->
+  <PropertyGroup>
+    <OutputType>Exe</OutputType>
+    <TargetFramework>net10.0</TargetFramework>
+    <Nullable>enable</Nullable>
+    <LangVersion>13.0</LangVersion>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <Compile Include="..\..\dnSpy\dnSpy\Documents\TreeView\RecentFileList.cs" Link="RecentFileList.cs" />
+  </ItemGroup>
+
+</Project>

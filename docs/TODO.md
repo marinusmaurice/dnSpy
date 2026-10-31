@@ -100,7 +100,7 @@ Suggested first, in this order:
 ### UI and quality of life
 
 - [ ] **S** Dark theme refresh, high-contrast theme, font picker, ligatures toggle.
-- [ ] **S** Recent files with pinning; restore last session.
+- [x] **S** Recent files with pinning; restore last session (7.20.0.0: assembly explorer context menu → Pin to Recent Files, pinned files at the top of File → Recent Files, `Test/RecentFilesCheck`, menus not click-tested; restoring the last session was already there: open assemblies and, with "Restore tabs at startup", the tabs).
 - [x] **S** Portable mode (settings next to the exe): an empty `dnSpy.xml` next to `dnSpy.exe` keeps settings, startup profiles and NuGet downloads in the dnSpy folder (7.12.0.0; `Test/PortableCheck` in `check.ps1`, not click-tested).
 - [x] **S** Open `.nupkg` files (drag and drop) and browse the DLLs inside (7.1.0.0; grouped by folder, eg. lib/net8.0).
 - [x] **M** "Open from NuGet": download a package by ID/version and open it (7.1.0.0; File menu; uses NuGet's global packages folder when the package is there, else downloads from nuget.org to `%LOCALAPPDATA%\dnSpy\NuGet`).

@@ -1,5 +1,6 @@
 /*
     Copyright (C) 2014-2019 de4dot@gmail.com
+    Copyright (C) 2026- marinusmaurice@outlook.com
 
     This file is part of dnSpy
 
@@ -180,7 +181,27 @@ namespace dnSpy.Documents.Tabs {
 		public override bool IsEnabled(IMenuItemContext context) => mruList.RecentFiles.Length > 0;
 	}
 
-	[ExportMenuItem(OwnerGuid = RecentFilesCommandItem.Guid, Group = "0,A8109840-1340-42BB-85C5-D753FD41AA86", Order = 0)]
+	// The pinned files, above the other recent files
+	[ExportMenuItem(OwnerGuid = RecentFilesCommandItem.Guid, Group = "0,6E3C2B71-94D5-4F0A-B8C6-1D27E5A9F340", Order = 0)]
+	sealed class PinnedRecentFilesCommand : MenuItemBase, IMenuItemProvider {
+		readonly IDocumentTreeView documentTreeView;
+		readonly AssemblyExplorerMostRecentlyUsedList mruList;
+
+		[ImportingConstructor]
+		PinnedRecentFilesCommand(IDocumentTreeView documentTreeView, AssemblyExplorerMostRecentlyUsedList mruList) {
+			this.documentTreeView = documentTreeView;
+			this.mruList = mruList;
+		}
+
+		public override void Execute(IMenuItemContext context) { }
+		// Hidden when nothing is pinned, else the menu gets a separator above the other files
+		public override bool IsVisible(IMenuItemContext context) => mruList.PinnedFiles.Length > 0;
+
+		public IEnumerable<CreatedMenuItem> Create(IMenuItemContext context) =>
+			RecentFilesCommand.Create(documentTreeView, mruList, mruList.PinnedFiles, 1, isPinned: true);
+	}
+
+	[ExportMenuItem(OwnerGuid = RecentFilesCommandItem.Guid, Group = "1,A8109840-1340-42BB-85C5-D753FD41AA86", Order = 0)]
 	sealed class RecentFilesCommand : MenuItemBase, IMenuItemProvider {
 		const int MaxFilenameLength = 100;
 		readonly IDocumentTreeView documentTreeView;
@@ -196,8 +217,13 @@ namespace dnSpy.Documents.Tabs {
 
 		sealed class MyMenuItem : MenuItemBase {
 			readonly Action<IMenuItemContext> action;
-			public MyMenuItem(Action<IMenuItemContext> action) => this.action = action;
+			readonly bool isChecked;
+			public MyMenuItem(Action<IMenuItemContext> action, bool isChecked) {
+				this.action = action;
+				this.isChecked = isChecked;
+			}
 			public override void Execute(IMenuItemContext context) => action(context);
+			public override bool IsChecked(IMenuItemContext context) => isChecked;
 		}
 
 		static string GetHeader(int i, string filename) {
@@ -217,17 +243,20 @@ namespace dnSpy.Documents.Tabs {
 			return filename;
 		}
 
-		public IEnumerable<CreatedMenuItem> Create(IMenuItemContext context) {
-			var files = mruList.RecentFiles;
+		public IEnumerable<CreatedMenuItem> Create(IMenuItemContext context) =>
+			Create(documentTreeView, mruList, mruList.UnpinnedFiles, mruList.PinnedFiles.Length + 1, isPinned: false);
+
+		// Pinned files are checked; the numbers go on from the pinned files to the other files
+		internal static IEnumerable<CreatedMenuItem> Create(IDocumentTreeView documentTreeView, AssemblyExplorerMostRecentlyUsedList mruList, string[] files, int firstNumber, bool isPinned) {
 			for (int i = 0; i < files.Length; i++) {
 				var filename = files[i];
-				var attr = new ExportMenuItemAttribute { Header = GetHeader(i + 1, filename) };
-				var item = new MyMenuItem(ctx => OpenFile(filename));
+				var attr = new ExportMenuItemAttribute { Header = GetHeader(firstNumber + i, filename) };
+				var item = new MyMenuItem(ctx => OpenFile(documentTreeView, mruList, filename), isPinned);
 				yield return new CreatedMenuItem(attr, item);
 			}
 		}
 
-		void OpenFile(string filename) {
+		static void OpenFile(IDocumentTreeView documentTreeView, AssemblyExplorerMostRecentlyUsedList mruList, string filename) {
 			var document = documentTreeView.DocumentService.TryGetOrCreate(DsDocumentInfo.CreateDocument(filename));
 			if (document is null)
 				return;
@@ -240,7 +269,38 @@ namespace dnSpy.Documents.Tabs {
 		}
 	}
 
-	[ExportMenuItem(OwnerGuid = MenuConstants.APP_MENU_FILE_GUID, Header = "res:ReloadAsmsCommand", Group = MenuConstants.GROUP_APP_MENU_FILE_OPEN, Order = 40)]
+	[ExportMenuItem(Header = "res:PinToRecentFilesCommand", Group = MenuConstants.GROUP_CTX_DOCUMENTS_OTHER, Order = 31)]
+	sealed class PinToRecentFilesCtxMenuCommand : MenuItemBase {
+		readonly AssemblyExplorerMostRecentlyUsedList mruList;
+
+		[ImportingConstructor]
+		PinToRecentFilesCtxMenuCommand(AssemblyExplorerMostRecentlyUsedList mruList) => this.mruList = mruList;
+
+		public override bool IsVisible(IMenuItemContext context) => GetFilename(context) is not null;
+		public override bool IsChecked(IMenuItemContext context) => GetFilename(context) is string filename && mruList.IsPinned(filename);
+
+		// The file of the selected assembly explorer node, if it's a file on disk
+		static string? GetFilename(IMenuItemContext context) {
+			if (context.CreatorObject.Guid != new Guid(MenuConstants.GUIDOBJ_DOCUMENTS_TREEVIEW_GUID))
+				return null;
+			var nodes = context.Find<TreeNodeData[]>();
+			if (nodes?.Length != 1)
+				return null;
+			var filename = (nodes[0] as DsDocumentNode)?.Document?.Filename;
+			if (!File.Exists(filename))
+				return null;
+			return filename;
+		}
+
+		public override void Execute(IMenuItemContext context) {
+			var filename = GetFilename(context);
+			if (filename is null)
+				return;
+			mruList.SetPinned(filename, !mruList.IsPinned(filename));
+		}
+	}
+
+	[ExportMenuItem(OwnerGuid = MenuConstants.APP_MENU_FILE_GUID, Header = "res:ReloadAsmsCommand",Group = MenuConstants.GROUP_APP_MENU_FILE_OPEN, Order = 40)]
 	sealed class ReloadCommand : MenuItemBase {
 		readonly IDocumentListLoader documentListLoader;
 

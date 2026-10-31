@@ -14,6 +14,7 @@
 	  - the side-by-side view's language choice and tab sync (../SideBySideCheck)
 	  - patch export/import: a patch made from ../PatchCases and its edited version, applied to a newer version (../PatchCheck)
 	  - the tracepoint message keywords ($HITCOUNT, $TICK, $TIME, ...) (../TracepointCheck)
+	  - pinned and recent files in File -> Recent Files (../RecentFilesCheck)
 	  - Open from NuGet's package sources from NuGet.config, search and download over V3, V2 and folder feeds (../NuGetFeedCheck)
 	  - portable mode: where the settings and data go with a dnSpy.xml next to dnSpy.exe or in bin (../PortableCheck)
 	  - the assemblies in Android packages: XALZ (LZ4) compressed files and assembly stores (../AndroidPackageCheck)
@@ -219,6 +220,12 @@ try {
 	$traceCheck = Invoke-Checked "run TracepointCheck" { dotnet run --project (Join-Path $PSScriptRoot '..\TracepointCheck\TracepointCheck.csproj') -c Release -v:q -nologo }
 	if (-not ($traceCheck -contains 'All tracepoint checks passed')) { Fail 'Tracepoints: checks failed'; $traceCheck | ForEach-Object { Write-Host "  $_" } }
 	else { Write-Host '  OK: tracepoint keywords ($HITCOUNT, $TICK, $TIME), escapes, expressions, help text' }
+
+	# Recent files: dnSpy's recent file list (pinning) compiled on its own
+	Write-Host '== Recent files'
+	$recentCheck = Invoke-Checked "run RecentFilesCheck" { dotnet run --project (Join-Path $PSScriptRoot '..\RecentFilesCheck\RecentFilesCheck.csproj') -c Release -v:q -nologo }
+	if (-not ($recentCheck -contains 'All recent files checks passed')) { Fail 'Recent files: checks failed'; $recentCheck | ForEach-Object { Write-Host "  $_" } }
+	else { Write-Host '  OK: pinned files stay at the top and are not pushed out, unpin, order, limits' }
 
 	# Open from NuGet: NuGet.config package sources, search and download (fake feeds, no network)
 	Write-Host '== Open from NuGet, package sources'

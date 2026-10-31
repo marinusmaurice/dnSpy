@@ -1,5 +1,6 @@
 /*
     Copyright (C) 2014-2019 de4dot@gmail.com
+    Copyright (C) 2026- marinusmaurice@outlook.com
 
     This file is part of dnSpy
 
@@ -24,60 +25,65 @@ using dnSpy.Contracts.Settings;
 
 namespace dnSpy.Documents.TreeView {
 	abstract class AssemblyExplorerMostRecentlyUsedList {
+		/// <summary>
+		/// Pinned files, then the other recent files
+		/// </summary>
 		public abstract string[] RecentFiles { get; }
+		public abstract string[] PinnedFiles { get; }
+		public abstract string[] UnpinnedFiles { get; }
 		public abstract void Add(string filename);
+		public abstract bool IsPinned(string filename);
+		public abstract void SetPinned(string filename, bool pin);
 	}
 
 	[Export(typeof(AssemblyExplorerMostRecentlyUsedList))]
 	sealed class AssemblyExplorerMostRecentlyUsedListImpl : AssemblyExplorerMostRecentlyUsedList {
 		static readonly Guid SETTINGS_GUID = new Guid("642B9276-3C9A-4EFE-9B3B-D62046824B18");
-		const int MaxFileCount = 30;
 		const string filenameSectionName = "file";
 		const string filenameAttributeName = "name";
+		// Missing in older settings (nothing pinned); older dnSpy versions ignore it and show the pinned files first
+		const string pinnedAttributeName = "pinned";
 
 		readonly ISettingsSection fileSection;
-		readonly List<string> fileList;
+		readonly RecentFileList fileList;
 
 		[ImportingConstructor]
 		AssemblyExplorerMostRecentlyUsedListImpl(ISettingsService settingsService) {
-			fileList = new List<string>(MaxFileCount);
+			fileList = new RecentFileList();
 
 			fileSection = settingsService.GetOrCreateSection(SETTINGS_GUID);
 			foreach (var fileSect in fileSection.SectionsWithName(filenameSectionName)) {
-				if (fileList.Count == MaxFileCount)
-					break;
 				var name = fileSect.Attribute<string?>(filenameAttributeName);
 				if (name is null)
 					continue;
-				fileList.Add(name);
+				fileList.Load(name, fileSect.Attribute<bool?>(pinnedAttributeName) ?? false);
 			}
 		}
 
-		public override string[] RecentFiles => fileList.ToArray();
+		public override string[] RecentFiles => fileList.All;
+		public override string[] PinnedFiles => fileList.Pinned;
+		public override string[] UnpinnedFiles => fileList.Recent;
 
 		public override void Add(string filename) {
-			if (string.IsNullOrEmpty(filename))
-				return;
-			int index = GetIndexOf(filename);
-			if (index >= 0)
-				fileList.RemoveAt(index);
-			if (fileList.Count == MaxFileCount)
-				fileList.RemoveAt(fileList.Count - 1);
-			fileList.Insert(0, filename);
-			Save();
+			if (fileList.Add(filename))
+				Save();
 		}
 
-		int GetIndexOf(string filename) {
-			for (int i = 0; i < fileList.Count; i++) {
-				if (StringComparer.OrdinalIgnoreCase.Equals(filename, fileList[i]))
-					return i;
-			}
-			return -1;
+		public override bool IsPinned(string filename) => fileList.IsPinned(filename);
+
+		public override void SetPinned(string filename, bool pin) {
+			if (pin ? fileList.Pin(filename) : fileList.Unpin(filename))
+				Save();
 		}
 
 		void Save() {
 			fileSection.RemoveSection(filenameSectionName);
-			foreach (var file in fileList) {
+			foreach (var file in fileList.Pinned) {
+				var fileSect = fileSection.CreateSection(filenameSectionName);
+				fileSect.Attribute<string>(filenameAttributeName, file);
+				fileSect.Attribute(pinnedAttributeName, true);
+			}
+			foreach (var file in fileList.Recent) {
 				var fileSect = fileSection.CreateSection(filenameSectionName);
 				fileSect.Attribute<string>(filenameAttributeName, file);
 			}
