@@ -689,5 +689,95 @@ namespace dnSpy.Console.Properties {
                 return ResourceManager.GetString("UsageHeader", resourceCulture);
             }
         }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to patch.
+        /// </summary>
+        internal static string CmdLinePatchFile {
+            get {
+                return ResourceManager.GetString("CmdLinePatchFile", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to save the method bodies that differ between an assembly and its edited version to a patch file: dnSpy.Console --patch-create edits.dnspypatch original.dll edited.dll.
+        /// </summary>
+        internal static string CmdLineDescription_PatchCreate {
+            get {
+                return ResourceManager.GetString("CmdLineDescription_PatchCreate", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to apply a patch file to an assembly and save the result: dnSpy.Console --patch-apply edits.dnspypatch -o patched.dll new.dll.
+        /// </summary>
+        internal static string CmdLineDescription_PatchApply {
+            get {
+                return ResourceManager.GetString("CmdLineDescription_PatchApply", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Missing patch file name.
+        /// </summary>
+        internal static string MissingPatchFile {
+            get {
+                return ResourceManager.GetString("MissingPatchFile", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to --patch-create needs two files: the original and the edited assembly.
+        /// </summary>
+        internal static string PatchCreateNeedsTwoFiles {
+            get {
+                return ResourceManager.GetString("PatchCreateNeedsTwoFiles", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to --patch-apply needs one assembly.
+        /// </summary>
+        internal static string PatchApplyNeedsOneFile {
+            get {
+                return ResourceManager.GetString("PatchApplyNeedsOneFile", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to --patch-apply needs the output file name (-o).
+        /// </summary>
+        internal static string PatchApplyNeedsOutputFile {
+            get {
+                return ResourceManager.GetString("PatchApplyNeedsOutputFile", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to not included.
+        /// </summary>
+        internal static string PatchNotIncluded {
+            get {
+                return ResourceManager.GetString("PatchNotIncluded", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Patch with {0} method(s) saved to {1}.
+        /// </summary>
+        internal static string PatchCreated {
+            get {
+                return ResourceManager.GetString("PatchCreated", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to {0} of {1} method(s) applied, saved to {2}.
+        /// </summary>
+        internal static string PatchApplied {
+            get {
+                return ResourceManager.GetString("PatchApplied", resourceCulture);
+            }
+        }
     }
 }

@@ -6627,5 +6627,104 @@ namespace dnSpy.AsmEditor.Properties {
                 return ResourceManager.GetString("XML", resourceCulture);
             }
         }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Export _Patch....
+        /// </summary>
+        public static string Patch_ExportCommand {
+            get {
+                return ResourceManager.GetString("Patch_ExportCommand", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Appl_y Patch....
+        /// </summary>
+        public static string Patch_ApplyCommand {
+            get {
+                return ResourceManager.GetString("Patch_ApplyCommand", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Apply Patch.
+        /// </summary>
+        public static string Patch_UndoDescription {
+            get {
+                return ResourceManager.GetString("Patch_UndoDescription", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to dnSpy patch files.
+        /// </summary>
+        public static string Patch_Files {
+            get {
+                return ResourceManager.GetString("Patch_Files", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to No method body of {0} differs from its file ({1}), so there is nothing to export. Edit a method first (Edit Method (C#) or Edit IL Instructions)..
+        /// </summary>
+        public static string Patch_NoChanges {
+            get {
+                return ResourceManager.GetString("Patch_NoChanges", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to {0} method(s) saved to {1}..
+        /// </summary>
+        public static string Patch_Exported {
+            get {
+                return ResourceManager.GetString("Patch_Exported", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Not in the patch (patches only have method bodies):.
+        /// </summary>
+        public static string Patch_NotIncluded {
+            get {
+                return ResourceManager.GetString("Patch_NotIncluded", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to ... and {0} more.
+        /// </summary>
+        public static string Patch_AndMore {
+            get {
+                return ResourceManager.GetString("Patch_AndMore", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to The patch was made from {0}, the selected assembly is {1}. Apply it anyway?.
+        /// </summary>
+        public static string Patch_OtherAssembly {
+            get {
+                return ResourceManager.GetString("Patch_OtherAssembly", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to {0} of {1} method(s) applied to {2}. Use File &gt; Save Module to save it; Edit &gt; Undo removes the patch..
+        /// </summary>
+        public static string Patch_Applied {
+            get {
+                return ResourceManager.GetString("Patch_Applied", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Not applied:.
+        /// </summary>
+        public static string Patch_NotApplied {
+            get {
+                return ResourceManager.GetString("Patch_NotApplied", resourceCulture);
+            }
+        }
     }
 }

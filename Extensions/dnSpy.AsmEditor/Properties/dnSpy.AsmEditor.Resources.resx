@@ -2312,4 +2312,37 @@ Most options will be re-initialized when this checkbox is clicked</value>
   <data name="Type_Flags_Visibility" xml:space="preserve">
     <value>Visibilit_y</value>
   </data>
+  <data name="Patch_ExportCommand" xml:space="preserve">
+    <value>Export _Patch...</value>
+  </data>
+  <data name="Patch_ApplyCommand" xml:space="preserve">
+    <value>Appl_y Patch...</value>
+  </data>
+  <data name="Patch_UndoDescription" xml:space="preserve">
+    <value>Apply Patch</value>
+  </data>
+  <data name="Patch_Files" xml:space="preserve">
+    <value>dnSpy patch files</value>
+  </data>
+  <data name="Patch_NoChanges" xml:space="preserve">
+    <value>No method body of {0} differs from its file ({1}), so there is nothing to export. Edit a method first (Edit Method (C#) or Edit IL Instructions).</value>
+  </data>
+  <data name="Patch_Exported" xml:space="preserve">
+    <value>{0} method(s) saved to {1}.</value>
+  </data>
+  <data name="Patch_NotIncluded" xml:space="preserve">
+    <value>Not in the patch (patches only have method bodies):</value>
+  </data>
+  <data name="Patch_AndMore" xml:space="preserve">
+    <value>... and {0} more</value>
+  </data>
+  <data name="Patch_OtherAssembly" xml:space="preserve">
+    <value>The patch was made from {0}, the selected assembly is {1}. Apply it anyway?</value>
+  </data>
+  <data name="Patch_Applied" xml:space="preserve">
+    <value>{0} of {1} method(s) applied to {2}. Use File &gt; Save Module to save it; Edit &gt; Undo removes the patch.</value>
+  </data>
+  <data name="Patch_NotApplied" xml:space="preserve">
+    <value>Not applied:</value>
+  </data>
 </root>

@@ -228,6 +228,22 @@ try {
 		$patchedRun = Invoke-Checked "run patched PatchCases v2" { dotnet (Join-Path $patchOut 'PatchCases.dll') }
 		if (Compare-Object $expectedRun $patchedRun) { Fail 'Patch export/import: patched v2 prints something different'; $patchedRun | ForEach-Object { Write-Host "  $_" } }
 		else { Write-Host "  OK: $($patchCheck[0]), applied to a newer version, same output ($($expectedRun.Count) lines)" }
+
+		# The same with dnSpy.Console --patch-create / --patch-apply
+		$consolePatch = Join-Path $work 'console.dnspypatch'
+		$consoleOut = Join-Path $work 'patch-console'
+		Copy-Item $patchDirs['v2'] $consoleOut -Recurse
+		$created = @(Invoke-Checked "dnSpy.Console --patch-create" { & $Console --patch-create $consolePatch (Join-Path $patchDirs['v1'] 'PatchCases.dll') (Join-Path $patchDirs['v1p'] 'PatchCases.dll') })
+		$applied = @(Invoke-Checked "dnSpy.Console --patch-apply" { & $Console --patch-apply $consolePatch -o (Join-Path $consoleOut 'PatchCases.dll') (Join-Path $patchDirs['v2'] 'PatchCases.dll') })
+		$consoleRun = Invoke-Checked "run console-patched PatchCases v2" { dotnet (Join-Path $consoleOut 'PatchCases.dll') }
+		$createdMethods = @($created | Where-Object { $_.StartsWith('+ ') }).Count
+		$appliedMethods = @($applied | Where-Object { $_.StartsWith('+ ') }).Count
+		if ($createdMethods -ne 4 -or $appliedMethods -ne 4 -or @($applied | Where-Object { $_.StartsWith('! ') }).Count -ne 0) {
+			Fail "Patch export/import: dnSpy.Console made $createdMethods and applied $appliedMethods methods (expected 4)"
+			$created + $applied | ForEach-Object { Write-Host "  $_" }
+		}
+		elseif (Compare-Object $expectedRun $consoleRun) { Fail 'Patch export/import: v2 patched by dnSpy.Console prints something different'; $consoleRun | ForEach-Object { Write-Host "  $_" } }
+		else { Write-Host '  OK: dnSpy.Console --patch-create / --patch-apply, same output' }
 	}
 
 	# Assembly diff: the two versions of Test/DiffCases differ exactly in the members marked V2; a lambda, an iterator

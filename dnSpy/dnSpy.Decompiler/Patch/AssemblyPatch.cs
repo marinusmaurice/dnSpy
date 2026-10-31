@@ -117,8 +117,10 @@ namespace dnSpy.Decompiler.Patch {
 					continue;
 				}
 				try {
+					var oldBody = method.MethodBody;
 					method.Body = reader.Read(method, methodPatch.Body);
 					result.Applied.Add(methodPatch);
+					result.ChangedMethods.Add((method, oldBody));
 				}
 				catch (PatchException ex) {
 					result.Failed.Add((methodPatch, ex.Message));
@@ -165,5 +167,7 @@ namespace dnSpy.Decompiler.Patch {
 	public sealed class PatchApplyResult {
 		public List<MethodPatch> Applied { get; } = new List<MethodPatch>();
 		public List<(MethodPatch method, string reason)> Failed { get; } = new List<(MethodPatch, string)>();
+		/// <summary>The methods whose bodies were replaced and their old bodies, eg. to undo the patch</summary>
+		public List<(MethodDef method, dnlib.DotNet.Emit.MethodBody? oldBody)> ChangedMethods { get; } = new List<(MethodDef, dnlib.DotNet.Emit.MethodBody?)>();
 	}
 }

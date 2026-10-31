@@ -327,4 +327,34 @@
   <data name="DiffNeedsTwoFiles" xml:space="preserve">
     <value>--diff needs two files: the old and the new version</value>
   </data>
+  <data name="CmdLinePatchFile" xml:space="preserve">
+    <value>patch</value>
+  </data>
+  <data name="CmdLineDescription_PatchCreate" xml:space="preserve">
+    <value>save the method bodies that differ between an assembly and its edited version to a patch file: dnSpy.Console --patch-create edits.dnspypatch original.dll edited.dll</value>
+  </data>
+  <data name="CmdLineDescription_PatchApply" xml:space="preserve">
+    <value>apply a patch file to an assembly and save the result: dnSpy.Console --patch-apply edits.dnspypatch -o patched.dll new.dll</value>
+  </data>
+  <data name="MissingPatchFile" xml:space="preserve">
+    <value>Missing patch file name</value>
+  </data>
+  <data name="PatchCreateNeedsTwoFiles" xml:space="preserve">
+    <value>--patch-create needs two files: the original and the edited assembly</value>
+  </data>
+  <data name="PatchApplyNeedsOneFile" xml:space="preserve">
+    <value>--patch-apply needs one assembly</value>
+  </data>
+  <data name="PatchApplyNeedsOutputFile" xml:space="preserve">
+    <value>--patch-apply needs the output file name (-o)</value>
+  </data>
+  <data name="PatchNotIncluded" xml:space="preserve">
+    <value>not included</value>
+  </data>
+  <data name="PatchCreated" xml:space="preserve">
+    <value>Patch with {0} method(s) saved to {1}</value>
+  </data>
+  <data name="PatchApplied" xml:space="preserve">
+    <value>{0} of {1} method(s) applied, saved to {2}</value>
+  </data>
 </root>

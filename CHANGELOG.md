@@ -9,11 +9,12 @@ Each section starts with a short summary, then **New Features** (new things you 
 
 ## 7.8.0.0
 
-Work in progress: patch export/import, to keep the edits of an assembly in a file and apply them to a newer version of it. Also has everything in 7.7.0.0, 7.6.0.0 and 7.5.0.0.
+Patch export/import, to keep the edits of an assembly in a file and apply them to a newer version of it. Also has everything in 7.7.0.0, 7.6.0.0 and 7.5.0.0.
 
 ### New Features
 
-- Patch export/import ([docs/PATCH_EXPORT_IMPORT.md](docs/PATCH_EXPORT_IMPORT.md)), in progress: the patch engine is done: it saves the changed method bodies of an edited assembly to a patch file (by name, not by token, with array initializer data) and applies them to another version of the assembly, method by method, reporting the methods it can't apply (not there, or a type or member they use is missing). Tested headlessly (`Test/PatchCheck`: a patch applied to a newer version with other tokens gives the same code and output as making the edits there). The menu commands (File → Export Patch... / Apply Patch...) come next; not usable from dnSpy's window yet.
+- Patch export/import ([docs/PATCH_EXPORT_IMPORT.md](docs/PATCH_EXPORT_IMPORT.md)): File → Export Patch... (also in an assembly's context menu) saves the method bodies you changed (Edit Method (C#), Edit IL Instructions) compared with the assembly's file to a `.dnspypatch` file, and lists what a patch can't hold yet (added members, attributes, resources). File → Apply Patch... applies a patch to the selected assembly, also to another version of it (methods are found by name, not by token, and array initializer data is carried along), method by method, and lists the methods it couldn't apply (not there, or a type or member they use is missing); Edit → Undo removes it, File → Save Module saves it. Patches only have method bodies for now. Tested headlessly (`Test/PatchCheck`: a patch applied to a newer version with other tokens gives the same code and output as making the edits there); the menu commands are **not click-tested** yet.
+- dnSpy.Console: `--patch-create edits.dnspypatch original.dll edited.dll` and `--patch-apply edits.dnspypatch -o patched.dll new.dll`, for scripts (tested by `check.ps1`).
 
 ### Enhancements
 

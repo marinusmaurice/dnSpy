@@ -3,7 +3,7 @@
 -->
 # Patch export/import
 
-Version 7.8.0.0, branch `7.8.0.0/patch-export-import`. Status: step 1 of 2 done (the patch engine, tested headlessly by `Test/PatchCheck`); step 2 (the menu commands) is next. **Not usable from dnSpy's window yet.**
+Version 7.8.0.0, branch `7.8.0.0/patch-export-import`. Status: both steps done. The patch engine and the `dnSpy.Console` options are tested headlessly (`Test/PatchCheck`, `check.ps1`); the menu commands are **not click-tested** (see [Click-test steps](#click-test-steps-for-the-owner)).
 
 ## Goal
 
@@ -37,9 +37,20 @@ Each method is applied on its own: it's looked up in the target assembly by type
 
 `Test/PatchCases` is built four times: v1, v1 edited (`-p:Patched=true`), v2 (a newer version with more members, so other tokens) and v2 edited. `Test/PatchCheck` (run by `check.ps1`) makes a patch from v1 and edited v1 (4 methods: calls into the type itself and generic BCL methods, a `switch`, strings with a tab and a `\0`, try/catch, value types, multi-dimensional arrays, an array initializer, `typeof`, `fixed` and pointers), saves and loads it, applies it to v2 and checks that the result has the same method bodies as edited v2 (assembly diff) and the same assembly references; `check.ps1` also runs it and edited v2, which must print the same. It also checks: applying twice, a missing method and a missing callee (reported, the other methods applied), a module without `<PrivateImplementationDetails>` (added), the added members of v2 listed as not included, and invalid files.
 
-## Step 2 (next run)
+## Commands (step 2)
 
-- File → Export Patch... (and in the assembly node's context menu): compares the edited assembly in memory with its file on disk, shows what's not included, saves a `.dnspypatch` file.
-- File → Apply Patch...: applies a patch to the selected assembly in memory, as one undoable edit (the `IUndoCommandService` like the other edit commands), and shows the applied and failed methods; then File → Save Module as usual.
-- `dnSpy.Console --patch-create <patch> <original> <edited>` and `--patch-apply <patch> <assembly> -o <output>` for scripts.
-- Click-test steps for the owner.
+- **File → Export Patch...** (also in the context menu of an assembly or module node): compares the selected assembly in memory (with your edits) with its file on disk (read into memory, so the file isn't locked), saves a `.dnspypatch` file (the save dialog starts in the assembly's folder) and lists what the patch doesn't have (at most 20 lines). Disabled when the module has no file (eg. in-memory modules); says so when no method body differs.
+- **File → Apply Patch...** (also in the context menu): applies a patch file to the selected assembly in memory and lists the methods it couldn't apply with the reason. When the patch was made from an assembly with another name it asks first. It's one edit for Edit → Undo / Redo (`ApplyPatchUndoCommand`: each method's old and new body); array initializer data the patch added stays after an undo (unused). The assembly is then modified: File → Save Module saves it as usual.
+- **dnSpy.Console**: `--patch-create edits.dnspypatch original.dll edited.dll` prints `+ <method>` per method and `! not included: ...` per other difference; `--patch-apply edits.dnspypatch -o patched.dll new.dll` prints `+ <method>` per applied method and `! <method>: <reason>` per method not applied (exit code 1 then; the output file is still written). Code in `dnSpy/dnSpy.Console/Program.cs`, menu commands in `Extensions/dnSpy.AsmEditor/Patch/PatchCommands.cs`.
+
+## Click-test steps for the owner
+
+1. Build `Test/PatchCases` twice: `dotnet build Test/PatchCases -c Release -o %TEMP%\pc1` and `dotnet build Test/PatchCases -c Release -p:PatchVersion=2 -o %TEMP%\pc2`.
+2. Open `%TEMP%\pc1\PatchCases.dll` in dnSpy, change a method (eg. Edit Method (C#) on a method of `Shop` or `Program`, change a string, Compile; or Edit IL Instructions).
+3. Right-click the assembly → **Export Patch...**: the save dialog offers `PatchCases.dnspypatch` in `%TEMP%\pc1`; save. The message says how many methods were saved (1 for an IL edit; Edit Method (C#) can change more, eg. a lambda's class) and lists anything not included.
+4. File → **Export Patch...** on an assembly you didn't change: "nothing to export" message. On a module without a file: the command is disabled.
+5. Open `%TEMP%\pc2\PatchCases.dll`, select it, File → **Apply Patch...**, choose the patch: "1 of 1 method(s) applied"; the method's code shows your edit; the assembly is marked modified (Save All enabled).
+6. Edit → **Undo**: the method's code is the original again; Edit → **Redo**: the edit is back.
+7. File → Save Module to `%TEMP%\pc2\PatchCases.patched.dll`, then `dotnet %TEMP%\pc2\PatchCases.patched.dll` runs with your change.
+8. Apply the patch to another assembly (eg. `dnSpy.Console.dll`): dnSpy asks first; answer Yes: the methods are listed as not applied ("method not found").
+9. Check the menu items' access keys (File → Export _Patch..., Appl_y Patch...) don't clash with other File menu items.

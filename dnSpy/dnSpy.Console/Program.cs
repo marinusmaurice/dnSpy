@@ -1,5 +1,6 @@
 /*
     Copyright (C) 2014-2019 de4dot@gmail.com
+    Copyright (C) 2026- marinusmaurice@outlook.com
 
     This file is part of dnSpy
 
@@ -34,6 +35,7 @@ using dnSpy.Contracts.Decompiler;
 using dnSpy.Contracts.Text;
 using dnSpy.Contracts.Utilities;
 using dnSpy.Decompiler.Diff;
+using dnSpy.Decompiler.Patch;
 using dnSpy.Decompiler.MSBuild;
 
 namespace dnSpy_Console {
@@ -175,6 +177,8 @@ namespace dnSpy_Console {
 		bool colorizeOutput;
 		bool diff;
 		bool diffCode;
+		string? patchCreateFile;
+		string? patchApplyFile;
 		Guid projectGuid = Guid.NewGuid();
 		int numThreads;
 		int mdToken;
@@ -358,6 +362,8 @@ namespace dnSpy_Console {
 			new UsageInfo("--gac-file", dnSpy_Console_Resources.CmdLineAssembly, dnSpy_Console_Resources.CmdLineDescription_GACFile),
 			new UsageInfo("--diff", null, dnSpy_Console_Resources.CmdLineDescription_Diff),
 			new UsageInfo("--diff-code", null, dnSpy_Console_Resources.CmdLineDescription_DiffCode),
+			new UsageInfo("--patch-create", dnSpy_Console_Resources.CmdLinePatchFile, dnSpy_Console_Resources.CmdLineDescription_PatchCreate),
+			new UsageInfo("--patch-apply", dnSpy_Console_Resources.CmdLinePatchFile, dnSpy_Console_Resources.CmdLineDescription_PatchApply),
 			new UsageInfo("-r", null, dnSpy_Console_Resources.CmdLineDescription_RecursiveSearch),
 			new UsageInfo("-o", dnSpy_Console_Resources.CmdLineOutputDir, dnSpy_Console_Resources.CmdLineDescription_OutputDirectory),
 			new UsageInfo("-l", dnSpy_Console_Resources.CmdLineLanguage, dnSpy_Console_Resources.CmdLineDescription_Language),
@@ -455,6 +461,8 @@ namespace dnSpy_Console {
 			"project-guid",
 			"diff",
 			"diff-code",
+			"patch-create",
+			"patch-apply",
 		};
 
 		void ParseCommandLine(string[] args) {
@@ -635,6 +643,17 @@ namespace dnSpy_Console {
 						diffCode = true;
 						break;
 
+					case "--patch-create":
+					case "--patch-apply":
+						if (next is null)
+							throw new ErrorException(dnSpy_Console_Resources.MissingPatchFile);
+						i++;
+						if (arg == "--patch-create")
+							patchCreateFile = Path.GetFullPath(next);
+						else
+							patchApplyFile = Path.GetFullPath(next);
+						break;
+
 					case "--project-guid":
 						if (next is null || !Guid.TryParse(next, out projectGuid))
 							throw new ErrorException(dnSpy_Console_Resources.InvalidGuid);
@@ -717,7 +736,19 @@ namespace dnSpy_Console {
 			foreach (var file in files.OrderBy(a => a.Module.Location, StringComparer.InvariantCultureIgnoreCase))
 				file.ProjectGuid = new Guid(string.Format(guidFormat, guidNum++));
 
-			if (diff) {
+			if (patchCreateFile is not null) {
+				if (files.Count != 2)
+					throw new ErrorException(dnSpy_Console_Resources.PatchCreateNeedsTwoFiles);
+				CreatePatch(patchCreateFile, files[0].Module, files[1].Module);
+			}
+			else if (patchApplyFile is not null) {
+				if (files.Count != 1)
+					throw new ErrorException(dnSpy_Console_Resources.PatchApplyNeedsOneFile);
+				if (string2.IsNullOrEmpty(outputDir))
+					throw new ErrorException(dnSpy_Console_Resources.PatchApplyNeedsOutputFile);
+				ApplyPatch(patchApplyFile, files[0].Module, outputDir);
+			}
+			else if (diff) {
 				if (files.Count != 2)
 					throw new ErrorException(dnSpy_Console_Resources.DiffNeedsTwoFiles);
 				var diffOutput = CreateConsoleOutput();
@@ -782,6 +813,40 @@ namespace dnSpy_Console {
 				var creator = new MSBuildProjectCreator(options);
 				creator.Create();
 			}
+		}
+
+		void CreatePatch(string patchFile, ModuleDef original, ModuleDef edited) {
+			var patch = AssemblyPatch.Create(original, edited, out var notIncluded);
+			using (var stream = File.Create(patchFile))
+				patch.Save(stream);
+			foreach (var method in patch.Methods)
+				Console.WriteLine("+ {0}", method);
+			foreach (var what in notIncluded)
+				Console.WriteLine("! {0}: {1}", dnSpy_Console_Resources.PatchNotIncluded, what);
+			Console.WriteLine(dnSpy_Console_Resources.PatchCreated, patch.Methods.Count, patchFile);
+		}
+
+		void ApplyPatch(string patchFile, ModuleDef module, string outputFile) {
+			AssemblyPatch patch;
+			try {
+				using (var stream = File.OpenRead(patchFile))
+					patch = AssemblyPatch.Load(stream);
+			}
+			catch (Exception ex) when (ex is PatchException || ex is IOException || ex is UnauthorizedAccessException) {
+				throw new ErrorException(ex.Message);
+			}
+			var result = patch.Apply(module);
+			foreach (var method in result.Applied)
+				Console.WriteLine("+ {0}", method);
+			foreach (var (method, reason) in result.Failed) {
+				Console.WriteLine("! {0}: {1}", method, reason);
+				errors++;
+			}
+			if (module is ModuleDefMD md && !md.IsILOnly)
+				md.NativeWrite(outputFile);
+			else
+				module.Write(outputFile);
+			Console.WriteLine(dnSpy_Console_Resources.PatchApplied, result.Applied.Count, patch.Methods.Count, outputFile);
 		}
 
 		Indenter GetIndenter() {
