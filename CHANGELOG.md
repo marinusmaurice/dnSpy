@@ -7,6 +7,14 @@ What changed in each release of this fork, newest first. The release workflow pu
 
 Each section starts with a short summary, then **New Features** (new things you can do), **Enhancements** (existing things that work better) and **Bug Fixes**, with a link to the commit for each item. Technical details are in [All changes in detail](docs/CHANGES.md#all-changes-in-detail) and in [docs/MODERNIZATION_PLAN.md](docs/MODERNIZATION_PLAN.md).
 
+## 7.12.0.0
+
+Portable mode: keep dnSpy's settings and data in the dnSpy folder, eg. on a USB stick. Also has everything in 7.11.0.0, 7.10.0.0, 7.9.0.0, 7.8.0.0, 7.7.0.0, 7.6.0.0 and 7.5.0.0.
+
+### New Features
+
+- Portable mode: put a `dnSpy.xml` file next to `dnSpy.exe` (an empty file is fine) and dnSpy keeps its settings in it, and its other data in the same folder: the startup (multicore JIT) profiles, packages downloaded by Open from NuGet, and the `Themes`, `FileLists` and C# Interactive scripts folders it also looks in. Without it, it's `%APPDATA%\dnSpy` and `%LOCALAPPDATA%\dnSpy` as before. dnSpy always looked for a `dnSpy.xml` in the folder of its own files, but in the release zips those are in the `bin` sub folder, so it only worked there; that still works, and wins when there are both. Updating keeps the file (the update copies the new files over the old ones). Tested headlessly (`Test/PortableCheck` in `check.ps1`: folder layouts with and without the file); dnSpy itself **not click-tested** in portable mode.
+
 ## 7.11.0.0
 
 Open from NuGet uses your own package sources too: private feeds and local folders from NuGet.config. Also has everything in 7.10.0.0, 7.9.0.0, 7.8.0.0, 7.7.0.0, 7.6.0.0 and 7.5.0.0.

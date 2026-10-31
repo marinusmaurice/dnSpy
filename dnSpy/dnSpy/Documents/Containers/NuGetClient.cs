@@ -64,6 +64,10 @@ namespace dnSpy.Documents.Containers {
 		// Tests replace it
 		internal static HttpClient HttpClient { get; set; } = new HttpClient();
 
+		/// <summary>Downloaded packages (not in the global packages folder) are saved here. dnSpy sets it to
+		/// <c>AppDirectories.LocalDataDirectory</c>\NuGet (the dnSpy folder in portable mode)</summary>
+		internal static string CacheDirectory { get; set; } = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), "dnSpy", "NuGet");
+
 		/// <summary>The sources, in order; read from the NuGet.config files the first time</summary>
 		internal static List<NuGetSource> Sources {
 			get => sources ??= NuGetSources.Read(NuGetSources.GetDefaultConfigFiles());
@@ -319,7 +323,7 @@ namespace dnSpy.Documents.Containers {
 			if (File.Exists(restored))
 				return restored;
 
-			var cacheDir = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), "dnSpy", "NuGet");
+			var cacheDir = CacheDirectory;
 			var filename = Path.Combine(cacheDir, packageName);
 			if (File.Exists(filename))
 				return filename;

@@ -54,6 +54,8 @@ namespace dnSpy.Documents.Containers {
 		}
 
 		public override void Execute(IMenuItemContext context) {
+			// In portable mode, downloaded packages stay in the dnSpy folder
+			NuGetClient.CacheDirectory = Path.Combine(AppDirectories.LocalDataDirectory, "NuGet");
 			var vm = new OpenFromNuGetVM();
 			var dlg = new OpenFromNuGetDlg { DataContext = vm, Owner = appWindow.MainWindow };
 			if (dlg.ShowDialog() != true || vm.SelectedPackage is null || vm.SelectedVersion is null)

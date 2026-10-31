@@ -15,6 +15,7 @@
 	  - patch export/import: a patch made from ../PatchCases and its edited version, applied to a newer version (../PatchCheck)
 	  - the tracepoint message keywords ($HITCOUNT, $TICK, $TIME, ...) (../TracepointCheck)
 	  - Open from NuGet's package sources from NuGet.config, search and download over V3, V2 and folder feeds (../NuGetFeedCheck)
+	  - portable mode: where the settings and data go with a dnSpy.xml next to dnSpy.exe or in bin (../PortableCheck)
 	Exits with 1 when a check fails.
 #>
 param(
@@ -219,6 +220,12 @@ try {
 	$nugetCheck = Invoke-Checked "run NuGetFeedCheck" { dotnet run --project (Join-Path $PSScriptRoot '..\NuGetFeedCheck\NuGetFeedCheck.csproj') -c Release -v:q -nologo }
 	if (-not ($nugetCheck -contains 'All NuGet feed checks passed')) { Fail 'Open from NuGet: checks failed'; $nugetCheck | ForEach-Object { Write-Host "  $_" } }
 	else { Write-Host '  OK: NuGet.config sources (clear, remove, disabled, relative paths), search and download over V3, V2 and folder feeds' }
+
+	# Portable mode: AppDirectories compiled on its own, run from dnSpy-like folder layouts
+	Write-Host '== Portable mode'
+	$portableCheck = Invoke-Checked "run PortableCheck" { dotnet run --project (Join-Path $PSScriptRoot '..\PortableCheck\PortableCheck.csproj') -c Release -v:q -nologo }
+	if (-not ($portableCheck -contains 'All portable mode checks passed')) { Fail 'Portable mode: checks failed'; $portableCheck | ForEach-Object { Write-Host "  $_" } }
+	else { Write-Host '  OK: dnSpy.xml next to dnSpy.exe or in bin keeps settings and data in the dnSpy folder, otherwise %APPDATA%' }
 
 	# Patch export/import: a patch made from PatchCases v1 and edited v1, applied to v2 (more members, other tokens), must
 	# give the same method bodies as edited v2 and print the same

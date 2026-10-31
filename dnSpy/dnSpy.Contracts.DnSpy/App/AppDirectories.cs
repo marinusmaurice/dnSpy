@@ -1,5 +1,6 @@
 /*
     Copyright (C) 2014-2019 de4dot@gmail.com
+    Copyright (C) 2026- marinusmaurice@outlook.com
 
     This file is part of dnSpy
 
@@ -36,9 +37,21 @@ namespace dnSpy.Contracts.App {
 
 		/// <summary>
 		/// Base directory of data directory. Usually %APPDATA%\dnSpy but could be identical to
-		/// <see cref="BinDirectory"/>.
+		/// <see cref="BinDirectory"/> or its parent directory (portable mode, see <see cref="IsPortable"/>).
 		/// </summary>
 		public static string DataDirectory { get; }
+
+		/// <summary>
+		/// true if dnSpy runs in portable mode: a dnSpy.xml file next to dnSpy.exe (or in <see cref="BinDirectory"/>)
+		/// keeps the settings and all other data (<see cref="LocalDataDirectory"/>) in the dnSpy folder
+		/// </summary>
+		public static bool IsPortable { get; }
+
+		/// <summary>
+		/// Directory of data that isn't roamed, eg. caches. Usually %LOCALAPPDATA%\dnSpy, or <see cref="DataDirectory"/>
+		/// in portable mode.
+		/// </summary>
+		public static string LocalDataDirectory { get; }
 
 		/// <summary>
 		/// dnSpy settings filename
@@ -58,13 +71,30 @@ namespace dnSpy.Contracts.App {
 		static AppDirectories() {
 			// This assembly is always in the bin sub dir if one exists
 			BinDirectory = Path.GetDirectoryName(typeof(AppDirectories).Assembly.Location)!;
-			settingsFilename = Path.Combine(BinDirectory, DNSPY_SETTINGS_FILENAME);
-			if (File.Exists(settingsFilename))
-				DataDirectory = BinDirectory;
+			var portableDirectory = GetPortableDirectory(BinDirectory);
+			if (portableDirectory is not null) {
+				IsPortable = true;
+				DataDirectory = portableDirectory;
+				LocalDataDirectory = portableDirectory;
+			}
 			else {
 				DataDirectory = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData), "dnSpy");
-				settingsFilename = Path.Combine(DataDirectory, DNSPY_SETTINGS_FILENAME);
+				LocalDataDirectory = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), "dnSpy");
 			}
+			settingsFilename = Path.Combine(DataDirectory, DNSPY_SETTINGS_FILENAME);
+		}
+
+		// A dnSpy.xml in the bin dir (where dnSpy always looked) or next to dnSpy.exe, which is the bin dir's parent
+		// when the files are in a 'bin' sub dir (the release zips)
+		static string? GetPortableDirectory(string binDirectory) {
+			if (File.Exists(Path.Combine(binDirectory, DNSPY_SETTINGS_FILENAME)))
+				return binDirectory;
+			if (StringComparer.OrdinalIgnoreCase.Equals(Path.GetFileName(binDirectory), "bin")) {
+				var exeDirectory = Path.GetDirectoryName(binDirectory);
+				if (exeDirectory is not null && File.Exists(Path.Combine(exeDirectory, DNSPY_SETTINGS_FILENAME)))
+					return exeDirectory;
+			}
+			return null;
 		}
 
 		/// <summary>

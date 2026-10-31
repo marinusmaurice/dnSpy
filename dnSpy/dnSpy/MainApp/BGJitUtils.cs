@@ -1,5 +1,6 @@
 /*
     Copyright (C) 2014-2019 de4dot@gmail.com
+    Copyright (C) 2026- marinusmaurice@outlook.com
 
     This file is part of dnSpy
 
@@ -19,6 +20,7 @@
 
 using System;
 using System.IO;
+using dnSpy.Contracts.App;
 
 namespace dnSpy.MainApp {
 	static class BGJitUtils {
@@ -30,7 +32,7 @@ namespace dnSpy.MainApp {
 #else
 #error Unknown framework
 #endif
-			return Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), Constants.DnSpyFile, "Startup" + (IntPtr.Size * 8).ToString(), frameworkDir);
+			return Path.Combine(AppDirectories.LocalDataDirectory, "Startup" + (IntPtr.Size * 8).ToString(), frameworkDir);
 		}
 	}
 }

@@ -1,5 +1,6 @@
 /*
     Copyright (C) 2014-2019 de4dot@gmail.com
+    Copyright (C) 2026- marinusmaurice@outlook.com
 
     This file is part of dnSpy
 
@@ -35,6 +36,9 @@ namespace dnSpy.Settings {
 
 		public void Read() {
 			if (!File.Exists(filename))
+				return;
+			// An empty dnSpy.xml (made to turn on portable mode) has no settings yet
+			if (string.IsNullOrWhiteSpace(File.ReadAllText(filename)))
 				return;
 			var doc = XDocument.Load(filename, LoadOptions.None);
 			var root = doc.Root;
