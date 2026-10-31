@@ -205,14 +205,32 @@ namespace dnSpy.Console.Properties {
         }
         
         /// <summary>
-        ///   Looks up a localized string similar to with --diff or --diff-code, write the differences as JSON (the code diff too with --diff-code).
+        ///   Looks up a localized string similar to with --diff or --diff-code, write the differences as JSON (the code diff too with --diff-code); with --list, the list as JSON.
         /// </summary>
         internal static string CmdLineDescription_Json {
             get {
                 return ResourceManager.GetString("CmdLineDescription_Json", resourceCulture);
             }
         }
-        
+
+        /// <summary>
+        ///   Looks up a localized string similar to list the types and members of the assemblies with their visibility and metadata tokens: dnSpy.Console --list file.dll.
+        /// </summary>
+        internal static string CmdLineDescription_List {
+            get {
+                return ResourceManager.GetString("CmdLineDescription_List", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   Looks up a localized string similar to --list needs at least one assembly.
+        /// </summary>
+        internal static string ListNeedsFiles {
+            get {
+                return ResourceManager.GetString("ListNeedsFiles", resourceCulture);
+            }
+        }
+
         /// <summary>
         ///   Looks up a localized string similar to --diff needs two files: the old and the new version.
         /// </summary>

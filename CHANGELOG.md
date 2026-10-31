@@ -7,6 +7,14 @@ What changed in each release of this fork, newest first. The release workflow pu
 
 Each section starts with a short summary, then **New Features** (new things you can do), **Enhancements** (existing things that work better) and **Bug Fixes**, with a link to the commit for each item. Technical details are in [All changes in detail](docs/CHANGES.md#all-changes-in-detail) and in [docs/MODERNIZATION_PLAN.md](docs/MODERNIZATION_PLAN.md).
 
+## 7.14.0.0
+
+dnSpy.Console can list the types and members of an assembly, as text or as JSON. Also has everything in 7.13.0.0, 7.12.0.0, 7.11.0.0, 7.10.0.0, 7.9.0.0, 7.8.0.0, 7.7.0.0, 7.6.0.0 and 7.5.0.0.
+
+### New Features
+
+- `dnSpy.Console --list file.dll` lists every type and member (fields, properties, events, methods) with its visibility, `static` and metadata token, and the number of types and members at the end; `--list --json` writes the same as JSON, with each type's base type and whether it's compiler-generated. Use it in scripts, eg. to see which public API an assembly has, or to find the token for `--md`. Several files or folders can be listed at once. The format is in [docs/CONSOLE_JSON.md](docs/CONSOLE_JSON.md). Tested by `check.ps1` (the list of `Test/DiffCases` as text and as JSON); no UI changes.
+
 ## 7.13.0.0
 
 dnSpy.Console can write the assembly diff as JSON, for scripts and CI. Also has everything in 7.12.0.0, 7.11.0.0, 7.10.0.0, 7.9.0.0, 7.8.0.0, 7.7.0.0, 7.6.0.0 and 7.5.0.0.

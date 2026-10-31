@@ -475,29 +475,47 @@ namespace dnSpy.Decompiler.Diff {
 
 		static void AddMembers(Dictionary<string, (IMemberDef, string, string)> dict, TypeDef type, string prefix) {
 			foreach (var m in type.Methods) {
-				var name = prefix + FullNameFactory.MethodFullName(null, m.Name, m.MethodSig, null, null, null, null);
-				if (m.MethodSig?.GenParamCount > 0)
-					name += "`" + m.MethodSig.GenParamCount.ToString(CultureInfo.InvariantCulture);
+				var name = prefix + GetMemberName(m);
 				dict["M:" + name] = (m, "method", name);
 			}
 			foreach (var f in type.Fields) {
-				var name = prefix + f.FieldType?.FullName + " " + f.Name;
+				var name = prefix + GetMemberName(f);
 				dict["F:" + name] = (f, "field", name);
 			}
 			foreach (var p in type.Properties) {
-				var name = prefix + FullNameFactory.PropertyFullName(null, p.Name, p.Type, null, null);
-				// Only indexers have parameters
-				if (name.EndsWith("()", StringComparison.Ordinal))
-					name = name.Substring(0, name.Length - 2);
+				var name = prefix + GetMemberName(p);
 				dict["P:" + name] = (p, "property", name);
 			}
 			foreach (var e in type.Events) {
-				var name = prefix + e.EventType?.FullName + " " + e.Name;
+				var name = prefix + GetMemberName(e);
 				dict["E:" + name] = (e, "event", name);
 			}
 			foreach (var nested in type.NestedTypes) {
 				if (IsCompilerGenerated(nested))
 					AddMembers(dict, nested, prefix + nested.Name + "::");
+			}
+		}
+
+		// The member's name and signature without its type, eg. "System.Int32 Add(System.Int32,System.Int32)"
+		internal static string GetMemberName(IMemberDef member) {
+			switch (member) {
+			case MethodDef m:
+				var name = FullNameFactory.MethodFullName(null, m.Name, m.MethodSig, null, null, null, null);
+				if (m.MethodSig?.GenParamCount > 0)
+					name += "`" + m.MethodSig.GenParamCount.ToString(CultureInfo.InvariantCulture);
+				return name;
+			case FieldDef f:
+				return f.FieldType?.FullName + " " + f.Name;
+			case PropertyDef p:
+				var propName = FullNameFactory.PropertyFullName(null, p.Name, p.Type, null, null);
+				// Only indexers have parameters
+				if (propName.EndsWith("()", StringComparison.Ordinal))
+					propName = propName.Substring(0, propName.Length - 2);
+				return propName;
+			case EventDef e:
+				return e.EventType?.FullName + " " + e.Name;
+			default:
+				return member.FullName;
 			}
 		}
 

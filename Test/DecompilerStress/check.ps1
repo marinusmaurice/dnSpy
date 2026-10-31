@@ -17,6 +17,7 @@
 	  - Open from NuGet's package sources from NuGet.config, search and download over V3, V2 and folder feeds (../NuGetFeedCheck)
 	  - portable mode: where the settings and data go with a dnSpy.xml next to dnSpy.exe or in bin (../PortableCheck)
 	  - the assembly diff of ../DiffCases as text and as JSON (--json)
+	  - the type and member list of ../DiffCases as text and as JSON (--list, --list --json)
 	Exits with 1 when a check fails.
 #>
 param(
@@ -345,6 +346,27 @@ try {
 	elseif (-not $sameJson.summary.identical -or @($sameJson.types).Count -ne 0) { Fail 'Assembly diff JSON: an assembly differs from itself' }
 	elseif ($json.summary.identical) { Fail 'Assembly diff JSON: two different versions are identical' }
 	else { Write-Host "  OK: valid JSON, same summary as the text output, renamed type, added resource, code diff" }
+
+	# --list: the types and members of an assembly, as text and as JSON (docs/CONSOLE_JSON.md)
+	Write-Host "== Type and member list"
+	$listText = @(Invoke-Checked "list DiffCases" { & $Console --list $diffFile1 })
+	$listJson = (@(Invoke-Checked "list DiffCases as JSON" { & $Console --list --json $diffFile1 }) -join "`n") | ConvertFrom-Json
+	$listTypes = @($listJson.modules | ForEach-Object { $_.types })
+	$listMembers = @($listTypes | ForEach-Object { $_.members })
+	$listCount = "// $($listTypes.Count) types, $($listMembers.Count) members"
+	$jsonCalculator = @($listTypes | Where-Object { $_.fullName -eq 'DiffCases.Calculator' })
+	$jsonAdd = @($jsonCalculator | ForEach-Object { $_.members } | Where-Object { $_.name -eq 'System.Int32 Add(System.Int32,System.Int32)' })
+	$jsonOldHelperName = @($listTypes | Where-Object { $_.fullName -eq 'DiffCases.OldHelper' } | ForEach-Object { $_.members } | Where-Object { $_.memberKind -eq 'property' })
+	if (-not ($listText | Where-Object { $_ -match '^class public DiffCases\.Calculator  // 0x02[0-9A-F]{6}$' })) { Fail 'List: DiffCases.Calculator is missing'; $listText | Select-Object -First 20 | ForEach-Object { Write-Host "  $_" } }
+	elseif (-not ($listText | Where-Object { $_ -match '^    method public System\.Int32 Add\(System\.Int32,System\.Int32\)  // 0x06[0-9A-F]{6}$' })) { Fail 'List: Calculator.Add is missing' }
+	elseif (-not ($listText | Where-Object { $_ -match '^    property public static System\.String Name  // 0x17[0-9A-F]{6}$' })) { Fail 'List: the static property OldHelper.Name is missing' }
+	elseif (-not ($listText | Where-Object { $_ -match '^    field private System\.Int32 lastResult  // ' })) { Fail 'List: the private field Calculator.lastResult is missing' }
+	elseif ($listJson.formatVersion -ne 1) { Fail "List JSON: formatVersion is $($listJson.formatVersion), expected 1" }
+	elseif ($listText[-1] -ne $listCount) { Fail "List JSON: '$listCount' differs from the text output's '$($listText[-1])'" }
+	elseif ($jsonAdd.Count -ne 1 -or $jsonAdd[0].visibility -ne 'public' -or $jsonAdd[0].static -or $jsonAdd[0].token -notmatch '^0x06[0-9A-F]{6}$') { Fail 'List JSON: Calculator.Add is missing or wrong' }
+	elseif ($jsonOldHelperName.Count -ne 1 -or -not $jsonOldHelperName[0].static) { Fail 'List JSON: the static property OldHelper.Name is missing or not static' }
+	elseif (-not @($listTypes | Where-Object { $_.compilerGenerated }).Count -or @($listTypes | Where-Object { $_.fullName -eq 'DiffCases.Unchanged' -and $_.compilerGenerated }).Count) { Fail 'List JSON: compilerGenerated is wrong' }
+	else { Write-Host "  OK: $($listTypes.Count) types and $($listMembers.Count) members, the same in text and JSON, visibility and static" }
 }
 catch {
 	Fail $_.Exception.Message
