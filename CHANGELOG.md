@@ -7,6 +7,14 @@ What changed in each release of this fork, newest first. The release workflow pu
 
 Each section starts with a short summary, then **New Features** (new things you can do), **Enhancements** (existing things that work better) and **Bug Fixes**, with a link to the commit for each item. Technical details are in [All changes in detail](docs/CHANGES.md#all-changes-in-detail) and in [docs/MODERNIZATION_PLAN.md](docs/MODERNIZATION_PLAN.md).
 
+## 7.11.0.0
+
+Open from NuGet uses your own package sources too: private feeds and local folders from NuGet.config. Also has everything in 7.10.0.0, 7.9.0.0, 7.8.0.0, 7.7.0.0, 7.6.0.0 and 7.5.0.0.
+
+### Enhancements
+
+- File → Open from NuGet... searches and downloads from the package sources in your NuGet.config (`%APPDATA%\NuGet\NuGet.Config` and the machine-wide files in `%ProgramFiles(x86)%\NuGet\Config`), not only nuget.org: V3 feeds (eg. Azure Artifacts, GitHub Packages, a company feed), V2 feeds (download only, they can't be searched) and local or network folders with `.nupkg` files. The files are read the way NuGet reads them (`<clear />`, `<remove>`, disabled sources, relative paths, `%VARIABLES%`); without a NuGet.config it's nuget.org as before. A package found in more than one source is listed from the first one, and a source that fails is skipped. Feeds that need a user name and password aren't supported yet (dnSpy doesn't read `<packageSourceCredentials>`): they're skipped. Tested headlessly with fake feeds (`Test/NuGetFeedCheck` in `check.ps1`); the dialog is **not click-tested** with a real private feed.
+
 ## 7.10.0.0
 
 Assembly diff compares the resources too and recognizes renamed types and members. Also has everything in 7.9.0.0, 7.8.0.0, 7.7.0.0, 7.6.0.0 and 7.5.0.0.

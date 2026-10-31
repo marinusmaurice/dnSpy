@@ -2080,7 +2080,7 @@ Filter can be changed in Assembly Explorer options.</value>
     <value>Open from NuGet</value>
   </data>
   <data name="OpenNuGet_NotFound" xml:space="preserve">
-    <value>Package {0} wasn&apos;t found on nuget.org.</value>
+    <value>Package {0} wasn&apos;t found in your package sources (nuget.org, or the feeds in your NuGet.config).</value>
   </data>
   <data name="OpenNuGet_Error" xml:space="preserve">
     <value>Couldn&apos;t download {0}: {1}</value>
@@ -2101,7 +2101,7 @@ Filter can be changed in Assembly Explorer options.</value>
     <value>{0} isn't a .NET file.</value>
   </data>
   <data name="OpenNuGet_Description" xml:space="preserve">
-    <value>Search nuget.org for a NuGet package (the libraries .NET projects use), pick a version and open its assemblies. dnSpy uses the copy in your NuGet cache if it's there, otherwise it downloads the package.</value>
+    <value>Search nuget.org (or the package sources in your NuGet.config) for a NuGet package (the libraries .NET projects use), pick a version and open its assemblies. dnSpy uses the copy in your NuGet cache if it's there, otherwise it downloads the package.</value>
   </data>
   <data name="OpenNuGet_Search_Label" xml:space="preserve">
     <value>_Search:</value>
@@ -2134,7 +2134,7 @@ Filter can be changed in Assembly Explorer options.</value>
     <value>{0} packages</value>
   </data>
   <data name="OpenNuGet_SearchError" xml:space="preserve">
-    <value>Couldn't search nuget.org: {0}</value>
+    <value>Couldn't search the package sources: {0}</value>
   </data>
   <data name="Update_CheckCommand" xml:space="preserve">
     <value>Check for _Updates...</value>

@@ -106,7 +106,7 @@ Suggested first, in this order:
 - [x] **M** "Open from NuGet": download a package by ID/version and open it (7.1.0.0; File menu; uses NuGet's global packages folder when the package is there, else downloads from nuget.org to `%LOCALAPPDATA%\dnSpy\NuGet`).
 - [ ] **S** Translate the 7.1.0.0 strings (Open from NuGet, NuGet Packages) in `dnSpy/dnSpy/Properties/dnSpy.Resources.*.resx`; they show in English for now.
 - [x] **S** Open from NuGet: search nuget.org (7.2.0.0: a search dialog with versions and prereleases).
-- [ ] **S** Open from NuGet: private feeds from NuGet.config.
+- [x] **S** Open from NuGet: private feeds from NuGet.config (7.11.0.0: V3, V2 (download only) and folder sources from the user's and the machine-wide NuGet.config, `Test/NuGetFeedCheck` in `check.ps1`). Not yet: feeds that need credentials, a solution's own NuGet.config.
 - [x] **S** Update checker based on GitHub releases (7.3.0.0: daily check and Help → Check for Updates, release notes, Update Now downloads the build's zip, checks its SHA-256, replaces the files after dnSpy exits and restarts it).
 - [ ] **S** Translate the 7.3.0.0 strings (update dialog, Check for Updates, the General page's update option) in `dnSpy/dnSpy/Properties`.
 - [ ] **S** Updates: an option for prereleases (beta tags), and updating a dnSpy in a folder that needs admin rights (today it opens the release page).

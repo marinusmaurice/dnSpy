@@ -14,6 +14,7 @@
 	  - the side-by-side view's language choice and tab sync (../SideBySideCheck)
 	  - patch export/import: a patch made from ../PatchCases and its edited version, applied to a newer version (../PatchCheck)
 	  - the tracepoint message keywords ($HITCOUNT, $TICK, $TIME, ...) (../TracepointCheck)
+	  - Open from NuGet's package sources from NuGet.config, search and download over V3, V2 and folder feeds (../NuGetFeedCheck)
 	Exits with 1 when a check fails.
 #>
 param(
@@ -212,6 +213,12 @@ try {
 	$traceCheck = Invoke-Checked "run TracepointCheck" { dotnet run --project (Join-Path $PSScriptRoot '..\TracepointCheck\TracepointCheck.csproj') -c Release -v:q -nologo }
 	if (-not ($traceCheck -contains 'All tracepoint checks passed')) { Fail 'Tracepoints: checks failed'; $traceCheck | ForEach-Object { Write-Host "  $_" } }
 	else { Write-Host '  OK: tracepoint keywords ($HITCOUNT, $TICK, $TIME), escapes, expressions, help text' }
+
+	# Open from NuGet: NuGet.config package sources, search and download (fake feeds, no network)
+	Write-Host '== Open from NuGet, package sources'
+	$nugetCheck = Invoke-Checked "run NuGetFeedCheck" { dotnet run --project (Join-Path $PSScriptRoot '..\NuGetFeedCheck\NuGetFeedCheck.csproj') -c Release -v:q -nologo }
+	if (-not ($nugetCheck -contains 'All NuGet feed checks passed')) { Fail 'Open from NuGet: checks failed'; $nugetCheck | ForEach-Object { Write-Host "  $_" } }
+	else { Write-Host '  OK: NuGet.config sources (clear, remove, disabled, relative paths), search and download over V3, V2 and folder feeds' }
 
 	# Patch export/import: a patch made from PatchCases v1 and edited v1, applied to v2 (more members, other tokens), must
 	# give the same method bodies as edited v2 and print the same

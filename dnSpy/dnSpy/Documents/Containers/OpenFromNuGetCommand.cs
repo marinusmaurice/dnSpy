@@ -1,5 +1,6 @@
 /*
     Copyright (C) 2014-2019 de4dot@gmail.com
+    Copyright (C) 2026- marinusmaurice@outlook.com
 
     This file is part of dnSpy
 
@@ -34,7 +35,7 @@ using dnSpy.Properties;
 
 namespace dnSpy.Documents.Containers {
 	/// <summary>
-	/// File -> Open from NuGet: search nuget.org, pick a package and version, and open it (from NuGet's global
+	/// File -> Open from NuGet: search nuget.org and the NuGet.config package sources, pick a package and version, and open it (from NuGet's global
 	/// packages folder if it's there, else it's downloaded)
 	/// </summary>
 	[ExportMenuItem(OwnerGuid = MenuConstants.APP_MENU_FILE_GUID, Header = "res:OpenNuGetCommand", Icon = DsImagesAttribute.NuGet, Group = MenuConstants.GROUP_APP_MENU_FILE_OPEN, Order = 15)]

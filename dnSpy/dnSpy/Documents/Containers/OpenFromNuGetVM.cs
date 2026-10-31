@@ -1,5 +1,6 @@
 /*
     Copyright (C) 2014-2019 de4dot@gmail.com
+    Copyright (C) 2026- marinusmaurice@outlook.com
 
     This file is part of dnSpy
 
@@ -61,7 +62,7 @@ namespace dnSpy.Documents.Containers {
 	}
 
 	/// <summary>
-	/// Searches nuget.org as you type; the selected package and version are opened
+	/// Searches nuget.org and the NuGet.config package sources as you type; the selected package and version are opened
 	/// </summary>
 	sealed class OpenFromNuGetVM : ViewModelBase, IDisposable {
 		public ObservableCollection<NuGetPackageVM> Packages { get; } = new ObservableCollection<NuGetPackageVM>();

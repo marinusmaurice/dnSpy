@@ -3450,7 +3450,7 @@ namespace dnSpy.Properties {
         }
         
         /// <summary>
-        ///   Looks up a localized string similar to Package {0} wasn&apos;t found on nuget.org..
+        ///   Looks up a localized string similar to Package {0} wasn&apos;t found in your package sources (nuget.org, or the feeds in your NuGet.config)..
         /// </summary>
         public static string OpenNuGet_NotFound {
             get {
@@ -3513,7 +3513,7 @@ namespace dnSpy.Properties {
         }
         
         /// <summary>
-        ///   Looks up a localized string similar to Search nuget.org for a NuGet package (the libraries .NET projects use), pick a version and open its assemblies. dnSpy uses the copy in your NuGet cache if it's there, otherwise it downloads the package..
+        ///   Looks up a localized string similar to Search nuget.org (or the package sources in your NuGet.config) for a NuGet package (the libraries .NET projects use), pick a version and open its assemblies. dnSpy uses the copy in your NuGet cache if it's there, otherwise it downloads the package..
         /// </summary>
         public static string OpenNuGet_Description {
             get {
@@ -3612,7 +3612,7 @@ namespace dnSpy.Properties {
         }
         
         /// <summary>
-        ///   Looks up a localized string similar to Couldn't search nuget.org: {0}.
+        ///   Looks up a localized string similar to Couldn't search the package sources: {0}.
         /// </summary>
         public static string OpenNuGet_SearchError {
             get {

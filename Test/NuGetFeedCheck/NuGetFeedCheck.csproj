@@ -1,0 +1,23 @@
+<!--
+    Copyright (C) 2026- marinusmaurice@outlook.com
+-->
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <!--
+    Open from NuGet, private feeds test: compiles dnSpy's NuGet client and NuGet.config reader (they don't use WPF)
+    and checks the sources read from NuGet.config files, search and download over V3, V2 and folder sources, with
+    fake feeds (no network). check.ps1 runs it, see ../DecompilerStress/README.md.
+  -->
+  <PropertyGroup>
+    <OutputType>Exe</OutputType>
+    <TargetFramework>net10.0</TargetFramework>
+    <Nullable>enable</Nullable>
+    <LangVersion>13.0</LangVersion>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <Compile Include="..\..\dnSpy\dnSpy\Documents\Containers\NuGetClient.cs" Link="Containers\NuGetClient.cs" />
+    <Compile Include="..\..\dnSpy\dnSpy\Documents\Containers\NuGetSources.cs" Link="Containers\NuGetSources.cs" />
+  </ItemGroup>
+
+</Project>
