@@ -372,4 +372,37 @@
   <data name="PatchApplied" xml:space="preserve">
     <value>{0} of {1} method(s) applied, saved to {2}</value>
   </data>
+  <data name="CmdLineFile" xml:space="preserve">
+    <value>file</value>
+  </data>
+  <data name="CmdLineDescription_Batch" xml:space="preserve">
+    <value>run the command lines in a file, one per line (empty lines and lines starting with # are skipped); the other options are added before each line: dnSpy.Console --batch jobs.txt --no-color</value>
+  </data>
+  <data name="CmdLineDescription_ResponseFile" xml:space="preserve">
+    <value>read more options and files from a file (several per line, quotes group them, # starts a comment line)</value>
+  </data>
+  <data name="ExampleDescription6" xml:space="preserve">
+    <value>Runs each command line in C:\jobs.txt (eg. &quot;-o C:\out\a a.dll&quot;), without colors</value>
+  </data>
+  <data name="ResponseFileNotFound" xml:space="preserve">
+    <value>response file not found: {0}</value>
+  </data>
+  <data name="ResponseFileTooDeep" xml:space="preserve">
+    <value>response files nested too deeply: {0}</value>
+  </data>
+  <data name="BatchNeedsFile" xml:space="preserve">
+    <value>--batch needs a file</value>
+  </data>
+  <data name="BatchFileNotFound" xml:space="preserve">
+    <value>batch file not found: {0}</value>
+  </data>
+  <data name="BatchInBatch" xml:space="preserve">
+    <value>--batch can&apos;t be used in a batch file</value>
+  </data>
+  <data name="BatchLine" xml:space="preserve">
+    <value>// batch line {0}: {1}</value>
+  </data>
+  <data name="BatchSummary" xml:space="preserve">
+    <value>// batch: {0} command line(s), {1} failed</value>
+  </data>
 </root>

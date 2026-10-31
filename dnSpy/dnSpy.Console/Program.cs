@@ -60,7 +60,14 @@ namespace dnSpy_Console {
 				// Make sure russian and chinese characters are shown correctly
 				Console.OutputEncoding = Encoding.UTF8;
 
+				args = CommandLineFile.ExpandResponseFiles(args);
+				if (CommandLineFile.TryGetBatchFile(args, out var batchFile, out var sharedArgs))
+					return CommandLineFile.RunBatch(batchFile!, sharedArgs, a => new DnSpyDecompiler().Run(a));
 				return new DnSpyDecompiler().Run(args);
+			}
+			catch (ErrorException ex) {
+				Console.WriteLine(dnSpy_Console_Resources.Error1, ex.Message);
+				return 1;
 			}
 			catch (Exception ex) {
 				Console.Error.WriteLine(ex.ToString());
@@ -372,6 +379,8 @@ namespace dnSpy_Console {
 			new UsageInfo("--json", null, dnSpy_Console_Resources.CmdLineDescription_Json),
 			new UsageInfo("--patch-create", dnSpy_Console_Resources.CmdLinePatchFile, dnSpy_Console_Resources.CmdLineDescription_PatchCreate),
 			new UsageInfo("--patch-apply", dnSpy_Console_Resources.CmdLinePatchFile, dnSpy_Console_Resources.CmdLineDescription_PatchApply),
+			new UsageInfo("--batch", dnSpy_Console_Resources.CmdLineFile, dnSpy_Console_Resources.CmdLineDescription_Batch),
+			new UsageInfo("@" + dnSpy_Console_Resources.CmdLineFile, null, dnSpy_Console_Resources.CmdLineDescription_ResponseFile),
 			new UsageInfo("-r", null, dnSpy_Console_Resources.CmdLineDescription_RecursiveSearch),
 			new UsageInfo("-o", dnSpy_Console_Resources.CmdLineOutputDir, dnSpy_Console_Resources.CmdLineDescription_OutputDirectory),
 			new UsageInfo("-l", dnSpy_Console_Resources.CmdLineLanguage, dnSpy_Console_Resources.CmdLineDescription_Language),
@@ -391,6 +400,7 @@ namespace dnSpy_Console {
 			new HelpInfo(dnSpy_Console_Resources.ExampleDescription3, @"-o C:\out\path C:\some\path\*.dll"),
 			new HelpInfo(dnSpy_Console_Resources.ExampleDescription4, @"--md 0x06000123 file.dll"),
 			new HelpInfo(dnSpy_Console_Resources.ExampleDescription5, @"-t system.int32 --gac-file ""mscorlib, Version=4.0.0.0"""),
+			new HelpInfo(dnSpy_Console_Resources.ExampleDescription6, @"--batch C:\jobs.txt --no-color"),
 		};
 
 		string GetOptionName(IDecompilerOption opt, string? extraPrefix = null) {
@@ -474,6 +484,7 @@ namespace dnSpy_Console {
 			"protection",
 			"patch-create",
 			"patch-apply",
+			"batch",
 		};
 
 		void ParseCommandLine(string[] args) {

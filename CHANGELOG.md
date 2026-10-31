@@ -7,6 +7,16 @@ What changed in each release of this fork, newest first. The release workflow pu
 
 Each section starts with a short summary, then **New Features** (new things you can do), **Enhancements** (existing things that work better) and **Bug Fixes**, with a link to the commit for each item. Technical details are in [All changes in detail](docs/CHANGES.md#all-changes-in-detail) and in [docs/MODERNIZATION_PLAN.md](docs/MODERNIZATION_PLAN.md).
 
+## 7.18.0.0
+
+dnSpy.Console can read its options from files and run many command lines in one go. Also has everything in 7.17.0.0, 7.16.0.0, 7.15.0.0, 7.14.0.0, 7.13.0.0, 7.12.0.0, 7.11.0.0, 7.10.0.0, 7.9.0.0, 7.8.0.0, 7.7.0.0, 7.6.0.0 and 7.5.0.0.
+
+### New Features
+
+- `dnSpy.Console --batch jobs.txt` runs each line of `jobs.txt` as its own command line, eg. one `-o C:\out\a a.dll` line per assembly to export many projects, or a `--list`/`--diff`/`--protection` line per file. Options after `--batch jobs.txt` (eg. `--no-color`, `-l`, `--asm-path`) are used for every line. Empty lines and lines starting with `#` are skipped. A line that fails doesn't stop the others; the output ends with `// batch: N command line(s), M failed` and the exit code is 1 when a line failed.
+- Response files: `dnSpy.Console @options.txt` reads more options and file names from `options.txt` (several per line, double quotes around names with spaces, `#` lines are comments; response files can include other response files). Use `--` before a file name that starts with `@`.
+- Tested by `check.ps1` (a response file gives the same output as the command line; a batch file with a comment, an empty line, a response file, a `--protection` line and a failing line), on the .NET and .NET Framework builds. The new help texts are in English only.
+
 ## 7.17.0.0
 
 dnSpy opens Android packages (.apk, .aab) and shows the .NET assemblies in them, decompressed. Also has everything in 7.16.0.0, 7.15.0.0, 7.14.0.0, 7.13.0.0, 7.12.0.0, 7.11.0.0, 7.10.0.0, 7.9.0.0, 7.8.0.0, 7.7.0.0, 7.6.0.0 and 7.5.0.0.

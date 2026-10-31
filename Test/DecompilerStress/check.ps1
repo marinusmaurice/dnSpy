@@ -20,6 +20,7 @@
 	  - the assembly diff of ../DiffCases as text and as JSON (--json)
 	  - the type and member list of ../DiffCases as text and as JSON (--list, --list --json)
 	  - obfuscator/packer detection of ../ProtectionCases' assembly and of DiffCases (--protection, --protection --json)
+	  - response files (@file) and batch files (--batch file)
 	Exits with 1 when a check fails.
 #>
 param(
@@ -399,6 +400,30 @@ try {
 		elseif (@($protectedText | Where-Object { $_ -like 'found: *' -or $_ -like 'hint: *' }).Count -ne $kinds.Count) { Fail 'Protection: the text and JSON output have a different number of findings' }
 		else { Write-Host "  OK: DiffCases is clean; ProtectionCases: $($kinds.Count) findings, the same in text and JSON" }
 	}
+
+	# @file (response file) and --batch file (one command line per line, the other options added before each line)
+	Write-Host "== Response files and batch files"
+	$responseFile = Join-Path $work 'list.rsp'
+	$batchFile = Join-Path $work 'jobs.txt'
+	Set-Content -Path $responseFile -Encoding UTF8 -Value @('# list the types and members', "--list `"$diffFile1`"")
+	Set-Content -Path $batchFile -Encoding UTF8 -Value @(
+		'# comment, then an empty line', '',
+		"@`"$responseFile`"",
+		"--protection `"$diffFile1`"",
+		'--batch nested.txt')
+	$responseText = @(Invoke-Checked "list DiffCases from a response file" { & $Console "@$responseFile" })
+	$batchText = @(& $Console --batch $batchFile --no-color 2>&1)
+	$batchExit = $LASTEXITCODE
+	$missingText = @(& $Console "@$(Join-Path $work 'missing.rsp')" 2>&1)
+	$missingExit = $LASTEXITCODE
+	$batchHeaders = @($batchText | Where-Object { $_ -like '// batch line *' })
+	if (($responseText -join "`n") -ne ($listText -join "`n")) { Fail 'Response file: the output differs from --list on the command line'; $responseText | Select-Object -Last 5 | ForEach-Object { Write-Host "  $_" } }
+	elseif ($batchExit -ne 1 -or $batchText[-1] -ne '// batch: 3 command line(s), 1 failed') { Fail "Batch: exit code $batchExit, last line '$($batchText[-1])', expected 1 and 3 command lines, 1 failed"; $batchText | Select-Object -Last 10 | ForEach-Object { Write-Host "  $_" } }
+	elseif ($batchHeaders.Count -ne 3 -or $batchHeaders[0] -notlike '// batch line 3: @*' -or $batchHeaders[2] -ne '// batch line 5: --batch nested.txt') { Fail "Batch: wrong line headers: $($batchHeaders -join ' | ')" }
+	elseif (-not ($batchText -contains $listText[-1]) -or -not ($batchText -contains '// No protection found')) { Fail 'Batch: the output of the list or protection line is missing' }
+	elseif (-not ($batchText -contains "ERROR: --batch can't be used in a batch file")) { Fail 'Batch: a nested --batch was not reported' }
+	elseif ($missingExit -ne 1 -or -not ($missingText -like 'ERROR: response file not found: *')) { Fail "Response file: a missing file wasn't reported (exit code $missingExit)" }
+	else { Write-Host "  OK: response file output = command line output; batch ran 3 lines (comments and empty lines skipped), the failed one counted; missing response file reported" }
 }
 catch {
 	Fail $_.Exception.Message

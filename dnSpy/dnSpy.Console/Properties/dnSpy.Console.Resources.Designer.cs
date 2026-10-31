@@ -824,5 +824,103 @@ namespace dnSpy.Console.Properties {
                 return ResourceManager.GetString("PatchApplied", resourceCulture);
             }
         }
+        /// <summary>
+        ///   Looks up a localized string similar to file.
+        /// </summary>
+        internal static string CmdLineFile {
+            get {
+                return ResourceManager.GetString("CmdLineFile", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to run the command lines in a file, one per line (empty lines and lines starting with # are skipped); the other options are added before each line: dnSpy.Console --batch jobs.txt --no-color.
+        /// </summary>
+        internal static string CmdLineDescription_Batch {
+            get {
+                return ResourceManager.GetString("CmdLineDescription_Batch", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to read more options and files from a file (several per line, quotes group them, # starts a comment line).
+        /// </summary>
+        internal static string CmdLineDescription_ResponseFile {
+            get {
+                return ResourceManager.GetString("CmdLineDescription_ResponseFile", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Runs each command line in C:\jobs.txt (eg. &quot;-o C:\out\a a.dll&quot;), without colors.
+        /// </summary>
+        internal static string ExampleDescription6 {
+            get {
+                return ResourceManager.GetString("ExampleDescription6", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to response file not found: {0}.
+        /// </summary>
+        internal static string ResponseFileNotFound {
+            get {
+                return ResourceManager.GetString("ResponseFileNotFound", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to response files nested too deeply: {0}.
+        /// </summary>
+        internal static string ResponseFileTooDeep {
+            get {
+                return ResourceManager.GetString("ResponseFileTooDeep", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to --batch needs a file.
+        /// </summary>
+        internal static string BatchNeedsFile {
+            get {
+                return ResourceManager.GetString("BatchNeedsFile", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to batch file not found: {0}.
+        /// </summary>
+        internal static string BatchFileNotFound {
+            get {
+                return ResourceManager.GetString("BatchFileNotFound", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to --batch can&apos;t be used in a batch file.
+        /// </summary>
+        internal static string BatchInBatch {
+            get {
+                return ResourceManager.GetString("BatchInBatch", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to // batch line {0}: {1}.
+        /// </summary>
+        internal static string BatchLine {
+            get {
+                return ResourceManager.GetString("BatchLine", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to // batch: {0} command line(s), {1} failed.
+        /// </summary>
+        internal static string BatchSummary {
+            get {
+                return ResourceManager.GetString("BatchSummary", resourceCulture);
+            }
+        }
     }
 }
