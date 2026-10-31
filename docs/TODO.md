@@ -55,7 +55,7 @@ Suggested first, in this order:
 
 - [x] **M–L** Assembly diff: compare two versions of a DLL (added, removed and changed members with code diff) (7.2.0.0; context menu Compare Assemblies / Compare with File..., `dnSpy.Console --diff`/`--diff-code`, `Test/DiffCases` in `check.ps1`).
 - [ ] **S** Translate the 7.2.0.0 strings (Compare Assemblies, Compare with File..., the diff node, the Open from NuGet dialog, `dnSpy.Console --diff`/`--diff-code` help) in `dnSpy/dnSpy/Properties` and `dnSpy/dnSpy.Console/Properties`; they show in English for now.
-- [ ] **S** Assembly diff: compare the resources too, and match renamed members (today a renamed member is removed + added).
+- [x] **S** Assembly diff: compare the resources too, and match renamed members (7.10.0.0: renamed types and members (same signature and code, one candidate) and resources by name, with the entries of `.resources` files; `Test/DiffCases` in `check.ps1`). Not matched yet: a renamed member whose code also changed, a type renamed together with its members.
 - [ ] **M** Generate a PDB from decompiled code, to debug third-party DLLs in Visual Studio.
 - [ ] **M** ReadyToRun / NativeAOT viewer: show the precompiled native code next to the IL.
 - [x] **M** Single-file bundles: open a .NET 6+ single-file `.exe` and browse the DLLs inside (7.1.0.0; .NET Core 3.x to .NET 10 bundles, also compressed ones; references between the bundle's assemblies, eg. a self-contained app's runtime, resolve to the bundle's copies).

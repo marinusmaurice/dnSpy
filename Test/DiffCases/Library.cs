@@ -1,3 +1,5 @@
+// Copyright (C) 2026- marinusmaurice@outlook.com
+
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -41,6 +43,26 @@ namespace DiffCases {
 #else
 			items.Sum(a => a * a);
 #endif
+
+		// Renamed method and property: same signature and code under another name
+#if V2
+		public int Opposite(int a) => -a;
+		public int LastResult => lastResult;
+#else
+		public int Negate(int a) => -a;
+		public int Last => lastResult;
+#endif
+	}
+
+	// Renamed type: the members use the type's own name, which doesn't count
+#if V2
+	public class Coordinates {
+#else
+	public class Point {
+#endif
+		public int X;
+		public int Y;
+		public int Sum() => X + Y;
 	}
 
 #if V2

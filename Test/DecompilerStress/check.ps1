@@ -264,7 +264,8 @@ try {
 	$diffFile1 = Join-Path $diffV1 'DiffCases.dll'
 	$diffFile2 = Join-Path $diffV2 'DiffCases.dll'
 	$expectedDiff = @(
-		'// Types: 1 added, 1 removed, 2 changed'
+		'// Types: 1 added, 1 removed, 2 changed, 1 renamed'
+		'// Resources: 1 added, 1 removed, 2 changed'
 		'// Assembly version: 1.0.0.0 -> 2.0.0.0'
 		''
 		'~ type DiffCases.Calculator'
@@ -272,23 +273,41 @@ try {
 		'    ~ method System.Int32 Add(System.Int32,System.Int32)  // body'
 		'    - method System.Int32 Divide(System.Int32,System.Int32)'
 		'    + method System.Int32 Multiply(System.Int32,System.Int32)'
+		'    ~ method System.Int32 Opposite(System.Int32)  // renamed from System.Int32 Negate(System.Int32)'
+		'    ~ property System.Int32 LastResult  // renamed from System.Int32 Last'
+		'~ type DiffCases.Coordinates  // renamed from DiffCases.Point'
 		'+ type DiffCases.Logger'
 		'- type DiffCases.OldHelper'
 		'~ type DiffCases.Settings'
 		'    ~ field System.Int32 Timeout  // value'
 		'    + property System.String Name'
+		'~ resource DiffCases.Data.txt  // data (10 -> 15 bytes)'
+		'+ resource DiffCases.New.txt'
+		'- resource DiffCases.Old.txt'
+		'~ resource DiffCases.Strings.resources  // data (261 -> 274 bytes)'
+		'    - Bye'
+		'    ~ Hello'
+		'    + Welcome'
 	)
 	# The first two lines are the old and new assembly names and paths
 	$actualDiff = @(Invoke-Checked "diff DiffCases" { & $Console --no-color --diff $diffFile1 $diffFile2 } | Select-Object -Skip 2)
 	$sameDiff = @(Invoke-Checked "diff DiffCases with itself" { & $Console --no-color --diff $diffFile1 $diffFile1 } | Select-Object -Skip 2)
 	$codeDiff = @(Invoke-Checked "code diff DiffCases" { & $Console --no-color --diff-code $diffFile1 $diffFile2 })
-	if (Compare-Object $expectedDiff $actualDiff) {
+	# A patch can't hold renames and resources yet, so they're listed as not included
+	$diffPatchFile = Join-Path $work 'diff.dnspypatch'
+	$diffPatch = @(Invoke-Checked "patch-create DiffCases" { & $Console --patch-create $diffPatchFile $diffFile1 $diffFile2 })
+	if (($expectedDiff -join "`n") -ne ($actualDiff -join "`n")) {
 		Fail 'Assembly diff: unexpected differences'
 		$actualDiff | ForEach-Object { Write-Host "  $_" }
 	}
 	elseif (-not ($sameDiff -contains '// No differences')) { Fail 'Assembly diff: an assembly differs from itself' }
 	elseif (-not ($codeDiff -contains '+ 		lastResult = checked(a + b);' -and $codeDiff -contains '- 		lastResult = a + b;')) { Fail 'Assembly diff: the code diff is missing the change in Add' }
-	else { Write-Host "  OK: $($expectedDiff.Count - 3) lines of differences, none with itself, code diff" }
+	elseif (-not ($codeDiff -contains '// Renamed: DiffCases.Point -> DiffCases.Coordinates')) { Fail 'Assembly diff: the code diff is missing the renamed type' }
+	elseif (-not ($diffPatch -contains '! not included: renamed type DiffCases.Point -> DiffCases.Coordinates' -and $diffPatch -contains '! not included: added resource DiffCases.New.txt')) {
+		Fail 'Assembly diff: the patch of DiffCases does not list the renamed type and the added resource as not included'
+		$diffPatch | ForEach-Object { Write-Host "  $_" }
+	}
+	else { Write-Host "  OK: $($expectedDiff.Count - 4) lines of differences (incl. renames and resources), none with itself, code diff" }
 }
 catch {
 	Fail $_.Exception.Message

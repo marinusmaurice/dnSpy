@@ -7,6 +7,16 @@ What changed in each release of this fork, newest first. The release workflow pu
 
 Each section starts with a short summary, then **New Features** (new things you can do), **Enhancements** (existing things that work better) and **Bug Fixes**, with a link to the commit for each item. Technical details are in [All changes in detail](docs/CHANGES.md#all-changes-in-detail) and in [docs/MODERNIZATION_PLAN.md](docs/MODERNIZATION_PLAN.md).
 
+## 7.10.0.0
+
+Assembly diff compares the resources too and recognizes renamed types and members. Also has everything in 7.9.0.0, 7.8.0.0, 7.7.0.0, 7.6.0.0 and 7.5.0.0.
+
+### Enhancements
+
+- Assembly diff (Compare Assemblies, Compare with File..., `dnSpy.Console --diff`): a type, method, field, property or event that only got a new name shows as `~ ... // renamed from <old name>` instead of a removed and an added one. It counts as renamed when everything else is the same (signature, attributes, code) and it's the only candidate. The summary counts renamed types.
+- Assembly diff: resources are compared by name: added, removed and changed (data, attributes, linked file or assembly), and for `.resources` files the entries that were added, removed or changed. Tested by `check.ps1` (`Test/DiffCases`).
+- Patch export: renamed types and members and resource changes are listed as not included in the patch.
+
 ## 7.9.0.0
 
 Better tracepoints: new keywords for the breakpoint messages. Also has everything in 7.8.0.0, 7.7.0.0, 7.6.0.0 and 7.5.0.0.

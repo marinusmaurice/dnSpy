@@ -1,8 +1,10 @@
 <Project Sdk="Microsoft.NET.Sdk">
 
   <!--
+    Copyright (C) 2026- marinusmaurice@outlook.com
+
     Assembly diff test library (see ../DecompilerStress/check.ps1): built twice, as is and with DiffVersion=2, and
-    dnSpy.Console's diff option must report exactly the differences marked V2 in Library.cs
+    dnSpy.Console's diff option must report exactly the differences marked V2 in Library.cs and the resources below
   -->
   <PropertyGroup>
     <TargetFramework>net10.0</TargetFramework>
@@ -10,11 +12,27 @@
     <Nullable>disable</Nullable>
     <Deterministic>true</Deterministic>
     <AssemblyVersion>1.0.0.0</AssemblyVersion>
+    <EnableDefaultEmbeddedResourceItems>false</EnableDefaultEmbeddedResourceItems>
   </PropertyGroup>
 
   <PropertyGroup Condition=" '$(DiffVersion)' == '2' ">
     <DefineConstants>$(DefineConstants);V2</DefineConstants>
     <AssemblyVersion>2.0.0.0</AssemblyVersion>
   </PropertyGroup>
+
+  <!-- Same in both versions; Data.txt and Strings.resources change (Strings: Hello changed, Bye removed, Welcome added); Old.txt is removed, New.txt added -->
+  <ItemGroup>
+    <EmbeddedResource Include="Resources\Same.txt" LogicalName="DiffCases.Same.txt" />
+  </ItemGroup>
+  <ItemGroup Condition=" '$(DiffVersion)' != '2' ">
+    <EmbeddedResource Include="Resources\Data1.txt" LogicalName="DiffCases.Data.txt" />
+    <EmbeddedResource Include="Resources\Strings1.resx" LogicalName="DiffCases.Strings.resources" />
+    <EmbeddedResource Include="Resources\Old.txt" LogicalName="DiffCases.Old.txt" />
+  </ItemGroup>
+  <ItemGroup Condition=" '$(DiffVersion)' == '2' ">
+    <EmbeddedResource Include="Resources\Data2.txt" LogicalName="DiffCases.Data.txt" />
+    <EmbeddedResource Include="Resources\Strings2.resx" LogicalName="DiffCases.Strings.resources" />
+    <EmbeddedResource Include="Resources\New.txt" LogicalName="DiffCases.New.txt" />
+  </ItemGroup>
 
 </Project>

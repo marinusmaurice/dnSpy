@@ -1,5 +1,6 @@
 /*
     Copyright (C) 2014-2019 de4dot@gmail.com
+    Copyright (C) 2026- marinusmaurice@outlook.com
 
     This file is part of dnSpy
 
@@ -19,6 +20,7 @@
 
 using System;
 using System.Collections.Generic;
+using System.Linq;
 using System.Threading;
 using dnlib.DotNet;
 using dnSpy.Contracts.Decompiler;
@@ -33,11 +35,13 @@ namespace dnSpy.Decompiler.Diff {
 		public static void WriteSummary(IDecompilerOutput output, AssemblyDiffResult result) {
 			WriteComment(output, "Old: " + GetName(result.OldModule));
 			WriteComment(output, "New: " + GetName(result.NewModule));
-			WriteComment(output, $"Types: {result.Count(DiffKind.Added)} added, {result.Count(DiffKind.Removed)} removed, {result.Count(DiffKind.Changed)} changed");
+			WriteComment(output, $"Types: {result.Count(DiffKind.Added)} added, {result.Count(DiffKind.Removed)} removed, {result.Count(DiffKind.Changed)} changed{Renamed(result.Count(DiffKind.Renamed))}");
+			if (result.Resources.Count != 0)
+				WriteComment(output, $"Resources: {CountResources(result, DiffKind.Added)} added, {CountResources(result, DiffKind.Removed)} removed, {CountResources(result, DiffKind.Changed)} changed");
 			foreach (var change in result.AssemblyChanges)
 				WriteComment(output, "Assembly " + change);
 			output.WriteLine();
-			if (result.Types.Count == 0 && result.AssemblyChanges.Count == 0) {
+			if (result.Types.Count == 0 && result.AssemblyChanges.Count == 0 && result.Resources.Count == 0) {
 				WriteComment(output, "No differences");
 				return;
 			}
@@ -47,6 +51,8 @@ namespace dnSpy.Decompiler.Diff {
 				output.Write("type", BoxedTextColor.Keyword);
 				output.Write(" ", BoxedTextColor.Text);
 				output.Write(type.FullName, (object?)type.New ?? type.Old, DecompilerReferenceFlags.None, BoxedTextColor.Type);
+				if (type.OldFullName is not null)
+					WriteRenamedFrom(output, type.OldFullName);
 				output.WriteLine();
 				foreach (var change in type.TypeChanges) {
 					output.Write("    ", BoxedTextColor.Text);
@@ -63,9 +69,36 @@ namespace dnSpy.Decompiler.Diff {
 						output.Write("  ", BoxedTextColor.Text);
 						output.Write("// " + member.Details, BoxedTextColor.Comment);
 					}
+					if (member.OldName is not null)
+						WriteRenamedFrom(output, member.OldName);
 					output.WriteLine();
 				}
 			}
+
+			foreach (var resource in result.Resources) {
+				WriteKind(output, resource.Kind);
+				output.Write("resource", BoxedTextColor.Keyword);
+				output.Write(" ", BoxedTextColor.Text);
+				output.Write(resource.Name, BoxedTextColor.String);
+				if (resource.Details is not null) {
+					output.Write("  ", BoxedTextColor.Text);
+					output.Write("// " + resource.Details, BoxedTextColor.Comment);
+				}
+				output.WriteLine();
+				foreach (var entry in resource.Entries) {
+					output.Write("    " + entry, BoxedTextColor.Text);
+					output.WriteLine();
+				}
+			}
+		}
+
+		static string Renamed(int count) => count == 0 ? string.Empty : $", {count} renamed";
+
+		static int CountResources(AssemblyDiffResult result, DiffKind kind) => result.Resources.Count(a => a.Kind == kind);
+
+		static void WriteRenamedFrom(IDecompilerOutput output, string oldName) {
+			output.Write("  ", BoxedTextColor.Text);
+			output.Write("// renamed from " + oldName, BoxedTextColor.Comment);
 		}
 
 		/// <summary>
@@ -74,7 +107,7 @@ namespace dnSpy.Decompiler.Diff {
 		public static void WriteCodeDiff(IDecompilerOutput output, IDecompiler decompiler, TypeDiff type, CancellationToken cancellationToken) {
 			var oldLines = type.Old is null ? Array.Empty<string>() : TextDiff.GetCodeLines(Decompile(decompiler, type.Old, cancellationToken));
 			var newLines = type.New is null ? Array.Empty<string>() : TextDiff.GetCodeLines(Decompile(decompiler, type.New, cancellationToken));
-			WriteComment(output, $"{type.Kind}: {type.FullName}");
+			WriteComment(output, type.OldFullName is null ? $"{type.Kind}: {type.FullName}" : $"{type.Kind}: {type.OldFullName} -> {type.FullName}");
 			WriteLines(output, TextDiff.Diff(oldLines, newLines));
 		}
 

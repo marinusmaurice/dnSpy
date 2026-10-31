@@ -80,7 +80,11 @@ namespace dnSpy.Decompiler.Patch {
 				notIncluded.Add("assembly " + change);
 			foreach (var type in diff.Types) {
 				if (type.Kind != DiffKind.Changed) {
-					notIncluded.Add((type.Kind == DiffKind.Added ? "added type " : "removed type ") + type.FullName);
+					notIncluded.Add(type.Kind switch {
+						DiffKind.Added => "added type " + type.FullName,
+						DiffKind.Removed => "removed type " + type.FullName,
+						_ => $"renamed type {type.OldFullName} -> {type.FullName}",
+					});
 					continue;
 				}
 				foreach (var change in type.TypeChanges)
@@ -88,7 +92,11 @@ namespace dnSpy.Decompiler.Patch {
 				foreach (var member in type.Members) {
 					var what = $"{member.MemberKind} {type.FullName}::{member.Name}";
 					if (member.Kind != DiffKind.Changed) {
-						notIncluded.Add((member.Kind == DiffKind.Added ? "added " : "removed ") + what);
+						notIncluded.Add(member.Kind switch {
+							DiffKind.Added => "added " + what,
+							DiffKind.Removed => "removed " + what,
+							_ => $"renamed {member.MemberKind} {type.FullName}::{member.OldName} -> {member.Name}",
+						});
 						continue;
 					}
 					var details = member.Details!.Split(new[] { ", " }, StringSplitOptions.None);
@@ -99,6 +107,13 @@ namespace dnSpy.Decompiler.Patch {
 					foreach (var detail in details.Where(a => a != "body" || member.New is not MethodDef))
 						notIncluded.Add($"{what}: {detail}");
 				}
+			}
+			foreach (var resource in diff.Resources) {
+				notIncluded.Add(resource.Kind switch {
+					DiffKind.Added => "added resource " + resource.Name,
+					DiffKind.Removed => "removed resource " + resource.Name,
+					_ => $"resource {resource.Name}: {resource.Details}",
+				});
 			}
 			return patch;
 		}

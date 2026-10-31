@@ -1,5 +1,6 @@
 /*
     Copyright (C) 2014-2019 de4dot@gmail.com
+    Copyright (C) 2026- marinusmaurice@outlook.com
 
     This file is part of dnSpy
 
@@ -24,12 +25,15 @@ using System.Linq;
 using System.Text;
 using dnlib.DotNet;
 using dnlib.DotNet.Emit;
+using dnlib.DotNet.Resources;
 
 namespace dnSpy.Decompiler.Diff {
 	public enum DiffKind {
 		Added,
 		Removed,
 		Changed,
+		/// <summary>The same type or member under another name (a removed and an added one with the same signature and code)</summary>
+		Renamed,
 	}
 
 	/// <summary>
@@ -47,14 +51,21 @@ namespace dnSpy.Decompiler.Diff {
 		public string Name { get; }
 		/// <summary>What changed, eg. "body", "attributes"</summary>
 		public string? Details { get; }
+		/// <summary>The old name and signature if <see cref="Kind"/> is <see cref="DiffKind.Renamed"/>, else null</summary>
+		public string? OldName { get; }
 
-		public MemberDiff(DiffKind kind, IMemberDef? old, IMemberDef? @new, string memberKind, string name, string? details) {
+		public MemberDiff(DiffKind kind, IMemberDef? old, IMemberDef? @new, string memberKind, string name, string? details)
+			: this(kind, old, @new, memberKind, name, details, null) {
+		}
+
+		public MemberDiff(DiffKind kind, IMemberDef? old, IMemberDef? @new, string memberKind, string name, string? details, string? oldName) {
 			Kind = kind;
 			Old = old;
 			New = @new;
 			MemberKind = memberKind;
 			Name = name;
 			Details = details;
+			OldName = oldName;
 		}
 	}
 
@@ -67,15 +78,44 @@ namespace dnSpy.Decompiler.Diff {
 		public TypeDef? Old { get; }
 		public TypeDef? New { get; }
 		public string FullName { get; }
+		/// <summary>The old full name if <see cref="Kind"/> is <see cref="DiffKind.Renamed"/>, else null</summary>
+		public string? OldFullName { get; }
 		/// <summary>Changes of the type itself (base type, interfaces, attributes)</summary>
 		public List<string> TypeChanges { get; } = new List<string>();
 		public List<MemberDiff> Members { get; } = new List<MemberDiff>();
 
-		public TypeDiff(DiffKind kind, TypeDef? old, TypeDef? @new, string fullName) {
+		public TypeDiff(DiffKind kind, TypeDef? old, TypeDef? @new, string fullName)
+			: this(kind, old, @new, fullName, null) {
+		}
+
+		public TypeDiff(DiffKind kind, TypeDef? old, TypeDef? @new, string fullName, string? oldFullName) {
 			Kind = kind;
 			Old = old;
 			New = @new;
 			FullName = fullName;
+			OldFullName = oldFullName;
+		}
+	}
+
+	/// <summary>
+	/// An added, removed or changed resource (by name)
+	/// </summary>
+	public sealed class ResourceDiff {
+		public DiffKind Kind { get; }
+		public Resource? Old { get; }
+		public Resource? New { get; }
+		public string Name { get; }
+		/// <summary>What changed, eg. "data (120 -> 135 bytes)", or null</summary>
+		public string? Details { get; }
+		/// <summary>The added (+), removed (-) and changed (~) entries of a changed <c>.resources</c> file</summary>
+		public List<string> Entries { get; } = new List<string>();
+
+		public ResourceDiff(DiffKind kind, Resource? old, Resource? @new, string name, string? details) {
+			Kind = kind;
+			Old = old;
+			New = @new;
+			Name = name;
+			Details = details;
 		}
 	}
 
@@ -85,6 +125,8 @@ namespace dnSpy.Decompiler.Diff {
 		public List<TypeDiff> Types { get; } = new List<TypeDiff>();
 		/// <summary>Changes of the assembly itself (version, references)</summary>
 		public List<string> AssemblyChanges { get; } = new List<string>();
+		/// <summary>Added, removed and changed resources, by name</summary>
+		public List<ResourceDiff> Resources { get; } = new List<ResourceDiff>();
 
 		public AssemblyDiffResult(ModuleDef oldModule, ModuleDef newModule) {
 			OldModule = oldModule;
@@ -119,8 +161,181 @@ namespace dnSpy.Decompiler.Diff {
 						result.Types.Add(diff);
 				}
 			}
+			FindRenamedTypes(result.Types);
+			CompareResources(result);
 			return result;
 		}
+
+		// A removed and an added type with the same attributes, base type, interfaces and members (names, signatures
+		// and code; the type's own name in them doesn't count) were renamed, if no other removed or added type is the same
+		static void FindRenamedTypes(List<TypeDiff> types) {
+			var renamed = MatchRenamed(types.Where(a => a.Kind == DiffKind.Removed).ToList(), types.Where(a => a.Kind == DiffKind.Added).ToList(),
+				a => GetTypeFingerprint(a.Old!), a => GetTypeFingerprint(a.New!));
+			if (renamed.Count == 0)
+				return;
+			foreach (var (removed, added) in renamed) {
+				types.Remove(removed);
+				types[types.IndexOf(added)] = new TypeDiff(DiffKind.Renamed, removed.Old, added.New, added.FullName, removed.FullName);
+			}
+		}
+
+		// Pairs a removed item with an added item that has the same fingerprint if no other removed or added item has it
+		static List<(T removed, T added)> MatchRenamed<T>(List<T> removed, List<T> added, Func<T, string> getRemovedFingerprint, Func<T, string> getAddedFingerprint) {
+			var result = new List<(T, T)>();
+			if (removed.Count == 0 || added.Count == 0)
+				return result;
+			var removedByFingerprint = removed.GroupBy(getRemovedFingerprint, StringComparer.Ordinal).Where(a => a.Count() == 1).ToDictionary(a => a.Key, a => a.First(), StringComparer.Ordinal);
+			foreach (var group in added.GroupBy(getAddedFingerprint, StringComparer.Ordinal)) {
+				if (group.Count() == 1 && removedByFingerprint.TryGetValue(group.Key, out var old))
+					result.Add((old, group.First()));
+			}
+			return result;
+		}
+
+		static string GetTypeFingerprint(TypeDef type) {
+			var sb = new StringBuilder();
+			sb.Append(type.Attributes).Append('|').Append(type.BaseType?.FullName).Append('|').Append(type.GenericParameters.Count).Append('|');
+			foreach (var i in type.Interfaces.Select(a => a.Interface?.FullName ?? string.Empty).OrderBy(a => a, StringComparer.Ordinal))
+				sb.Append(i).Append(';');
+			sb.Append('|').Append(GetCustomAttributes(type)).Append('\n');
+			foreach (var kv in GetMembers(type).OrderBy(a => a.Key, StringComparer.Ordinal))
+				sb.Append(kv.Key).Append('=').Append(GetMemberFingerprint(kv.Value.member)).Append('\n');
+			return sb.ToString().Replace(type.FullName, "<self>");
+		}
+
+		// What CompareMembers compares
+		static string GetMemberFingerprint(IMemberDef member) {
+			var sb = new StringBuilder();
+			switch (member) {
+			case MethodDef method:
+				sb.Append(method.Attributes).Append('|').Append(method.ImplAttributes).Append('|').Append(GetParameterNames(method)).Append('|').Append(GetBody(method));
+				break;
+			case FieldDef field:
+				sb.Append(field.Attributes).Append('|').Append(field.Constant is null ? "-" : FormatValue(field.Constant.Value)).Append('|');
+				if (field.InitialValue is byte[] data)
+					sb.Append(Convert.ToBase64String(data));
+				break;
+			case PropertyDef prop:
+				sb.Append(prop.Attributes);
+				break;
+			case EventDef evt:
+				sb.Append(evt.Attributes);
+				break;
+			}
+			if (member is IHasCustomAttribute ca)
+				sb.Append('|').Append(GetCustomAttributes(ca));
+			return sb.ToString();
+		}
+
+		static void CompareResources(AssemblyDiffResult result) {
+			var oldResources = GetResources(result.OldModule);
+			var newResources = GetResources(result.NewModule);
+			foreach (var name in oldResources.Keys.Union(newResources.Keys).OrderBy(a => a, StringComparer.Ordinal)) {
+				oldResources.TryGetValue(name, out var oldResource);
+				newResources.TryGetValue(name, out var newResource);
+				if (oldResource is null)
+					result.Resources.Add(new ResourceDiff(DiffKind.Added, null, newResource, name, null));
+				else if (newResource is null)
+					result.Resources.Add(new ResourceDiff(DiffKind.Removed, oldResource, null, name, null));
+				else {
+					var diff = CompareResource(result, oldResource, newResource, name);
+					if (diff is not null)
+						result.Resources.Add(diff);
+				}
+			}
+		}
+
+		static Dictionary<string, Resource> GetResources(ModuleDef module) {
+			var dict = new Dictionary<string, Resource>(StringComparer.Ordinal);
+			foreach (var resource in module.Resources)
+				dict[resource.Name.String] = resource;
+			return dict;
+		}
+
+		static ResourceDiff? CompareResource(AssemblyDiffResult result, Resource oldResource, Resource newResource, string name) {
+			var changes = new List<string>();
+			List<string>? entries = null;
+			if (oldResource.Attributes != newResource.Attributes)
+				changes.Add($"attributes: {oldResource.Attributes} -> {newResource.Attributes}");
+			if (oldResource.ResourceType != newResource.ResourceType)
+				changes.Add($"kind: {oldResource.ResourceType} -> {newResource.ResourceType}");
+			else {
+				switch (oldResource) {
+				case EmbeddedResource oldEmbedded:
+					var newEmbedded = (EmbeddedResource)newResource;
+					var oldData = oldEmbedded.CreateReader().ToArray();
+					var newData = newEmbedded.CreateReader().ToArray();
+					if (!oldData.SequenceEqual(newData)) {
+						changes.Add(oldData.Length == newData.Length ?
+							$"data ({newData.Length} bytes)" :
+							$"data ({oldData.Length} -> {newData.Length} bytes)");
+						entries = CompareResourceEntries(result.OldModule, oldEmbedded, result.NewModule, newEmbedded);
+					}
+					break;
+				case LinkedResource oldLinked:
+					var newLinked = (LinkedResource)newResource;
+					if (oldLinked.FileName != newLinked.FileName)
+						changes.Add($"file: {oldLinked.FileName} -> {newLinked.FileName}");
+					else if (!(oldLinked.Hash ?? Array.Empty<byte>()).SequenceEqual(newLinked.Hash ?? Array.Empty<byte>()))
+						changes.Add("file hash");
+					break;
+				case AssemblyLinkedResource oldAsmLinked:
+					var oldAsm = oldAsmLinked.Assembly?.FullName ?? string.Empty;
+					var newAsm = ((AssemblyLinkedResource)newResource).Assembly?.FullName ?? string.Empty;
+					if (oldAsm != newAsm)
+						changes.Add($"assembly: {Or(oldAsm)} -> {Or(newAsm)}");
+					break;
+				}
+			}
+			if (GetCustomAttributes(oldResource) != GetCustomAttributes(newResource))
+				changes.Add("custom attributes");
+			if (changes.Count == 0)
+				return null;
+			var diff = new ResourceDiff(DiffKind.Changed, oldResource, newResource, name, string.Join(", ", changes));
+			if (entries is not null)
+				diff.Entries.AddRange(entries);
+			return diff;
+		}
+
+		// The added, removed and changed entries (by name) of two .resources files, or null if they aren't both .resources files
+		static List<string>? CompareResourceEntries(ModuleDef oldModule, EmbeddedResource oldResource, ModuleDef newModule, EmbeddedResource newResource) {
+			var oldEntries = ReadResourceEntries(oldModule, oldResource);
+			var newEntries = ReadResourceEntries(newModule, newResource);
+			if (oldEntries is null || newEntries is null)
+				return null;
+			var list = new List<string>();
+			foreach (var key in oldEntries.Keys.Union(newEntries.Keys).OrderBy(a => a, StringComparer.Ordinal)) {
+				if (!oldEntries.TryGetValue(key, out var oldValue))
+					list.Add("+ " + key);
+				else if (!newEntries.TryGetValue(key, out var newValue))
+					list.Add("- " + key);
+				else if (oldValue != newValue)
+					list.Add("~ " + key);
+			}
+			return list;
+		}
+
+		static Dictionary<string, string>? ReadResourceEntries(ModuleDef module, EmbeddedResource resource) {
+			try {
+				if (!ResourceReader.CouldBeResourcesFile(resource.CreateReader()))
+					return null;
+				var set = ResourceReader.Read(module, resource.CreateReader());
+				var dict = new Dictionary<string, string>(StringComparer.Ordinal);
+				foreach (var element in set.ResourceElements)
+					dict[element.Name] = GetResourceValue(element.ResourceData);
+				return dict;
+			}
+			catch {
+				// Not a valid .resources file: only its data is compared
+				return null;
+			}
+		}
+
+		static string GetResourceValue(IResourceData data) => data switch {
+			BuiltInResourceData builtIn => builtIn.Code + ":" + (builtIn.Data is byte[] bytes ? Convert.ToBase64String(bytes) : FormatValue(builtIn.Data)),
+			BinaryResourceData binary => binary.TypeName + ":" + Convert.ToBase64String(binary.Data),
+			_ => data.Code + ":" + data,
+		};
 
 		static void CompareAssemblies(AssemblyDiffResult result) {
 			var oldAsm = result.OldModule.Assembly;
@@ -193,19 +408,49 @@ namespace dnSpy.Decompiler.Diff {
 				}
 			}
 
-			// An added or removed property/event implies its accessors, an auto property its backing field
+			FindRenamedMembers(diff.Members);
+
+			// An added, removed or renamed property/event implies its accessors, an auto property its backing field
 			var accessors = new HashSet<MethodDef>();
 			foreach (var member in diff.Members) {
 				if (member.Kind == DiffKind.Changed)
 					continue;
-				if ((member.Old ?? member.New) is PropertyDef prop)
-					accessors.UnionWith(prop.GetMethods.Concat(prop.SetMethods).Concat(prop.OtherMethods));
-				else if ((member.Old ?? member.New) is EventDef evt)
-					accessors.UnionWith(new[] { evt.AddMethod, evt.RemoveMethod, evt.InvokeMethod }.Where(a => a is not null).Concat(evt.OtherMethods)!);
+				foreach (var m in new[] { member.Old, member.New }) {
+					if (m is PropertyDef prop)
+						accessors.UnionWith(prop.GetMethods.Concat(prop.SetMethods).Concat(prop.OtherMethods));
+					else if (m is EventDef evt)
+						accessors.UnionWith(new[] { evt.AddMethod, evt.RemoveMethod, evt.InvokeMethod }.Where(a => a is not null).Concat(evt.OtherMethods)!);
+				}
 			}
 			diff.Members.RemoveAll(a => a.Kind != DiffKind.Changed &&
 				((a.Old ?? a.New) is MethodDef method && accessors.Contains(method) ||
 				(a.Old ?? a.New) is FieldDef field && field.Name.String.IndexOf('<') >= 0));
+		}
+
+		// A removed and an added member of the same kind with the same signature (except the name) and code were
+		// renamed, if no other removed or added member is the same. The renamed member takes the added one's place.
+		static void FindRenamedMembers(List<MemberDiff> members) {
+			var renamed = MatchRenamed(members.Where(a => a.Kind == DiffKind.Removed).ToList(), members.Where(a => a.Kind == DiffKind.Added).ToList(),
+				GetRenameFingerprint, GetRenameFingerprint);
+			foreach (var (removed, added) in renamed) {
+				members.Remove(removed);
+				members[members.IndexOf(added)] = new MemberDiff(DiffKind.Renamed, removed.Old, added.New, added.MemberKind, added.Name, null, removed.Name);
+			}
+		}
+
+		static string GetRenameFingerprint(MemberDiff member) {
+			var m = (member.Old ?? member.New)!;
+			var sig = m switch {
+				MethodDef method => FullNameFactory.MethodFullName(null, string.Empty, method.MethodSig, null, null, null, null) +
+					"`" + (method.MethodSig?.GenParamCount ?? 0).ToString(CultureInfo.InvariantCulture),
+				FieldDef field => field.FieldType?.FullName,
+				PropertyDef prop => FullNameFactory.PropertyFullName(null, string.Empty, prop.Type, null, null),
+				EventDef evt => evt.EventType?.FullName,
+				_ => null,
+			};
+			// Members of compiler-generated nested types (lambdas, iterators) are only matched with each other
+			var nested = IsCompilerGenerated(m.DeclaringType) ? "nested " : string.Empty;
+			return nested + member.MemberKind + " " + sig + "\n" + GetMemberFingerprint(m);
 		}
 
 		static string Or(string s) => s.Length == 0 ? "(none)" : s;
@@ -314,6 +559,11 @@ namespace dnSpy.Decompiler.Diff {
 			null => "null",
 			IList<CAArgument> list => "[" + string.Join(",", list.Select(FormatArgument)) + "]",
 			TypeSig sig => sig.FullName,
+			var v => FormatValue(v),
+		};
+
+		static string FormatValue(object? value) => value switch {
+			null => "null",
 			IFormattable f => f.ToString(null, CultureInfo.InvariantCulture),
 			var v => v.ToString() ?? string.Empty,
 		};
