@@ -177,6 +177,7 @@ namespace dnSpy_Console {
 		bool colorizeOutput;
 		bool diff;
 		bool diffCode;
+		bool json;
 		string? patchCreateFile;
 		string? patchApplyFile;
 		Guid projectGuid = Guid.NewGuid();
@@ -362,6 +363,7 @@ namespace dnSpy_Console {
 			new UsageInfo("--gac-file", dnSpy_Console_Resources.CmdLineAssembly, dnSpy_Console_Resources.CmdLineDescription_GACFile),
 			new UsageInfo("--diff", null, dnSpy_Console_Resources.CmdLineDescription_Diff),
 			new UsageInfo("--diff-code", null, dnSpy_Console_Resources.CmdLineDescription_DiffCode),
+			new UsageInfo("--json", null, dnSpy_Console_Resources.CmdLineDescription_Json),
 			new UsageInfo("--patch-create", dnSpy_Console_Resources.CmdLinePatchFile, dnSpy_Console_Resources.CmdLineDescription_PatchCreate),
 			new UsageInfo("--patch-apply", dnSpy_Console_Resources.CmdLinePatchFile, dnSpy_Console_Resources.CmdLineDescription_PatchApply),
 			new UsageInfo("-r", null, dnSpy_Console_Resources.CmdLineDescription_RecursiveSearch),
@@ -643,6 +645,10 @@ namespace dnSpy_Console {
 						diffCode = true;
 						break;
 
+					case "--json":
+						json = true;
+						break;
+
 					case "--patch-create":
 					case "--patch-apply":
 						if (next is null)
@@ -751,13 +757,17 @@ namespace dnSpy_Console {
 			else if (diff) {
 				if (files.Count != 2)
 					throw new ErrorException(dnSpy_Console_Resources.DiffNeedsTwoFiles);
-				var diffOutput = CreateConsoleOutput();
 				var result = AssemblyDiff.Compare(files[0].Module, files[1].Module);
-				AssemblyDiffWriter.WriteSummary(diffOutput, result);
-				if (diffCode) {
-					foreach (var type in result.Types) {
-						diffOutput.WriteLine();
-						AssemblyDiffWriter.WriteCodeDiff(diffOutput, GetLanguage(), type, decompilationContext.CancellationToken);
+				if (json)
+					AssemblyDiffJsonWriter.Write(Console.Out, result, diffCode ? GetLanguage() : null, decompilationContext.CancellationToken);
+				else {
+					var diffOutput = CreateConsoleOutput();
+					AssemblyDiffWriter.WriteSummary(diffOutput, result);
+					if (diffCode) {
+						foreach (var type in result.Types) {
+							diffOutput.WriteLine();
+							AssemblyDiffWriter.WriteCodeDiff(diffOutput, GetLanguage(), type, decompilationContext.CancellationToken);
+						}
 					}
 				}
 			}

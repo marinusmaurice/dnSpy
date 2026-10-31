@@ -105,10 +105,18 @@ namespace dnSpy.Decompiler.Diff {
 		/// Writes the line diff of the old and new decompiled code of a type (or all its code if it was added or removed)
 		/// </summary>
 		public static void WriteCodeDiff(IDecompilerOutput output, IDecompiler decompiler, TypeDiff type, CancellationToken cancellationToken) {
+			var lines = GetCodeDiff(decompiler, type, cancellationToken);
+			WriteComment(output, type.OldFullName is null ? $"{type.Kind}: {type.FullName}" : $"{type.Kind}: {type.OldFullName} -> {type.FullName}");
+			WriteLines(output, lines);
+		}
+
+		/// <summary>
+		/// Gets the line diff of the old and new decompiled code of a type (or all its code if it was added or removed)
+		/// </summary>
+		public static List<DiffLine> GetCodeDiff(IDecompiler decompiler, TypeDiff type, CancellationToken cancellationToken) {
 			var oldLines = type.Old is null ? Array.Empty<string>() : TextDiff.GetCodeLines(Decompile(decompiler, type.Old, cancellationToken));
 			var newLines = type.New is null ? Array.Empty<string>() : TextDiff.GetCodeLines(Decompile(decompiler, type.New, cancellationToken));
-			WriteComment(output, type.OldFullName is null ? $"{type.Kind}: {type.FullName}" : $"{type.Kind}: {type.OldFullName} -> {type.FullName}");
-			WriteLines(output, TextDiff.Diff(oldLines, newLines));
+			return TextDiff.Diff(oldLines, newLines);
 		}
 
 		public static void WriteLines(IDecompilerOutput output, List<DiffLine> lines) {

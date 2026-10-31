@@ -324,6 +324,9 @@
   <data name="CmdLineDescription_DiffCode" xml:space="preserve">
     <value>like --diff, also show the decompiled code diff of each changed type</value>
   </data>
+  <data name="CmdLineDescription_Json" xml:space="preserve">
+    <value>with --diff or --diff-code, write the differences as JSON (the code diff too with --diff-code)</value>
+  </data>
   <data name="DiffNeedsTwoFiles" xml:space="preserve">
     <value>--diff needs two files: the old and the new version</value>
   </data>

@@ -16,6 +16,7 @@
 	  - the tracepoint message keywords ($HITCOUNT, $TICK, $TIME, ...) (../TracepointCheck)
 	  - Open from NuGet's package sources from NuGet.config, search and download over V3, V2 and folder feeds (../NuGetFeedCheck)
 	  - portable mode: where the settings and data go with a dnSpy.xml next to dnSpy.exe or in bin (../PortableCheck)
+	  - the assembly diff of ../DiffCases as text and as JSON (--json)
 	Exits with 1 when a check fails.
 #>
 param(
@@ -322,6 +323,28 @@ try {
 		$diffPatch | ForEach-Object { Write-Host "  $_" }
 	}
 	else { Write-Host "  OK: $($expectedDiff.Count - 4) lines of differences (incl. renames and resources), none with itself, code diff" }
+
+	# --json: the same differences as JSON (docs/CONSOLE_JSON.md); the counts must match the text summary
+	Write-Host "== Assembly diff as JSON"
+	$jsonText = @(Invoke-Checked "diff DiffCases as JSON" { & $Console --diff-code --json $diffFile1 $diffFile2 }) -join "`n"
+	$sameJsonText = @(Invoke-Checked "diff DiffCases with itself as JSON" { & $Console --diff --json $diffFile1 $diffFile1 }) -join "`n"
+	$textSummary = @(Invoke-Checked "diff DiffCases" { & $Console --no-color --diff $diffFile1 $diffFile2 })[2]
+	$json = $jsonText | ConvertFrom-Json
+	$sameJson = $sameJsonText | ConvertFrom-Json
+	$t = $json.summary.types
+	$jsonSummary = "// Types: $($t.added) added, $($t.removed) removed, $($t.changed) changed" + $(if ($t.renamed) { ", $($t.renamed) renamed" } else { '' })
+	$renamedType = @($json.types | Where-Object { $_.fullName -eq 'DiffCases.Coordinates' })
+	$calculator = @($json.types | Where-Object { $_.fullName -eq 'DiffCases.Calculator' })
+	$codeTexts = @($calculator | ForEach-Object { $_.code } | Where-Object { $_.kind -eq 'added' -or $_.kind -eq 'removed' } | ForEach-Object { "$($_.kind) $($_.text.Trim())" })
+	if ($json.formatVersion -ne 1) { Fail "Assembly diff JSON: formatVersion is $($json.formatVersion), expected 1" }
+	elseif ($jsonSummary -ne $textSummary) { Fail "Assembly diff JSON: summary '$jsonSummary' differs from the text summary '$textSummary'" }
+	elseif (@($json.types).Count -ne @($expectedDiff | Where-Object { $_ -match '^[-+~] type ' }).Count) { Fail "Assembly diff JSON: $(@($json.types).Count) types, expected the same as the text output" }
+	elseif ($renamedType.Count -ne 1 -or $renamedType[0].oldFullName -ne 'DiffCases.Point' -or $renamedType[0].kind -ne 'renamed' -or -not $renamedType[0].oldToken) { Fail 'Assembly diff JSON: the renamed type is missing or wrong' }
+	elseif (-not (@($json.resources | Where-Object { $_.name -eq 'DiffCases.New.txt' -and $_.kind -eq 'added' }).Count -eq 1)) { Fail 'Assembly diff JSON: the added resource is missing' }
+	elseif (-not ($codeTexts -contains 'added lastResult = checked(a + b);' -and $codeTexts -contains 'removed lastResult = a + b;')) { Fail 'Assembly diff JSON: the code diff is missing the change in Add'; $codeTexts | ForEach-Object { Write-Host "  $_" } }
+	elseif (-not $sameJson.summary.identical -or @($sameJson.types).Count -ne 0) { Fail 'Assembly diff JSON: an assembly differs from itself' }
+	elseif ($json.summary.identical) { Fail 'Assembly diff JSON: two different versions are identical' }
+	else { Write-Host "  OK: valid JSON, same summary as the text output, renamed type, added resource, code diff" }
 }
 catch {
 	Fail $_.Exception.Message

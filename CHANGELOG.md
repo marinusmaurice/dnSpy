@@ -7,6 +7,14 @@ What changed in each release of this fork, newest first. The release workflow pu
 
 Each section starts with a short summary, then **New Features** (new things you can do), **Enhancements** (existing things that work better) and **Bug Fixes**, with a link to the commit for each item. Technical details are in [All changes in detail](docs/CHANGES.md#all-changes-in-detail) and in [docs/MODERNIZATION_PLAN.md](docs/MODERNIZATION_PLAN.md).
 
+## 7.13.0.0
+
+dnSpy.Console can write the assembly diff as JSON, for scripts and CI. Also has everything in 7.12.0.0, 7.11.0.0, 7.10.0.0, 7.9.0.0, 7.8.0.0, 7.7.0.0, 7.6.0.0 and 7.5.0.0.
+
+### New Features
+
+- `dnSpy.Console --diff --json OLD.dll NEW.dll` writes the differences between two versions of an assembly as JSON: a summary with counts, the added, removed, changed and renamed types and members with their metadata tokens, and the resources. With `--diff-code --json` each type also has the line diff of its decompiled code. Use it to check a new build in CI, eg. fail when a public type was removed. The format is in [docs/CONSOLE_JSON.md](docs/CONSOLE_JSON.md). Tested by `check.ps1` (the JSON of `Test/DiffCases` is parsed and compared with the text output).
+
 ## 7.12.0.0
 
 Portable mode: keep dnSpy's settings and data in the dnSpy folder, eg. on a USB stick. Also has everything in 7.11.0.0, 7.10.0.0, 7.9.0.0, 7.8.0.0, 7.7.0.0, 7.6.0.0 and 7.5.0.0.

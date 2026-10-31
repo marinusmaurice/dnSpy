@@ -205,6 +205,15 @@ namespace dnSpy.Console.Properties {
         }
         
         /// <summary>
+        ///   Looks up a localized string similar to with --diff or --diff-code, write the differences as JSON (the code diff too with --diff-code).
+        /// </summary>
+        internal static string CmdLineDescription_Json {
+            get {
+                return ResourceManager.GetString("CmdLineDescription_Json", resourceCulture);
+            }
+        }
+        
+        /// <summary>
         ///   Looks up a localized string similar to --diff needs two files: the old and the new version.
         /// </summary>
         internal static string DiffNeedsTwoFiles {
