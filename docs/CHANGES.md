@@ -5,6 +5,31 @@
 
 What's new in each 7.x feature release, all changes in detail, what was tested, and dnSpy's features. For a short overview see the [README](../README.md); for the release notes see [CHANGELOG.md](../CHANGELOG.md).
 
+## What's new in 7.5 to 7.21
+
+**Debugging**
+- Debug History (7.5): record each stop of a debugged .NET program (Options → Debugger → Debug History); Debug → Windows → Debug History lists them with what changed, Step Back/Forward (Alt+[ / Alt+]) shows earlier call stacks and locals read-only, and "Show History of" gives a variable's values over time
+- Tracepoint messages can use `$HITCOUNT`, `$TICK` and `$TIME` (7.9)
+
+**Finding and reading code**
+- Command palette, **F1** (7.6): run any main menu command by typing part of its name; `#name` finds types and members
+- Side-by-side view, **Window → Compare Side by Side** (7.7): the same code in two languages next to each other, both following the selected node
+- Pinned recent files (7.20): right-click → Pin to Recent Files
+
+**Editing and diffing**
+- Test Compile in Edit Method/Class, Shift+F6 (7.19): compiles and lists the errors without changing the assembly
+- Export Patch / Apply Patch (7.8): keep the changed method bodies in a file and apply them to a newer version; also `dnSpy.Console --patch-create/--patch-apply`
+- Assembly diff compares resources and recognizes renames (7.10); `--diff --json` (7.13)
+
+**Packages and files**
+- Android packages (7.17, 7.21): open `.apk`/`.aab` files of Xamarin.Android, .NET 6–8 and .NET 9/10 MAUI apps (compressed assemblies, all assembly store formats up to 3)
+- Open from NuGet uses the package sources in NuGet.config: private feeds, V2 feeds, folders (7.11)
+- Portable mode (7.12): an empty `dnSpy.xml` next to `dnSpy.exe` keeps settings and data in the dnSpy folder
+
+**Analysis and dnSpy.Console**
+- Detect Protection (7.15, 7.16): whether an assembly looks obfuscated or packed, in the assembly explorer's context menu and `dnSpy.Console --protection`
+- `dnSpy.Console --list` (7.14): types and members as text or JSON; response files and batch files (7.18)
+
 ## What's new in 7.3
 
 **Updates and release notes**
