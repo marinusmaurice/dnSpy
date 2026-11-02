@@ -41,3 +41,19 @@ The 2026-10-31 23:01 run found it still at 74% (5-hour limit at 4%) and also sta
 The 2026-11-01 00:15 run found it still at 74% (5-hour limit at 0%) and also started nothing.
 
 The 2026-11-01 01:01 run found it still at 74% (5-hour limit at 2%) and also started nothing.
+
+## Click-test and merge (2026-11-02)
+
+Click-tested in a copy of the 7.20.0.0 Release net10 publish in portable mode, with a .NET 10 Debug console app (a loop `x += i; p.count++;`). All passed; `master` and `0000_Update` were fast-forwarded to `264a98092` (7.20.0.0) and pushed. No tags: the owner tags.
+
+| Feature | Result |
+|---|---|
+| 7.5.0.0 time-travel debugging | ✅ Options → Debugger → Debug History → Record debug history; breakpoint on `x += i;`, F5 ×2, F10 ×2: 5 rows (3 Breakpoint, 2 Step) with Changes like `x: 0x00000000 → 0x00000001` (hex display on). Step Back: "Viewing step 3 of 5 (historical, read-only)", historical arrow on `x += i;`, the live highlight stays, locals show `(was: ...)`. Alt+] went to step 4 of 5; Return to Live works. Show History of 'x': `0 → 1 → 3` with stop counts. After Stop Debugging the history stays. Minor: row 1 (the first stop) has no locals ("partial: a time or value limit was reached"), so row 2 shows "3 new": the first capture exceeded the 150 ms limit, probably evaluation warm-up. |
+| 7.6.0.0 command palette | ✅ F1 opens it; `#Program` lists Program and Program.Main(); "side by side" runs Window → Compare Side by Side. |
+| 7.7.0.0 side-by-side | ✅ Left C# (ILSpy 11), right old C# in a new vertical tab group; selecting `<Module>` and the Detect Protection node: both sides followed. |
+| 7.12.0.0 portable mode | ✅ After exiting, the empty `dnSpy.xml` next to `dnSpy.exe` had the settings (14 KB, pinned recent file included). |
+| 7.16.0.0 Detect Protection | ✅ Context menu item adds a "Protection: LoopApp, ..." node: "No protection found". Not tried on a real obfuscated assembly. |
+| 7.19.0.0 Edit Method Test Compile | ✅ Syntax error + Shift+F6: CS1002 and CS0103 listed, dialog stays open; fixed: "Test compile: no errors. Nothing was changed"; Cancel: Save All stays disabled. |
+| 7.20.0.0 pinned recent files | ✅ Pin to Recent Files in the context menu; File → Recent Files shows the file with the pin mark at the top. |
+
+Not click-tested (tested headlessly): console options, assembly diff output, patch engine, tracepoint keywords. Owner still to check (no test data): a private NuGet feed (7.11.0.0), a real Xamarin/MAUI `.apk` (7.17.0.0), Detect Protection on a really obfuscated assembly.
