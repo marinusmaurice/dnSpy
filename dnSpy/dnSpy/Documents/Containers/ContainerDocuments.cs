@@ -28,6 +28,7 @@ using dnlib.DotNet;
 using dnlib.PE;
 using dnSpy.Contracts.Decompiler;
 using dnSpy.Contracts.Documents;
+using dnSpy.Contracts.Documents.Tabs.DocViewer;
 using dnSpy.Contracts.Documents.TreeView;
 using dnSpy.Contracts.Images;
 using dnSpy.Contracts.Text;
@@ -201,20 +202,29 @@ namespace dnSpy.Documents.Containers {
 		public override DsDocumentInfo? SerializedDocument => DsDocumentInfo.CreateDocument(Filename);
 		public override IDsDocumentNameKey Key => FilenameKey.CreateFullPath(Filename);
 
-		AndroidPackageDocument(IDsDocumentService documentService, string filename, List<ContainerFile> files)
-			: base(documentService, filename, files) => Filename = filename;
+		/// <summary>
+		/// Assembly stores in the package that couldn't be read (unknown format, invalid data)
+		/// </summary>
+		public List<string> Warnings { get; }
+
+		AndroidPackageDocument(IDsDocumentService documentService, string filename, List<ContainerFile> files, List<string> warnings)
+			: base(documentService, filename, files) {
+			Filename = filename;
+			Warnings = warnings;
+		}
 
 		public static AndroidPackageDocument? TryCreate(IDsDocumentService documentService, string filename) {
 			var files = new List<ContainerFile>();
+			var warnings = new List<string>();
 			try {
 				// Packages can be big: the file is read again when an assembly is needed instead of being kept in memory
-				foreach (var file in AndroidPackage.GetAssemblies(() => new FileStream(filename, FileMode.Open, FileAccess.Read, FileShare.Read)))
+				foreach (var file in AndroidPackage.GetAssemblies(() => new FileStream(filename, FileMode.Open, FileAccess.Read, FileShare.Read), warnings))
 					files.Add(new ContainerFile(file.Path, file.GetData));
 			}
 			catch (Exception ex) when (ex is IOException || ex is InvalidDataException || ex is UnauthorizedAccessException) {
 				return null;
 			}
-			return new AndroidPackageDocument(documentService, filename, files);
+			return new AndroidPackageDocument(documentService, filename, files, warnings);
 		}
 	}
 
@@ -291,7 +301,7 @@ namespace dnSpy.Documents.Containers {
 		}
 	}
 
-	sealed class ContainerDocumentNodeImpl : UnknownDocumentNode {
+	sealed class ContainerDocumentNodeImpl : UnknownDocumentNode, IDecompileSelf {
 		public static readonly Guid NuGetPackageGuid = new Guid("5C4DF7E6-41A0-4C42-9B7C-1F0B8F4E8D21");
 		public static readonly Guid FolderGuid = new Guid("1E6A2B53-8E0C-4F5D-A1C6-3D7F2E9B4A10");
 		public static readonly Guid AndroidPackageGuid = new Guid("8B3F1C2D-6E4A-4D7B-9A15-2C0E7F3B5D94");
@@ -323,6 +333,16 @@ namespace dnSpy.Documents.Containers {
 				output.WriteLine();
 				output.WriteFilename(Document.Filename);
 			}
+		}
+
+		// An Android package with assembly stores that couldn't be read: the default text (the filename) and why
+		public bool Decompile(IDecompileNodeContext context) {
+			if (!(Document is AndroidPackageDocument package) || package.Warnings.Count == 0)
+				return false;
+			context.Decompiler.WriteCommentLine(context.Output, NameUtilities.CleanName(ToString(context.Decompiler)));
+			foreach (var warning in package.Warnings)
+				context.Decompiler.WriteCommentLine(context.Output, warning);
+			return true;
 		}
 	}
 }

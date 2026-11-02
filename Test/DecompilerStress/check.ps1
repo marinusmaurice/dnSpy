@@ -17,7 +17,7 @@
 	  - pinned and recent files in File -> Recent Files (../RecentFilesCheck)
 	  - Open from NuGet's package sources from NuGet.config, search and download over V3, V2 and folder feeds (../NuGetFeedCheck)
 	  - portable mode: where the settings and data go with a dnSpy.xml next to dnSpy.exe or in bin (../PortableCheck)
-	  - the assemblies in Android packages: XALZ (LZ4) compressed files and assembly stores (../AndroidPackageCheck)
+	  - the assemblies in Android packages: XALZ (LZ4) compressed files and assembly stores, also .NET 9+ ones in ELF files (../AndroidPackageCheck)
 	  - the assembly diff of ../DiffCases as text and as JSON (--json)
 	  - the type and member list of ../DiffCases as text and as JSON (--list, --list --json)
 	  - obfuscator/packer detection of ../ProtectionCases' assembly and of DiffCases (--protection, --protection --json)
@@ -243,7 +243,7 @@ try {
 	Write-Host '== Android packages (.apk, .aab)'
 	$androidCheck = Invoke-Checked "run AndroidPackageCheck" { dotnet run --project (Join-Path $PSScriptRoot '..\AndroidPackageCheck\AndroidPackageCheck.csproj') -c Release -v:q -nologo }
 	if (-not ($androidCheck -contains 'All Android package checks passed')) { Fail 'Android packages: checks failed'; $androidCheck | ForEach-Object { Write-Host "  $_" } }
-	else { Write-Host '  OK: plain and XALZ (LZ4) assemblies, assembly stores with assemblies.manifest, .aab and Unity layouts, broken data' }
+	else { Write-Host '  OK: plain and XALZ (LZ4) assemblies, assembly stores with assemblies.manifest, .NET 9+ stores in ELF files, .aab and Unity layouts, broken data' }
 
 	# Patch export/import: a patch made from PatchCases v1 and edited v1, applied to v2 (more members, other tokens), must
 	# give the same method bodies as edited v2 and print the same

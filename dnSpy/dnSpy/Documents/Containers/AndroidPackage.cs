@@ -21,6 +21,7 @@ using System;
 using System.Collections.Generic;
 using System.IO;
 using System.IO.Compression;
+using System.Text;
 
 namespace dnSpy.Documents.Containers {
 	/// <summary>
@@ -40,9 +41,10 @@ namespace dnSpy.Documents.Containers {
 	/// <list type="bullet">
 	/// <item>assembly files, also the LZ4-compressed ones (<c>XALZ</c> header) that Xamarin.Android writes to assemblies/</item>
 	/// <item>assembly stores, format 1 (<c>XABA</c> header, assemblies/assemblies*.blob, .NET 6 to 8), with the names from assemblies.manifest</item>
+	/// <item>assembly stores, format 2 and 3 (.NET 9 and later): an ELF file, lib/&lt;abi&gt;/libassemblies.&lt;abi&gt;.blob.so (.NET 9)
+	/// or lib/&lt;abi&gt;/libassembly-store.so (.NET 10), whose payload section is the store, with the names in the store</item>
 	/// <item>other .dll/.exe files, eg. a Unity game's assets/bin/Data/Managed/*.dll</item>
 	/// </list>
-	/// Not read: the assembly stores in lib/&lt;abi&gt;/libassemblies.&lt;abi&gt;.blob.so (.NET 9+, format 2).
 	/// </summary>
 	static class AndroidPackage {
 		const uint XALZ_MAGIC = 0x5A4C4158;// "XALZ"
@@ -50,7 +52,9 @@ namespace dnSpy.Documents.Containers {
 		const int XALZ_HEADER_SIZE = 12;
 		const int XABA_HEADER_SIZE = 20;
 		const int XABA_DESCRIPTOR_SIZE = 24;
+		const int XABA_V2_DESCRIPTOR_SIZE = 28;
 		const int MAX_ASSEMBLY_SIZE = 0x40000000;
+		const int MAX_STORE_ENTRIES = 100000;
 
 		public static bool IsAndroidPackage(string filename) =>
 			filename.EndsWith(".apk", StringComparison.OrdinalIgnoreCase) ||
@@ -58,10 +62,12 @@ namespace dnSpy.Documents.Containers {
 
 		/// <summary>
 		/// Returns the assemblies in the package. <paramref name="openPackage"/> is called again each time an assembly's data is read.
+		/// Assembly stores that can't be read are added to <paramref name="warnings"/>.
 		/// </summary>
-		public static List<AndroidPackageFile> GetAssemblies(Func<Stream> openPackage) {
+		public static List<AndroidPackageFile> GetAssemblies(Func<Stream> openPackage, List<string>? warnings = null) {
 			var files = new List<AndroidPackageFile>();
 			var blobs = new List<string>();
+			var elfStores = new List<string>();
 			var manifests = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase);
 			// The package stream is disposed by its own using: ZipArchive's constructor doesn't close it when it throws (not a zip file)
 			using (var package = openPackage())
@@ -73,6 +79,8 @@ namespace dnSpy.Documents.Containers {
 						files.Add(new AndroidPackageFile(entryName, () => Decompress(ReadEntry(openPackage, entryName))));
 					else if (name.StartsWith("assemblies", StringComparison.OrdinalIgnoreCase) && name.EndsWith(".blob", StringComparison.OrdinalIgnoreCase))
 						blobs.Add(entryName);
+					else if (IsElfStoreName(name))
+						elfStores.Add(entryName);
 					else if (name.Equals("assemblies.manifest", StringComparison.OrdinalIgnoreCase)) {
 						using (var reader = new StreamReader(entry.Open()))
 							manifests[GetFolder(entryName)] = reader.ReadToEnd();
@@ -84,10 +92,13 @@ namespace dnSpy.Documents.Containers {
 					if (entry is null)
 						continue;
 					StoreInfo? store;
+					uint? version;
 					using (var stream = entry.Open())
-						store = ReadStoreInfo(stream);
-					if (store is null)
+						store = ReadStoreInfo(stream, out version);
+					if (store is null) {
+						warnings?.Add(version is uint v ? $"{blobName}: assembly store format {v & 0xFFFF} isn't supported" : $"{blobName}: not an assembly store");
 						continue;
+					}
 					manifests.TryGetValue(GetFolder(blobName), out var manifest);
 					var names = manifest is null ? null : ParseManifest(manifest, store.StoreId);
 					for (int i = 0; i < store.Descriptors.Length; i++) {
@@ -104,9 +115,48 @@ namespace dnSpy.Documents.Containers {
 						files.Add(new AndroidPackageFile(blobName + "/" + name, () => Decompress(Slice(ReadEntry(openPackage, blob), desc.DataOffset, desc.DataSize))));
 					}
 				}
+
+				foreach (var storeName in elfStores) {
+					var entry = zip.GetEntry(storeName);
+					if (entry is null)
+						continue;
+					byte[] data;
+					using (var stream = entry.Open()) {
+						var ms = new MemoryStream();
+						stream.CopyTo(ms);
+						data = ms.ToArray();
+					}
+					var store = ReadElfStore(data, out var error);
+					if (store is null) {
+						warnings?.Add($"{storeName}: {error}");
+						continue;
+					}
+					for (int i = 0; i < store.Descriptors.Length; i++) {
+						var desc = store.Descriptors[i];
+						if (desc.DataSize == 0)
+							continue;
+						var name = store.Names[i] ?? $"assembly_{i}";
+						if (!IsAssembly(name))
+							name += ".dll";
+						var path = storeName;
+						files.Add(new AndroidPackageFile(storeName + "/" + name, () => {
+							var storeData = ReadEntry(openPackage, path);
+							var offset = ReadElfStore(storeData, out _)?.Offset ?? throw new InvalidDataException();
+							long start = offset + (long)desc.DataOffset;
+							if (start > storeData.Length)
+								throw new InvalidDataException();
+							return Decompress(Slice(storeData, (uint)start, desc.DataSize));
+						}));
+					}
+				}
 			}
 			return files;
 		}
+
+		// .NET 9: libassemblies.<abi>.blob.so, .NET 10: libassembly-store.so
+		static bool IsElfStoreName(string name) =>
+			name.Equals("libassembly-store.so", StringComparison.OrdinalIgnoreCase) ||
+			(name.StartsWith("libassemblies.", StringComparison.OrdinalIgnoreCase) && name.EndsWith(".blob.so", StringComparison.OrdinalIgnoreCase));
 
 		static bool IsAssembly(string name) =>
 			name.EndsWith(".dll", StringComparison.OrdinalIgnoreCase) ||
@@ -157,13 +207,18 @@ namespace dnSpy.Documents.Containers {
 
 		// Header: magic, version, local entry count, global entry count, store id; then per local entry: data offset,
 		// data size, debug data offset, debug data size, config data offset, config data size (all uint32).
-		static StoreInfo? ReadStoreInfo(Stream stream) {
+		// version: the header's version if it has a XABA header
+		static StoreInfo? ReadStoreInfo(Stream stream, out uint? version) {
+			version = null;
 			var header = ReadBytes(stream, XABA_HEADER_SIZE);
-			if (header is null || BitConverter.ToUInt32(header, 0) != XABA_MAGIC || BitConverter.ToUInt32(header, 4) != 1)
+			if (header is null || BitConverter.ToUInt32(header, 0) != XABA_MAGIC)
+				return null;
+			version = BitConverter.ToUInt32(header, 4);
+			if (version != 1)
 				return null;
 			uint count = BitConverter.ToUInt32(header, 8);
 			uint storeId = BitConverter.ToUInt32(header, 16);
-			if (count > 100000)
+			if (count > MAX_STORE_ENTRIES)
 				return null;
 			var data = ReadBytes(stream, (int)count * XABA_DESCRIPTOR_SIZE);
 			if (data is null)
@@ -174,6 +229,117 @@ namespace dnSpy.Documents.Containers {
 				descriptors[i] = new StoreDescriptor(BitConverter.ToUInt32(data, pos), BitConverter.ToUInt32(data, pos + 4));
 			}
 			return new StoreInfo(storeId, descriptors);
+		}
+
+		sealed class ElfStoreInfo {
+			// Offset of the store (its XABA header) in the ELF file; the descriptors' data offsets are relative to it
+			public readonly int Offset;
+			public readonly StoreDescriptor[] Descriptors;
+			public readonly string?[] Names;
+			public ElfStoreInfo(int offset, StoreDescriptor[] descriptors, string?[] names) {
+				Offset = offset;
+				Descriptors = descriptors;
+				Names = names;
+			}
+		}
+
+		/// <summary>
+		/// Reads an assembly store, format 2 or 3, in an ELF file's payload section. Header: magic, version (bits 0-15:
+		/// format, 16-23: ABI, 31: 64-bit), entry count, index entry count, index size in bytes; then the index (name hash,
+		/// descriptor index, format 3: an ignore flag), per entry: mapping index, data offset, data size, debug data offset,
+		/// debug data size, config data offset, config data size (all uint32); then per entry its name: length (uint32), UTF-8.
+		/// </summary>
+		static ElfStoreInfo? ReadElfStore(byte[] data, out string? error) {
+			int offset = FindElfPayload(data);
+			if (offset < 0) {
+				error = "no assembly store found in the file";
+				return null;
+			}
+			if (data.Length - offset < XABA_HEADER_SIZE) {
+				error = "the assembly store is truncated";
+				return null;
+			}
+			uint version = BitConverter.ToUInt32(data, offset + 4) & 0xFFFF;
+			if (version != 2 && version != 3) {
+				error = $"assembly store format {version} isn't supported";
+				return null;
+			}
+			uint count = BitConverter.ToUInt32(data, offset + 8);
+			uint indexSize = BitConverter.ToUInt32(data, offset + 16);
+			error = "the assembly store is invalid";
+			if (count > MAX_STORE_ENTRIES || indexSize > data.Length)
+				return null;
+			long pos = (long)offset + XABA_HEADER_SIZE + indexSize;
+			if (pos + (long)count * XABA_V2_DESCRIPTOR_SIZE > data.Length)
+				return null;
+			var descriptors = new StoreDescriptor[count];
+			for (int i = 0; i < descriptors.Length; i++, pos += XABA_V2_DESCRIPTOR_SIZE)
+				descriptors[i] = new StoreDescriptor(BitConverter.ToUInt32(data, (int)pos + 4), BitConverter.ToUInt32(data, (int)pos + 8));
+			var names = new string?[count];
+			for (int i = 0; i < names.Length; i++) {
+				if (pos + 4 > data.Length)
+					break;
+				uint length = BitConverter.ToUInt32(data, (int)pos);
+				pos += 4;
+				if (length > data.Length - pos)
+					break;
+				names[i] = length == 0 ? null : Encoding.UTF8.GetString(data, (int)pos, (int)length);
+				pos += length;
+			}
+			error = null;
+			return new ElfStoreInfo(offset, descriptors, names);
+		}
+
+		/// <summary>
+		/// Returns the offset of the XABA header in an ELF file: the start of its "payload" section, else the first
+		/// page-aligned (4 KB) XABA header; or the start of the data if it has no ELF header; -1 if not found
+		/// </summary>
+		internal static int FindElfPayload(byte[] data) {
+			if (IsXaba(data, 0))
+				return 0;
+			if (data.Length < 0x34 || BitConverter.ToUInt32(data, 0) != 0x464C457F)// "\x7FELF"
+				return -1;
+			int offset = FindElfSection(data, "payload");
+			if (offset >= 0 && IsXaba(data, offset))
+				return offset;
+			for (int i = 0x1000; i <= data.Length - XABA_HEADER_SIZE; i += 0x1000) {
+				if (IsXaba(data, i))
+					return i;
+			}
+			return -1;
+		}
+
+		static bool IsXaba(byte[] data, int offset) => offset >= 0 && data.Length - offset >= XABA_HEADER_SIZE && BitConverter.ToUInt32(data, offset) == XABA_MAGIC;
+
+		// Returns the file offset of a section (little-endian ELF32 or ELF64), or -1
+		static int FindElfSection(byte[] data, string name) {
+			bool is64 = data[4] == 2;
+			if (data[5] != 1 || (is64 && data.Length < 0x40))
+				return -1;
+			long shoff = is64 ? (long)BitConverter.ToUInt64(data, 0x28) : BitConverter.ToUInt32(data, 0x20);
+			int shentsize = BitConverter.ToUInt16(data, is64 ? 0x3A : 0x2E);
+			int shnum = BitConverter.ToUInt16(data, is64 ? 0x3C : 0x30);
+			int shstrndx = BitConverter.ToUInt16(data, is64 ? 0x3E : 0x32);
+			if (shentsize < (is64 ? 0x28 : 0x18) || shstrndx >= shnum || shoff < 0 || shoff + (long)shnum * shentsize > data.Length)
+				return -1;
+			long SectionOffset(int index) => is64 ? (long)BitConverter.ToUInt64(data, (int)(shoff + index * shentsize + 0x18)) : BitConverter.ToUInt32(data, (int)(shoff + index * shentsize + 0x10));
+			long strtab = SectionOffset(shstrndx);
+			if (strtab < 0 || strtab >= data.Length)
+				return -1;
+			var nameBytes = Encoding.ASCII.GetBytes(name);
+			for (int i = 0; i < shnum; i++) {
+				long nameOffset = strtab + BitConverter.ToUInt32(data, (int)(shoff + i * shentsize));
+				if (nameOffset < 0 || nameOffset + nameBytes.Length >= data.Length)
+					continue;
+				bool match = data[nameOffset + nameBytes.Length] == 0;
+				for (int j = 0; match && j < nameBytes.Length; j++)
+					match = data[nameOffset + j] == nameBytes[j];
+				if (!match)
+					continue;
+				long offset = SectionOffset(i);
+				return offset >= 0 && offset < data.Length ? (int)offset : -1;
+			}
+			return -1;
 		}
 
 		static byte[]? ReadBytes(Stream stream, int count) {

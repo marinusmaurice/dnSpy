@@ -7,6 +7,15 @@ What changed in each release of this fork, newest first. The release workflow pu
 
 Each section starts with a short summary, then **New Features** (new things you can do), **Enhancements** (existing things that work better) and **Bug Fixes**, with a link to the commit for each item. Technical details are in [All changes in detail](docs/CHANGES.md#all-changes-in-detail) and in [docs/MODERNIZATION_PLAN.md](docs/MODERNIZATION_PLAN.md).
 
+## 7.21.0.0
+
+Android packages of .NET 9 and later MAUI apps show their assemblies. Also has everything in 7.20.0.0, 7.19.0.0, 7.18.1.0, 7.18.0.0, 7.17.0.0, 7.16.0.0, 7.15.0.0, 7.14.0.0, 7.13.0.0, 7.12.0.0, 7.11.0.0, 7.10.0.0, 7.9.0.0, 7.8.0.0, 7.7.0.0, 7.6.0.0 and 7.5.0.0.
+
+### Enhancements
+
+- Opening an `.apk`/`.aab` of a .NET 9 or later Android/MAUI app lists its assemblies. These apps keep them in an assembly store inside a native library, `lib/<abi>/libassemblies.<abi>.blob.so` (.NET 9) or `lib/<abi>/libassembly-store.so` (.NET 10), that 7.17.0.0 didn't read, so the package was empty. Store formats 2 and 3 are read, with the assembly names from the store, decompressed (LZ4) like before, one folder per ABI. Tested with a real .NET 10 MAUI app (all 276 assemblies of its two ABIs open, with the right names) and by `check.ps1` (`Test/AndroidPackageCheck`).
+- If a package has an assembly store dnSpy can't read (a newer format, broken data), the package's node says so in the code view instead of being silently empty. The new text is in English only.
+
 ## 7.20.0.0
 
 Files you use often can be pinned to the top of File → Recent Files. Also has everything in 7.19.0.0, 7.18.1.0, 7.18.0.0, 7.17.0.0, 7.16.0.0, 7.15.0.0, 7.14.0.0, 7.13.0.0, 7.12.0.0, 7.11.0.0, 7.10.0.0, 7.9.0.0, 7.8.0.0, 7.7.0.0, 7.6.0.0 and 7.5.0.0.
