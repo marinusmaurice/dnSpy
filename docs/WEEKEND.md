@@ -56,4 +56,6 @@ Click-tested in a copy of the 7.20.0.0 Release net10 publish in portable mode, w
 | 7.19.0.0 Edit Method Test Compile | ✅ Syntax error + Shift+F6: CS1002 and CS0103 listed, dialog stays open; fixed: "Test compile: no errors. Nothing was changed"; Cancel: Save All stays disabled. |
 | 7.20.0.0 pinned recent files | ✅ Pin to Recent Files in the context menu; File → Recent Files shows the file with the pin mark at the top. |
 
-Not click-tested (tested headlessly): console options, assembly diff output, patch engine, tracepoint keywords. Owner still to check (no test data): a private NuGet feed (7.11.0.0), a real Xamarin/MAUI `.apk` (7.17.0.0), Detect Protection on a really obfuscated assembly.
+Not click-tested (tested headlessly): console options, assembly diff output, patch engine, tracepoint keywords. Owner still to check (no test data): a private NuGet feed (7.11.0.0), a .NET 6–8 or Xamarin `.apk` (7.17.0.0), Detect Protection on a really obfuscated assembly.
+
+7.17.0.0 with a real .NET 10 MAUI app (the owner's MauiApp1, Release `-Signed.apk`): opens without errors but the package node is empty, as documented. Its assemblies are only in `lib/<abi>/libassembly-store.so` (an ELF file; `XABA` at 0x4000, version `0x80010003` = format 3, 64-bit; 138 assemblies, `XALZ` compressed), which 7.17.0.0 doesn't read (format 1 only). There's no message saying why the node is empty.
