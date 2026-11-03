@@ -173,6 +173,51 @@ try {
 		}
 	}
 
+	# WinForms resources: Export to Project writes Form1.resx (not the raw Form1.resources) under Form1.cs, without
+	# deserializing anything. The export must build, and the rebuilt app's resources must export to the same .resx and
+	# files (images, icon and sound as separate files in .NET 10, serialized objects in .NET Framework .resources).
+	$winFormsProject = Join-Path $PSScriptRoot '..\WinFormsResx\WinFormsResx.csproj'
+	foreach ($tfm in 'net10.0-windows', 'net48') {
+		$name = "WinForms resx $tfm"
+		Write-Host "== $name"
+		# dotnet build can't compile non-string resources for .NET Framework
+		if ($tfm -eq 'net48' -and -not $msbuild) { Write-Host '  (skipped: msbuild not found)'; continue }
+		function Build-WinForms([string]$projectFile, [string]$outDir, [string[]]$tfmArgs) {
+			if ($tfm -eq 'net48') { & $msbuild.Source -nr:false -v:q -nologo -restore -p:Configuration=Release @tfmArgs "-p:OutputPath=$outDir\" $projectFile 2>&1 }
+			else { & dotnet build $projectFile -c Release @tfmArgs -o $outDir -v:q -nologo 2>&1 }
+		}
+		function Get-ResxSnapshot([string]$exportDir) {
+			$resx = Get-ChildItem $exportDir -Recurse -Filter Form1.resx | Select-Object -First 1
+			if (-not $resx) { return $null }
+			$files = Get-ChildItem (Join-Path $resx.DirectoryName 'Resources') -File -ErrorAction SilentlyContinue | Sort-Object Name | ForEach-Object { "$($_.Name) $((Get-FileHash $_.FullName).Hash)" }
+			(Get-Content $resx.FullName -Raw) + ($files -join "`n")
+		}
+		$appFile = if ($tfm -eq 'net48') { 'WinFormsResx.exe' } else { 'WinFormsResx.dll' }
+		$origDir = Join-Path $work "winforms-$tfm"
+		$tfmArgs = if ($tfm -eq 'net48') { , '-p:TargetFramework=net48' } else { '-f', $tfm }
+		$build = Build-WinForms $winFormsProject $origDir $tfmArgs
+		if ($LASTEXITCODE) { $build | Select-Object -Last 20 | ForEach-Object { Write-Host "  $_" }; throw "build WinFormsResx ($tfm) failed" }
+		$exportDir = Join-Path $work "winforms-export-$tfm"
+		Invoke-Checked "export WinFormsResx" { & $Console --no-color -o $exportDir (Join-Path $origDir $appFile) } > $null
+		$exportProject = (Get-ChildItem $exportDir -Recurse -Filter *.csproj | Select-Object -First 1).FullName
+		$exported = Get-ResxSnapshot $exportDir
+		$dataCount = if ($exported) { ([regex]::Matches($exported, '<data ')).Count } else { 0 }
+		if ($dataCount -ne 13) { Fail "$name`: $dataCount of 13 resources in Form1.resx"; continue }
+		if (Get-ChildItem $exportDir -Recurse -Filter *.resources) { Fail "$name`: the export has .resources files" }
+		if ((Get-Content $exportProject -Raw) -notmatch '<EmbeddedResource Include="Form1.resx">\s*<DependentUpon>Form1.cs</DependentUpon>') { Fail "$name`: Form1.resx isn't under Form1.cs in the project" }
+		$rebuiltDir = Join-Path $work "winforms-rebuilt-$tfm"
+		$build = Build-WinForms $exportProject $rebuiltDir @()
+		if ($LASTEXITCODE) {
+			Fail "$name`: exported project doesn't build"
+			$build | Where-Object { $_ -match ' error ' } | Select-Object -First 10 | ForEach-Object { Write-Host "  $_" }
+			continue
+		}
+		$reexportDir = Join-Path $work "winforms-reexport-$tfm"
+		Invoke-Checked "export rebuilt WinFormsResx" { & $Console --no-color -o $reexportDir (Join-Path $rebuiltDir $appFile) } > $null
+		if ((Get-ResxSnapshot $reexportDir) -ne $exported) { Fail "$name`: the rebuilt app's resources export to a different Form1.resx" }
+		else { Write-Host "  OK: Form1.resx with $dataCount resources under Form1.cs, export builds, same resources after the rebuild" }
+	}
+
 	# Export to Project: code shapes that used to export as code that doesn't compile (<>y__InlineArrayN locals declared
 	# at the start of a method with `fixed` statements, a file-local type that ICSharpCode.Decompiler hid)
 	$casesProject = Join-Path $PSScriptRoot '..\ExportCases\ExportCases.csproj'

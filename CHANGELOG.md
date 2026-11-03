@@ -7,6 +7,14 @@ What changed in each release of this fork, newest first. The release workflow pu
 
 Each section starts with a short summary, then **New Features** (new things you can do), **Enhancements** (existing things that work better) and **Bug Fixes**, with a link to the commit for each item. Technical details are in [All changes in detail](docs/CHANGES.md#all-changes-in-detail) and in [docs/MODERNIZATION_PLAN.md](docs/MODERNIZATION_PLAN.md).
 
+## 7.21.1.0
+
+Export to Project creates `.resx` files for WinForms forms and other resources again. Also has everything in 7.21.0.0 and earlier.
+
+### Bug Fixes
+
+- Export to Project wrote each form's resources as a raw `Form1.resources` file next to `Form1.cs`, where Visual Studio's designer can't open it. dnSpy now writes `Form1.resx` and nests it under `Form1.cs` (`DependentUpon`), like a project made in Visual Studio. The "Create .resx files" option in the Export to Project dialog box (and `dnSpy.Console --no-resx`) works again. It had been switched off because the old writer deserialized the resources to write them. The new writer doesn't load or run anything from the assembly: strings, numbers and dates are written as text, type-converter values (eg. a `Color`) as their string or bytes, `BinaryFormatter` objects (eg. an `ImageListStreamer`) as the same base64 data, and the images, icons and sounds of .NET 5+ apps as separate files in a `Resources` folder that the `.resx` references, the way Visual Studio stores them. Tested by `check.ps1` (`Test/WinFormsResx`, .NET 10 and .NET Framework 4.8): all 13 kinds of resources are exported, the exported project builds, and the rebuilt app's resources export to the same `.resx`. Not tried in Visual Studio's WinForms designer.
+
 ## 7.21.0.0
 
 Android packages of .NET 9 and later MAUI apps show their assemblies. Also has everything in 7.20.0.0, 7.19.0.0, 7.18.1.0, 7.18.0.0, 7.17.0.0, 7.16.0.0, 7.15.0.0, 7.14.0.0, 7.13.0.0, 7.12.0.0, 7.11.0.0, 7.10.0.0, 7.9.0.0, 7.8.0.0, 7.7.0.0, 7.6.0.0 and 7.5.0.0.

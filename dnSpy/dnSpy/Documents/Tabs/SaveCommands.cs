@@ -1,5 +1,6 @@
 /*
     Copyright (C) 2014-2019 de4dot@gmail.com
+    Copyright (C) 2026- marinusmaurice@outlook.com
 
     This file is part of dnSpy
 
@@ -92,7 +93,8 @@ namespace dnSpy.Documents.Tabs {
 			var vm = new ExportToProjectVM(new PickDirectory(), decompilerService, task, bamlDecompiler is not null);
 			task.vm = vm;
 			vm.ProjectVersion = exportToProjectSettings.ProjectVersion;
-			vm.CreateResX = documentTreeViewSettings.DeserializeResources;
+			// ResXProjectFile doesn't deserialize anything
+			vm.CreateResX = true;
 			vm.DontReferenceStdLib = modules.Any(a => a.Assembly.IsCorLib());
 			vm.Decompiler = vm.AllDecompilers.First(a => a.Decompiler == decompiler);
 			vm.SolutionFilename = GetSolutionFilename(modules);

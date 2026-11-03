@@ -167,6 +167,7 @@ To debug Unity games, you need this repo too: https://github.com/dnSpy/dnSpy-Uni
 
 ## All changes in detail
 
+- 7.21.1.0: Export to Project writes `.resx` files again (WinForms `Form1.resx` under `Form1.cs`), from the raw resource data without deserializing (`ResXProjectFile`); streams and activator streams go to `Resources\` files referenced with `ResXFileRef`. Regression test `Test/WinFormsResx` in `check.ps1`
 - Targets `net48` and `net10.0-windows` (was `net5.0-windows`), C# language version pinned to 13
 - Debugger uses `dbgshim.dll` 10.0 from Microsoft's `Microsoft.Diagnostics.DbgShim` NuGet package (.NET 7+ runtimes don't include it). This replaces the 2017 copy and the `netcorefiles` submodule.
 - Fixed: debugging .NET apps from the .NET build failed with "Couldn't find dbgshim.dll"

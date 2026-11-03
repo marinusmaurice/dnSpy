@@ -1,0 +1,18 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <!--
+    WinForms resources test app (see ../DecompilerStress/README.md): Form1.resx has every kind of resource the
+    WinForms designer and VS write (strings, numbers, type converter strings and byte arrays, a BinaryFormatter
+    ImageListStreamer, file references to an image, icon and sound). ../DecompilerStress/check.ps1 exports it with
+    dnSpy.Console, checks that Form1.resx is created under Form1.cs, builds the export and checks that the rebuilt
+    assembly's resources export to the same .resx.
+  -->
+  <PropertyGroup>
+    <OutputType>WinExe</OutputType>
+    <TargetFrameworks>net10.0-windows;net48</TargetFrameworks>
+    <UseWindowsForms>true</UseWindowsForms>
+    <LangVersion>latest</LangVersion>
+    <Nullable>disable</Nullable>
+  </PropertyGroup>
+
+</Project>

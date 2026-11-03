@@ -1,5 +1,6 @@
 /*
     Copyright (C) 2014-2019 de4dot@gmail.com
+    Copyright (C) 2026- marinusmaurice@outlook.com
 
     This file is part of dnSpy
 
@@ -18,50 +19,22 @@
 */
 
 using System;
-using System.Collections.Generic;
+using System.Globalization;
 using System.IO;
-using System.Reflection;
-using System.Reflection.Emit;
-using System.Resources;
+using System.Text;
+using System.Xml;
 using dnlib.DotNet;
+using dnlib.DotNet.Resources;
 using dnSpy.Decompiler.Properties;
 
 namespace dnSpy.Decompiler.MSBuild {
+	/// <summary>
+	/// Writes a .resources resource as a .resx file. The XML is created from the raw resource data
+	/// (dnlib's <see cref="ResourceReader"/>) and nothing is deserialized: serialized objects are written
+	/// as base64 with their mime type, streams and activator streams (eg. images in .NET 5+ apps) as
+	/// separate files the .resx references (<c>ResXFileRef</c>).
+	/// </summary>
 	sealed class ResXProjectFile : ProjectFile {
-		static ResXProjectFile() {
-			// Mono doesn't support the constructors that we need
-
-			Type[] paramTypes;
-			ConstructorInfo? ctorInfo;
-
-			paramTypes = new Type[] { typeof(string), typeof(Func<Type, string>) };
-			ctorInfo = typeof(ResXResourceWriter).GetConstructor(paramTypes);
-			if (ctorInfo is not null) {
-				var dynMethod = new DynamicMethod("ResXResourceWriter-ctor", typeof(ResXResourceWriter), paramTypes);
-				var ilg = dynMethod.GetILGenerator();
-				ilg.Emit(OpCodes.Ldarg_0);
-				ilg.Emit(OpCodes.Ldarg_1);
-				ilg.Emit(OpCodes.Newobj, ctorInfo);
-				ilg.Emit(OpCodes.Ret);
-				delegateResXResourceWriterConstructor = (Func<string, Func<Type, string>, ResXResourceWriter>)dynMethod.CreateDelegate(typeof(Func<string, Func<Type, string>, ResXResourceWriter>));
-			}
-
-			paramTypes = new Type[] { typeof(string), typeof(object), typeof(Func<Type, string>) };
-			ctorInfo = typeof(ResXDataNode).GetConstructor(paramTypes);
-			if (ctorInfo is not null) {
-				var dynMethod = new DynamicMethod("ResXDataNode-ctor", typeof(ResXDataNode), paramTypes);
-				var ilg = dynMethod.GetILGenerator();
-				ilg.Emit(OpCodes.Ldarg_0);
-				ilg.Emit(OpCodes.Ldarg_1);
-				ilg.Emit(OpCodes.Ldarg_2);
-				ilg.Emit(OpCodes.Newobj, ctorInfo);
-				ilg.Emit(OpCodes.Ret);
-				delegateResXDataNodeConstructor = (Func<string, object?, Func<Type, string>, ResXDataNode>)dynMethod.CreateDelegate(typeof(Func<string, object?, Func<Type, string>, ResXDataNode>));
-			}
-		}
-		static readonly Func<string, Func<Type, string>, ResXResourceWriter>? delegateResXResourceWriterConstructor;
-		static readonly Func<string, object?, Func<Type, string>, ResXDataNode>? delegateResXDataNodeConstructor;
-
 		public override string Description => dnSpy_Decompiler_Resources.MSBuild_CreateResXFile;
 		public override BuildAction BuildAction => BuildAction.EmbeddedResource;
 		public override string Filename => filename;
@@ -70,79 +43,225 @@ namespace dnSpy.Decompiler.MSBuild {
 		public string TypeFullName { get; }
 		public bool IsSatelliteFile { get; set; }
 
+		readonly ModuleDef module;
 		readonly EmbeddedResource embeddedResource;
-		readonly Dictionary<IAssembly, IAssembly> newToOldAsm;
+
+		const string ResXReaderWriterAssembly = "System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089";
+		const string BinaryMimeType = "application/x-microsoft.net.object.binary.base64";
+		const string ByteArrayMimeType = "application/x-microsoft.net.object.bytearray.base64";
+		const string FileRefTypeName = "System.Resources.ResXFileRef, " + ResXReaderWriterAssembly;
+		const string FilesDirectoryName = "Resources";
 
 		public ResXProjectFile(ModuleDef module, string filename, string typeFullName, EmbeddedResource er) {
 			this.filename = filename;
 			TypeFullName = typeFullName;
+			this.module = module;
 			embeddedResource = er;
-
-			newToOldAsm = new Dictionary<IAssembly, IAssembly>(new AssemblyNameComparer(AssemblyNameComparerFlags.All & ~AssemblyNameComparerFlags.Version));
-			foreach (var asmRef in module.GetAssemblyRefs())
-				newToOldAsm[asmRef] = asmRef;
 		}
 
 		public override void Create(DecompileContext ctx) {
-			var list = ReadResourceEntries(ctx);
-
-			using (var writer = delegateResXResourceWriterConstructor?.Invoke(Filename, TypeNameConverter) ?? new ResXResourceWriter(Filename)) {
-				foreach (var t in list) {
-					ctx.CancellationToken.ThrowIfCancellationRequested();
-					writer.AddResource(t);
-				}
-			}
-		}
-
-		string TypeNameConverter(Type type) {
-			var newAsm = new AssemblyNameInfo(type.Assembly.GetName());
-			if (!newToOldAsm.TryGetValue(newAsm, out var oldAsm))
-				return type.AssemblyQualifiedName ?? throw new ArgumentException();
-			if (type.IsGenericType)
-				return type.AssemblyQualifiedName ?? throw new ArgumentException();
-			if (AssemblyNameComparer.CompareAll.Equals(oldAsm, newAsm))
-				return type.AssemblyQualifiedName ?? throw new ArgumentException();
-			return $"{type.FullName}, {oldAsm.FullName}";
-		}
-
-		List<ResXDataNode> ReadResourceEntries(DecompileContext ctx) {
-			var list = new List<ResXDataNode>();
-			int errors = 0;
+			ResourceElementSet set;
 			try {
-				using (var reader = new ResourceReader(embeddedResource.CreateReader().AsStream())) {
-					var iter = reader.GetEnumerator();
-					while (iter.MoveNext()) {
-						ctx.CancellationToken.ThrowIfCancellationRequested();
-						string? key = null;
-						try {
-							key = iter.Key as string;
-							if (key is null)
-								continue;
-							var value = iter.Value;
-							// ResXDataNode ctor checks if the input is serializable, which this stream isn't.
-							// We have no choice but to create a new stream.
-							if (value is Stream && !value.GetType().IsSerializable) {
-								var stream = (Stream)value;
-								var data = new byte[stream.Length];
-								if (stream.Read(data, 0, data.Length) != data.Length)
-									throw new IOException("Could not read all bytes");
-								value = new MemoryStream(data);
-							}
-							//TODO: Some resources, like images, should be saved as separate files. Use ResXFileRef.
-							//		Don't do it if it's a satellite assembly.
-							list.Add(delegateResXDataNodeConstructor?.Invoke(key, value, TypeNameConverter) ?? new ResXDataNode(key, value));
-						}
-						catch (Exception ex) {
-							if (errors++ < 30)
-								ctx.Logger.Error($"Could not add resource '{key}', Message: {ex.Message}");
-						}
-					}
-				}
+				set = ResourceReader.Read(module, embeddedResource.CreateReader());
 			}
 			catch (Exception ex) {
 				ctx.Logger.Error($"Could not read resources from {embeddedResource.Name}, Message: {ex.Message}");
+				return;
 			}
-			return list;
+
+			var settings = new XmlWriterSettings {
+				Indent = true,
+				IndentChars = "  ",
+				Encoding = new UTF8Encoding(true),
+			};
+			using (var writer = XmlWriter.Create(Filename, settings)) {
+				writer.WriteStartElement("root");
+				WriteHeader(writer, "resmimetype", "text/microsoft-resx");
+				WriteHeader(writer, "version", "2.0");
+				WriteHeader(writer, "reader", "System.Resources.ResXResourceReader, " + ResXReaderWriterAssembly);
+				WriteHeader(writer, "writer", "System.Resources.ResXResourceWriter, " + ResXReaderWriterAssembly);
+
+				int errors = 0;
+				foreach (var elem in set.ResourceElements) {
+					ctx.CancellationToken.ThrowIfCancellationRequested();
+					try {
+						WriteData(writer, elem);
+					}
+					catch (Exception ex) {
+						if (errors++ < 30)
+							ctx.Logger.Error($"Could not add resource '{elem.Name}', Message: {ex.Message}");
+					}
+				}
+
+				writer.WriteEndElement();
+			}
+		}
+
+		static void WriteHeader(XmlWriter writer, string name, string value) {
+			writer.WriteStartElement("resheader");
+			writer.WriteAttributeString("name", name);
+			writer.WriteElementString("value", value);
+			writer.WriteEndElement();
+		}
+
+		void WriteData(XmlWriter writer, ResourceElement elem) {
+			// Get the value first so a resource that fails doesn't leave a half written <data> element
+			string? typeName = null, mimeType = null;
+			string value;
+			bool preserveSpace = false;
+			switch (elem.ResourceData) {
+			case BuiltInResourceData builtIn:
+				switch (builtIn.Code) {
+				case ResourceTypeCode.Null:
+					typeName = "System.Resources.ResXNullRef, " + ResXReaderWriterAssembly;
+					value = string.Empty;
+					break;
+				case ResourceTypeCode.String:
+					value = (string)builtIn.Data;
+					preserveSpace = true;
+					break;
+				case ResourceTypeCode.ByteArray:
+					typeName = "System.Byte[], mscorlib";
+					value = Convert.ToBase64String((byte[])builtIn.Data);
+					break;
+				case ResourceTypeCode.Stream:
+					typeName = FileRefTypeName;
+					value = WriteFile(elem.Name, (byte[])builtIn.Data) + ";System.IO.MemoryStream, mscorlib";
+					break;
+				default:
+					typeName = GetPrimitiveTypeName(builtIn.Code) + ", mscorlib";
+					value = ToInvariantString(builtIn.Data);
+					break;
+				}
+				break;
+
+			case BinaryResourceData binary:
+				switch (binary.Format) {
+				case SerializationFormat.BinaryFormatter:
+					mimeType = BinaryMimeType;
+					value = Convert.ToBase64String(binary.Data);
+					break;
+				case SerializationFormat.TypeConverterByteArray:
+					typeName = binary.TypeName;
+					mimeType = ByteArrayMimeType;
+					value = Convert.ToBase64String(binary.Data);
+					break;
+				case SerializationFormat.TypeConverterString:
+					typeName = binary.TypeName;
+					// UTF-8, the length is before the data
+					value = Encoding.UTF8.GetString(binary.Data);
+					preserveSpace = true;
+					break;
+				case SerializationFormat.ActivatorStream:
+					typeName = FileRefTypeName;
+					value = WriteFile(elem.Name, binary.Data) + ";" + binary.TypeName;
+					break;
+				default:
+					throw new InvalidOperationException($"Unknown serialization format: {binary.Format}");
+				}
+				break;
+
+			default:
+				throw new InvalidOperationException($"Unknown resource data: {elem.ResourceData?.GetType()}");
+			}
+
+			writer.WriteStartElement("data");
+			writer.WriteAttributeString("name", elem.Name);
+			if (typeName is not null)
+				writer.WriteAttributeString("type", typeName);
+			if (mimeType is not null)
+				writer.WriteAttributeString("mimetype", mimeType);
+			if (preserveSpace)
+				writer.WriteAttributeString("xml", "space", null, "preserve");
+			writer.WriteElementString("value", value);
+			writer.WriteEndElement();
+		}
+
+		static string GetPrimitiveTypeName(ResourceTypeCode code) =>
+			code switch {
+				ResourceTypeCode.Boolean => "System.Boolean",
+				ResourceTypeCode.Char => "System.Char",
+				ResourceTypeCode.Byte => "System.Byte",
+				ResourceTypeCode.SByte => "System.SByte",
+				ResourceTypeCode.Int16 => "System.Int16",
+				ResourceTypeCode.UInt16 => "System.UInt16",
+				ResourceTypeCode.Int32 => "System.Int32",
+				ResourceTypeCode.UInt32 => "System.UInt32",
+				ResourceTypeCode.Int64 => "System.Int64",
+				ResourceTypeCode.UInt64 => "System.UInt64",
+				ResourceTypeCode.Single => "System.Single",
+				ResourceTypeCode.Double => "System.Double",
+				ResourceTypeCode.Decimal => "System.Decimal",
+				ResourceTypeCode.DateTime => "System.DateTime",
+				ResourceTypeCode.TimeSpan => "System.TimeSpan",
+				_ => throw new InvalidOperationException($"Unknown resource type: {code}"),
+			};
+
+		// The format ResXResourceReader's TypeConverters read (ConvertFromInvariantString)
+		static string ToInvariantString(object data) =>
+			data switch {
+				float f => f.ToString("R", CultureInfo.InvariantCulture),
+				double d => d.ToString("R", CultureInfo.InvariantCulture),
+				DateTime dt => dt.ToString("O", CultureInfo.InvariantCulture),
+				TimeSpan ts => ts.ToString("c", CultureInfo.InvariantCulture),
+				IFormattable f => f.ToString(null, CultureInfo.InvariantCulture),
+				_ => data.ToString() ?? string.Empty,
+			};
+
+
+		/// <summary>
+		/// Writes the data to a new file in the Resources folder next to the .resx file and returns its
+		/// path relative to the .resx file
+		/// </summary>
+		string WriteFile(string resourceName, byte[] data) {
+			var dir = Path.Combine(Path.GetDirectoryName(Filename)!, FilesDirectoryName);
+			Directory.CreateDirectory(dir);
+			var name = FilenameUtils.CleanName(resourceName);
+			if (string.IsNullOrEmpty(name))
+				name = "resource";
+			var ext = GetExtension(data);
+			for (int i = 0; ; i++) {
+				var fileName = i == 0 ? name + ext : name + "_" + i.ToString(CultureInfo.InvariantCulture) + ext;
+				FileStream stream;
+				try {
+					// CreateNew: the .resx files are created in parallel and can have resources with the same name
+					stream = new FileStream(Path.Combine(dir, fileName), FileMode.CreateNew, FileAccess.Write);
+				}
+				catch (IOException) when (i < 1000) {
+					continue;
+				}
+				using (stream)
+					stream.Write(data, 0, data.Length);
+				return FilesDirectoryName + "\\" + fileName;
+			}
+		}
+
+		static string GetExtension(byte[] data) {
+			if (StartsWith(data, 0x89, 0x50, 0x4E, 0x47))
+				return ".png";
+			if (StartsWith(data, 0xFF, 0xD8, 0xFF))
+				return ".jpg";
+			if (StartsWith(data, 0x47, 0x49, 0x46, 0x38))
+				return ".gif";
+			if (StartsWith(data, 0x42, 0x4D))
+				return ".bmp";
+			if (StartsWith(data, 0x00, 0x00, 0x01, 0x00))
+				return ".ico";
+			if (StartsWith(data, 0x00, 0x00, 0x02, 0x00))
+				return ".cur";
+			if (StartsWith(data, 0x52, 0x49, 0x46, 0x46) && data.Length >= 12 && data[8] == 0x57 && data[9] == 0x41 && data[10] == 0x56 && data[11] == 0x45)
+				return ".wav";
+			return ".bin";
+		}
+
+		static bool StartsWith(byte[] data, params byte[] magic) {
+			if (data.Length < magic.Length)
+				return false;
+			for (int i = 0; i < magic.Length; i++) {
+				if (data[i] != magic[i])
+					return false;
+			}
+			return true;
 		}
 	}
 }
