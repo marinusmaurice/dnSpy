@@ -1218,6 +1218,15 @@ Are you sure you want to expand it?</value>
   <data name="Breakpoints_GlyphMargin_BreakWhenBreakpointHit" xml:space="preserve">
     <value>Break</value>
   </data>
+  <data name="EditBreakpointSettings_DependsOn" xml:space="preserve">
+    <value>Only when a breakpoint with this label was hit:</value>
+  </data>
+  <data name="EditBreakpointSettings_DependsOnToolTip" xml:space="preserve">
+    <value>The breakpoint is checked only after a breakpoint with this label (Edit Labels in the Breakpoints window) was hit in the current debug session</value>
+  </data>
+  <data name="EditBreakpointSettings_RemoveOnceHit" xml:space="preserve">
+    <value>Remove the breakpoint once it's hit</value>
+  </data>
   <data name="EditBreakpointSettings_TraceContinue" xml:space="preserve">
     <value>Continue execution</value>
   </data>

@@ -2160,6 +2160,9 @@ Filter can be changed in Assembly Explorer options.</value>
   <data name="Update_Explanation" xml:space="preserve">
     <value>Update now downloads it, closes dnSpy, replaces this dnSpy's files with the new ones and starts dnSpy again. Your settings are kept.</value>
   </data>
+  <data name="Update_IncludePrereleases" xml:space="preserve">
+    <value>Include _beta versions</value>
+  </data>
   <data name="Update_CheckAtStartup" xml:space="preserve">
     <value>Check for _updates at startup (once a day)</value>
   </data>

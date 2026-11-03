@@ -1,5 +1,6 @@
 /*
     Copyright (C) 2014-2019 de4dot@gmail.com
+    Copyright (C) 2026- marinusmaurice@outlook.com
 
     This file is part of dnSpy
 
@@ -49,6 +50,18 @@ namespace dnSpy.MainApp {
 		}
 		bool checkForUpdates = true;
 
+		/// <summary>Also offer beta versions (GitHub pre-releases, eg. v7.22.0.0-beta.1)</summary>
+		public bool IncludePrereleases {
+			get => includePrereleases;
+			set {
+				if (includePrereleases != value) {
+					includePrereleases = value;
+					OnPropertyChanged(nameof(IncludePrereleases));
+				}
+			}
+		}
+		bool includePrereleases;
+
 		/// <summary>UTC time of the last update check</summary>
 		public DateTime LastUpdateCheck {
 			get => lastUpdateCheck;
@@ -75,6 +88,7 @@ namespace dnSpy.MainApp {
 			var sect = settingsService.GetOrCreateSection(SETTINGS_GUID);
 			AllowMoreThanOneInstance = sect.Attribute<bool?>(nameof(AllowMoreThanOneInstance)) ?? AllowMoreThanOneInstance;
 			CheckForUpdates = sect.Attribute<bool?>(nameof(CheckForUpdates)) ?? CheckForUpdates;
+			IncludePrereleases = sect.Attribute<bool?>(nameof(IncludePrereleases)) ?? IncludePrereleases;
 			if (DateTime.TryParse(sect.Attribute<string>(nameof(LastUpdateCheck)), CultureInfo.InvariantCulture, DateTimeStyles.AdjustToUniversal | DateTimeStyles.AssumeUniversal, out var lastCheck))
 				LastUpdateCheck = lastCheck;
 			PropertyChanged += AppSettingsImpl_PropertyChanged;
@@ -84,6 +98,7 @@ namespace dnSpy.MainApp {
 			var sect = settingsService.RecreateSection(SETTINGS_GUID);
 			sect.Attribute(nameof(AllowMoreThanOneInstance), AllowMoreThanOneInstance);
 			sect.Attribute(nameof(CheckForUpdates), CheckForUpdates);
+			sect.Attribute(nameof(IncludePrereleases), IncludePrereleases);
 			sect.Attribute(nameof(LastUpdateCheck), LastUpdateCheck.ToString("o", CultureInfo.InvariantCulture));
 		}
 	}

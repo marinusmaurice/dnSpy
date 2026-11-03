@@ -1,4 +1,6 @@
 /*
+    Copyright (C) 2026- marinusmaurice@outlook.com
+
     This file is part of dnSpy
 
     dnSpy is free software: you can redistribute it and/or modify
@@ -22,6 +24,8 @@ using dnlib.DotNet;
 using dnSpy.Contracts.Decompiler;
 using dnSpy.Decompiler.MSBuild;
 using ICSharpCode.Decompiler.CSharp.OutputVisitor;
+using ICSharpCode.Decompiler.DebugInfo;
+using ICSharpCode.Decompiler.Metadata;
 using ICSharpCode.Decompiler.CSharp.Syntax;
 using ICSharpCode.Decompiler.CSharp.Transforms;
 using ICSharpCode.Decompiler.TypeSystem;
@@ -135,6 +139,7 @@ namespace dnSpy.Decompiler.ILSpyModern.Core {
 			case DecompilationType.PartialType:
 			case DecompilationType.AssemblyInfo:
 			case DecompilationType.TypeMethods:
+			case DecompilationType.PortablePdb:
 				return true;
 			}
 			return base.CanDecompile(decompilationType);
@@ -150,6 +155,9 @@ namespace dnSpy.Decompiler.ILSpyModern.Core {
 				return;
 			case DecompilationType.TypeMethods:
 				DecompileTypeMethods((DecompileTypeMethods)data);
+				return;
+			case DecompilationType.PortablePdb:
+				GeneratePortablePdb((GeneratePortablePdb)data);
 				return;
 			}
 			base.Decompile(decompilationType, data);
@@ -183,12 +191,62 @@ namespace dnSpy.Decompiler.ILSpyModern.Core {
 			// Using declarations are kept for single members too (like ILSpy): without them, every type name is fully qualified
 			Decompile(module, output, ctx, langSettings.CreateILSpySettings(), null, decompile);
 
+		/// <summary>
+		/// Writes a portable PDB of the module's file on disk, with the decompiled code (the same transforms as the code
+		/// view) embedded as source. Visual Studio matches it with the DLL by the DLL's CodeView debug directory entry.
+		/// </summary>
+		void GeneratePortablePdb(GeneratePortablePdb info) {
+			var ctx = info.Context;
+			var diskModule = ConvertedModule.FromModuleOnDisk(info.Module);
+			if (diskModule.IsInMemory || diskModule.File is not PEFile peFile) {
+				info.ErrorMessage = "The module isn't saved to a file. Save it first: the PDB must match the file.";
+				return;
+			}
+			if (!PortablePdbWriter.HasCodeViewDebugDirectoryEntry(peFile)) {
+				info.ErrorMessage = "The module has no CodeView debug directory entry, so a debugger can't match a PDB with it. It was probably compiled without debug information (DebugType=none).";
+				return;
+			}
+			var modules = ctx.GetOrCreate<ConvertedModules>();
+			var settings = langSettings.CreateILSpySettings();
+			var decompiler = CreateILSpyDecompiler(info.Module, peFile, diskModule, modules, ctx, settings, null);
+			var writer = new PortablePdbWriter {
+				EmbedSourceFiles = info.EmbedSourceFiles,
+			};
+			if (info.Progress is Action<int, int> progress)
+				writer.Progress = new ProgressReporter(progress);
+			writer.WritePdb(peFile, decompiler, settings, info.Output);
+		}
+
+		sealed class ProgressReporter : IProgress<ICSharpCode.Decompiler.DecompilationProgress> {
+			readonly Action<int, int> progress;
+			public ProgressReporter(Action<int, int> progress) => this.progress = progress;
+			public void Report(ICSharpCode.Decompiler.DecompilationProgress value) => progress(value.UnitsCompleted, value.TotalUnits);
+		}
+
 		void Decompile(ModuleDef module, IDecompilerOutput output, DecompilationContext ctx, ICSharpCode.Decompiler.DecompilerSettings settings, IAstTransform? lastTransform, Func<ILSpyDecompiler, ConvertedModule, SyntaxTree> decompile) {
 			var modules = ctx.GetOrCreate<ConvertedModules>();
 			var mainModule = modules.GetMainModule(module);
-			var decompiler = new ILSpyDecompiler(mainModule.File, new DnlibAssemblyResolver(module, modules, ctx), settings) {
+			var decompiler = CreateILSpyDecompiler(module, mainModule.File, mainModule, modules, ctx, settings, lastTransform);
+			var syntaxTree = decompile(decompiler, mainModule);
+			if (!MemberOrderTransform.IsILSpyOrder(langSettings))
+				MemberOrderTransform.Run(syntaxTree, modules, langSettings);
+			// Not in the code that Edit Method/Edit Class compiles
+			if (langSettings.ShowTokenAndRvaComments && lastTransform is not DecompileTypeMethodsTransform)
+				TokenComments.Add(syntaxTree, modules);
+			var tokenWriter = new DecompilerOutputTokenWriter(output, modules);
+			// Also stores the text locations in the AST, needed to create the debugger's statement mapping
+			var writer = TokenWriter.WrapInWriterThatSetsLocationsInAST(tokenWriter);
+			syntaxTree.AcceptVisitor(new ModernCSharpOutputVisitor(writer, settings.CSharpFormattingOptions));
+			if (output.UsesCustomData)
+				MethodDebugInfoCreator.AddDebugInfos(output, decompiler, syntaxTree, tokenWriter, modules, langSettings.Version);
+		}
+
+		// ICSharpCode.Decompiler's decompiler with dnSpy's transforms. file: the module's metadata (in memory with dnSpy's
+		// edits, or the file on disk for a PDB); debugInfoModule: the same module, for the variable names in its PDB.
+		ILSpyDecompiler CreateILSpyDecompiler(ModuleDef module, MetadataFile file, ConvertedModule debugInfoModule, ConvertedModules modules, DecompilationContext ctx, ICSharpCode.Decompiler.DecompilerSettings settings, IAstTransform? lastTransform) {
+			var decompiler = new ILSpyDecompiler(file, new DnlibAssemblyResolver(module, modules, ctx), settings) {
 				CancellationToken = ctx.CancellationToken,
-				DebugInfoProvider = new DnlibDebugInfoProvider(mainModule),
+				DebugInfoProvider = new DnlibDebugInfoProvider(debugInfoModule),
 			};
 			if (settings.ShowXmlDocumentation)
 				decompiler.DocumentationProvider = new DnlibDocumentationProvider(modules);
@@ -245,18 +303,7 @@ namespace dnSpy.Decompiler.ILSpyModern.Core {
 				decompiler.AstTransforms.Add(new GeneratedRegexAttributeTransform());
 				decompiler.AstTransforms.Add(new EscapeInvalidIdentifiers());
 			}
-			var syntaxTree = decompile(decompiler, mainModule);
-			if (!MemberOrderTransform.IsILSpyOrder(langSettings))
-				MemberOrderTransform.Run(syntaxTree, modules, langSettings);
-			// Not in the code that Edit Method/Edit Class compiles
-			if (langSettings.ShowTokenAndRvaComments && lastTransform is not DecompileTypeMethodsTransform)
-				TokenComments.Add(syntaxTree, modules);
-			var tokenWriter = new DecompilerOutputTokenWriter(output, modules);
-			// Also stores the text locations in the AST, needed to create the debugger's statement mapping
-			var writer = TokenWriter.WrapInWriterThatSetsLocationsInAST(tokenWriter);
-			syntaxTree.AcceptVisitor(new ModernCSharpOutputVisitor(writer, settings.CSharpFormattingOptions));
-			if (output.UsesCustomData)
-				MethodDebugInfoCreator.AddDebugInfos(output, decompiler, syntaxTree, tokenWriter, modules, langSettings.Version);
+			return decompiler;
 		}
 	}
 

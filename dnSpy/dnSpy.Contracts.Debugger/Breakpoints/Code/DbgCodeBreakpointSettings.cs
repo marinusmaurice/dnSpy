@@ -1,5 +1,6 @@
 /*
     Copyright (C) 2014-2019 de4dot@gmail.com
+    Copyright (C) 2026- marinusmaurice@outlook.com
 
     This file is part of dnSpy
 
@@ -55,6 +56,17 @@ namespace dnSpy.Contracts.Debugger.Breakpoints.Code {
 		/// </summary>
 		public ReadOnlyCollection<string> Labels { get; set; }
 
+		/// <summary>
+		/// If not null or empty, the breakpoint is only checked after a breakpoint with this label was hit
+		/// in the current debug session (a dependent breakpoint)
+		/// </summary>
+		public string? DependsOnLabel { get; set; }
+
+		/// <summary>
+		/// true to remove the breakpoint the first time it's hit (it breaks or prints its trace message)
+		/// </summary>
+		public bool RemoveOnceHit { get; set; }
+
 #pragma warning disable CS1591 // Missing XML comment for publicly visible type or member
 		public static bool operator ==(DbgCodeBreakpointSettings left, DbgCodeBreakpointSettings right) => left.Equals(right);
 		public static bool operator !=(DbgCodeBreakpointSettings left, DbgCodeBreakpointSettings right) => !left.Equals(right);
@@ -71,7 +83,9 @@ namespace dnSpy.Contracts.Debugger.Breakpoints.Code {
 			HitCount == other.HitCount &&
 			Filter == other.Filter &&
 			Trace == other.Trace &&
-			LabelsEquals(Labels, other.Labels);
+			LabelsEquals(Labels, other.Labels) &&
+			StringComparer.Ordinal.Equals(DependsOnLabel ?? string.Empty, other.DependsOnLabel ?? string.Empty) &&
+			RemoveOnceHit == other.RemoveOnceHit;
 
 		static bool LabelsEquals(ReadOnlyCollection<string>? a, ReadOnlyCollection<string>? b) {
 			if (a is null)
@@ -114,7 +128,9 @@ namespace dnSpy.Contracts.Debugger.Breakpoints.Code {
 			HitCount.GetValueOrDefault().GetHashCode() ^
 			Filter.GetValueOrDefault().GetHashCode() ^
 			Trace.GetValueOrDefault().GetHashCode() ^
-			LabelsGetHashCode(Labels);
+			LabelsGetHashCode(Labels) ^
+			StringComparer.Ordinal.GetHashCode(DependsOnLabel ?? string.Empty) ^
+			(RemoveOnceHit ? 2 : 0);
 	}
 
 	/// <summary>

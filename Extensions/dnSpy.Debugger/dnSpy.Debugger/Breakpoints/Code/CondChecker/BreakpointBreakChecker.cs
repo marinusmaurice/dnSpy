@@ -1,5 +1,6 @@
 /*
     Copyright (C) 2014-2019 de4dot@gmail.com
+    Copyright (C) 2026- marinusmaurice@outlook.com
 
     This file is part of dnSpy
 
@@ -30,6 +31,7 @@ namespace dnSpy.Debugger.Breakpoints.Code.CondChecker {
 		readonly Lazy<DbgCodeBreakpointHitCountChecker> dbgCodeBreakpointHitCountChecker;
 		readonly Lazy<DbgCodeBreakpointConditionChecker> dbgCodeBreakpointConditionChecker;
 		readonly Lazy<DbgCodeBreakpointTraceMessagePrinter> dbgCodeBreakpointTraceMessagePrinter;
+		readonly BreakpointDependencyTracker dependencyTracker = new BreakpointDependencyTracker();
 
 		[ImportingConstructor]
 		BreakpointBreakChecker(Lazy<DbgCodeBreakpointHitCountService2> dbgCodeBreakpointHitCountService, Lazy<DbgCodeBreakpointFilterChecker> dbgCodeBreakpointFilterChecker, Lazy<DbgCodeBreakpointHitCountChecker> dbgCodeBreakpointHitCountChecker, Lazy<DbgCodeBreakpointConditionChecker> dbgCodeBreakpointConditionChecker, Lazy<DbgCodeBreakpointTraceMessagePrinter> dbgCodeBreakpointTraceMessagePrinter) {
@@ -40,16 +42,30 @@ namespace dnSpy.Debugger.Breakpoints.Code.CondChecker {
 			this.dbgCodeBreakpointTraceMessagePrinter = dbgCodeBreakpointTraceMessagePrinter;
 		}
 
-		void IDbgManagerStartListener.OnStart(DbgManager dbgManager) => dbgManager.MessageBoundBreakpoint += DbgManager_MessageBoundBreakpoint;
-
-		void DbgManager_MessageBoundBreakpoint(object? sender, DbgMessageBoundBreakpointEventArgs e) {
-			bool pause = ShouldBreak(e.BoundBreakpoint, e.Thread);
-			e.Pause = pause;
-			if (pause && e.BoundBreakpoint.Breakpoint.IsOneShot)
-				e.BoundBreakpoint.Breakpoint.Remove();
+		void IDbgManagerStartListener.OnStart(DbgManager dbgManager) {
+			dbgManager.MessageBoundBreakpoint += DbgManager_MessageBoundBreakpoint;
+			dbgManager.IsDebuggingChanged += DbgManager_IsDebuggingChanged;
 		}
 
-		bool ShouldBreak(DbgBoundCodeBreakpoint boundBreakpoint, DbgThread? thread) {
+		// Dependent breakpoints wait for their breakpoint again in each debug session
+		void DbgManager_IsDebuggingChanged(object? sender, EventArgs e) {
+			if (((DbgManager)sender!).IsDebugging)
+				dependencyTracker.Clear();
+		}
+
+		void DbgManager_MessageBoundBreakpoint(object? sender, DbgMessageBoundBreakpointEventArgs e) {
+			bool pause = ShouldBreak(e.BoundBreakpoint, e.Thread, out bool wasHit);
+			e.Pause = pause;
+			var bp = e.BoundBreakpoint.Breakpoint;
+			if (bp.IsClosed)
+				return;
+			if ((pause && bp.IsOneShot) || (wasHit && bp.Settings.RemoveOnceHit))
+				bp.Remove();
+		}
+
+		// wasHit: the breakpoint's filter, condition and hit count passed, so it breaks or prints its trace message
+		bool ShouldBreak(DbgBoundCodeBreakpoint boundBreakpoint, DbgThread? thread, out bool wasHit) {
+			wasHit = false;
 			if (thread is null)
 				return false;
 			var bp = (DbgCodeBreakpointImpl)boundBreakpoint.Breakpoint;
@@ -58,6 +74,9 @@ namespace dnSpy.Debugger.Breakpoints.Code.CondChecker {
 
 			var settings = bp.Settings;
 			if (!settings.IsEnabled)
+				return false;
+
+			if (!dependencyTracker.IsArmed(settings.DependsOnLabel))
 				return false;
 
 			if (!bp.RaiseHitCheck(boundBreakpoint, thread))
@@ -96,6 +115,9 @@ namespace dnSpy.Debugger.Breakpoints.Code.CondChecker {
 				if (!checkRes.ShouldBreak)
 					return false;
 			}
+
+			wasHit = true;
+			dependencyTracker.OnHit(settings.Labels);
 
 			bool shouldBreak;
 			if (settings.Trace is DbgCodeBreakpointTrace trace) {

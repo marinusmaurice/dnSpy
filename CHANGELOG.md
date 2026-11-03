@@ -7,6 +7,24 @@ What changed in each release of this fork, newest first. The release workflow pu
 
 Each section starts with a short summary, then **New Features** (new things you can do), **Enhancements** (existing things that work better) and **Bug Fixes**, with a link to the commit for each item. Technical details are in [All changes in detail](docs/CHANGES.md#all-changes-in-detail) and in [docs/MODERNIZATION_PLAN.md](docs/MODERNIZATION_PLAN.md).
 
+## 7.22.0.0
+
+Breakpoints that wait for another breakpoint or remove themselves, PDBs of decompiled code, beta versions in the update check, and a better assembly diff. Also has everything in 7.21.1.0 and earlier.
+
+### New Features
+
+- Dependent breakpoints: a breakpoint's settings (Breakpoints window → Settings...) have **"Only when a breakpoint with this label was hit"**. Give another breakpoint that label (Edit Labels) and this one is only checked after that one was hit in the current debug session, eg. to stop in a method only after a certain path ran.
+- **"Remove the breakpoint once it's hit"**: a one-time breakpoint or tracepoint that deletes itself after it breaks or prints its message.
+- `dnSpy.Console --pdb -o <dir> file.dll` writes a portable PDB for an assembly with its decompiled C# (ILSpy 11) code embedded as source, so you can debug a third-party DLL in Visual Studio with the decompiled code. The DLL needs a debug directory entry (it was built with debug information) for Visual Studio to match the PDB. Not tried in Visual Studio's debugger yet.
+- Updates: **Include beta versions** (Options → Environment → General, next to the update check) also offers pre-releases (`v7.x.y.z-beta.N`).
+
+### Enhancements
+
+- Assembly diff: a method that was renamed *and* changed is shown as one renamed, changed method (`// body // renamed from ...`) instead of a removed and an added one, when the two methods' code is mostly the same.
+- Debug history: the first stop of a debug session has its locals too. It used to go over the time limit while dnSpy loaded things for the first time, and was recorded without values.
+
+The new texts are in English only.
+
 ## 7.21.1.0
 
 Export to Project creates `.resx` files for WinForms forms and other resources again. Also has everything in 7.21.0.0 and earlier.

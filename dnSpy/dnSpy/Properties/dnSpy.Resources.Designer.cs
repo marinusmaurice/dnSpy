@@ -3693,6 +3693,15 @@ namespace dnSpy.Properties {
         }
         
         /// <summary>
+        ///   Looks up a localized string similar to Include _beta versions.
+        /// </summary>
+        public static string Update_IncludePrereleases {
+            get {
+                return ResourceManager.GetString("Update_IncludePrereleases", resourceCulture);
+            }
+        }
+        
+        /// <summary>
         ///   Looks up a localized string similar to Check for _updates at startup (once a day).
         /// </summary>
         public static string Update_CheckAtStartup {

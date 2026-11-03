@@ -1,5 +1,6 @@
 /*
     Copyright (C) 2014-2019 de4dot@gmail.com
+    Copyright (C) 2026- marinusmaurice@outlook.com
 
     This file is part of dnSpy
 
@@ -36,5 +37,10 @@ namespace dnSpy.Contracts.Decompiler {
 		/// Decompiles selected methods, the other ones have empty bodies, data is a <see cref="DecompileTypeMethods"/>
 		/// </summary>
 		TypeMethods,
+
+		/// <summary>
+		/// Writes a portable PDB with the decompiled code as source, data is a <see cref="GeneratePortablePdb"/> instance
+		/// </summary>
+		PortablePdb,
 	}
 }

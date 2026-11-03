@@ -189,6 +189,7 @@ namespace dnSpy_Console {
 		bool json;
 		bool list;
 		bool protection;
+		bool pdb;
 		string? patchCreateFile;
 		string? patchApplyFile;
 		Guid projectGuid = Guid.NewGuid();
@@ -376,6 +377,7 @@ namespace dnSpy_Console {
 			new UsageInfo("--diff-code", null, dnSpy_Console_Resources.CmdLineDescription_DiffCode),
 			new UsageInfo("--list", null, dnSpy_Console_Resources.CmdLineDescription_List),
 			new UsageInfo("--protection", null, dnSpy_Console_Resources.CmdLineDescription_Protection),
+			new UsageInfo("--pdb", null, dnSpy_Console_Resources.CmdLineDescription_Pdb),
 			new UsageInfo("--json", null, dnSpy_Console_Resources.CmdLineDescription_Json),
 			new UsageInfo("--patch-create", dnSpy_Console_Resources.CmdLinePatchFile, dnSpy_Console_Resources.CmdLineDescription_PatchCreate),
 			new UsageInfo("--patch-apply", dnSpy_Console_Resources.CmdLinePatchFile, dnSpy_Console_Resources.CmdLineDescription_PatchApply),
@@ -482,6 +484,7 @@ namespace dnSpy_Console {
 			"json",
 			"list",
 			"protection",
+			"pdb",
 			"patch-create",
 			"patch-apply",
 			"batch",
@@ -677,6 +680,10 @@ namespace dnSpy_Console {
 						protection = true;
 						break;
 
+					case "--pdb":
+						pdb = true;
+						break;
+
 					case "--patch-create":
 					case "--patch-apply":
 						if (next is null)
@@ -808,6 +815,13 @@ namespace dnSpy_Console {
 				else
 					AssemblyListWriter.WriteText(Console.Out, modules, decompilationContext.CancellationToken);
 			}
+			else if (pdb) {
+				if (files.Count == 0)
+					throw new ErrorException(dnSpy_Console_Resources.PdbNeedsFiles);
+				if (string2.IsNullOrEmpty(outputDir))
+					throw new ErrorException(dnSpy_Console_Resources.PdbNeedsOutputDir);
+				GeneratePdbs(files.Select(a => a.Module).ToArray(), outputDir);
+			}
 			else if (protection) {
 				if (files.Count == 0)
 					throw new ErrorException(dnSpy_Console_Resources.ProtectionNeedsFiles);
@@ -868,6 +882,33 @@ namespace dnSpy_Console {
 					options.SolutionFilename = slnName;
 				var creator = new MSBuildProjectCreator(options);
 				creator.Create();
+			}
+		}
+
+		// Writes <outputDir>\<file name>.pdb for each module, with the decompiled code (C# (ILSpy 11), the only language
+		// that can write PDBs, if -l isn't one that can) embedded as source
+		void GeneratePdbs(ModuleDef[] modules, string outputDir) {
+			var lang = GetLanguageOrNull() is IDecompiler l && l.CanDecompile(DecompilationType.PortablePdb) ? l :
+				AllLanguages.FirstOrDefault(a => a.CanDecompile(DecompilationType.PortablePdb)) ?? throw new ErrorException(dnSpy_Console_Resources.PdbNoLanguage);
+			Directory.CreateDirectory(outputDir);
+			foreach (var module in modules) {
+				var pdbFile = Path.Combine(outputDir, Path.GetFileNameWithoutExtension(module.Location) + ".pdb");
+				var tempFile = pdbFile + ".tmp";
+				GeneratePortablePdb info;
+				using (var stream = File.Create(tempFile)) {
+					info = new GeneratePortablePdb(module, stream, decompilationContext);
+					lang.Decompile(DecompilationType.PortablePdb, info);
+				}
+				if (info.ErrorMessage is not null) {
+					File.Delete(tempFile);
+					Console.WriteLine("! {0}: {1}", module.Location, info.ErrorMessage);
+					errors++;
+					continue;
+				}
+				if (File.Exists(pdbFile))
+					File.Delete(pdbFile);
+				File.Move(tempFile, pdbFile);
+				Console.WriteLine(dnSpy_Console_Resources.PdbCreated, pdbFile);
 			}
 		}
 

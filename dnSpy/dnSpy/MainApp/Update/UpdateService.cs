@@ -68,6 +68,8 @@ namespace dnSpy.MainApp.Update {
 	sealed class UpdateService {
 		public const string ReleasesUrl = "https://github.com/marinusmaurice/dnSpy/releases";
 		const string LatestReleaseApiUrl = "https://api.github.com/repos/marinusmaurice/dnSpy/releases/latest";
+		// Newest first; /releases/latest skips pre-releases
+		const string ReleasesApiUrl = "https://api.github.com/repos/marinusmaurice/dnSpy/releases?per_page=30";
 		static readonly HttpClient httpClient = CreateHttpClient();
 
 		readonly IAppWindow appWindow;
@@ -150,15 +152,24 @@ namespace dnSpy.MainApp.Update {
 		public static string FormatVersion(Version v) => v.ToString();
 
 		async Task<ReleaseInfo?> GetLatestReleaseAsync(CancellationToken cancellationToken) {
-			using (var response = await httpClient.GetAsync(LatestReleaseApiUrl, cancellationToken)) {
+			bool includePrereleases = appSettings.IncludePrereleases;
+			using (var response = await httpClient.GetAsync(includePrereleases ? ReleasesApiUrl : LatestReleaseApiUrl, cancellationToken)) {
 				if (response.StatusCode == System.Net.HttpStatusCode.NotFound)
 					return null;
 				response.EnsureSuccessStatusCode();
 				var json = await response.Content.ReadAsStringAsync();
 				using (var doc = JsonDocument.Parse(json)) {
 					var root = doc.RootElement;
+					if (includePrereleases) {
+						var releases = root.EnumerateArray().ToList();
+						int index = ReleaseSelector.Select(releases.Select(a => (GetString(a, "tag_name"), GetBool(a, "draft"), GetBool(a, "prerelease"))).ToList(), includePrereleases: true);
+						if (index < 0)
+							return null;
+						root = releases[index];
+					}
 					var tag = GetString(root, "tag_name");
-					if (!Version.TryParse(tag.TrimStart('v', 'V'), out var version))
+					// A beta's version is its release's version, eg. 7.22.0.0 for v7.22.0.0-beta.1
+					if (!ReleaseSelector.TryParseTag(tag, out var version, out _))
 						return null;
 					string? assetUrl = null, sha256 = null;
 					long size = 0;
@@ -176,6 +187,9 @@ namespace dnSpy.MainApp.Update {
 				}
 			}
 		}
+
+		static bool GetBool(JsonElement element, string name) =>
+			element.TryGetProperty(name, out var value) && value.ValueKind == JsonValueKind.True;
 
 		static string GetString(JsonElement element, string name) =>
 			element.TryGetProperty(name, out var value) && value.ValueKind == JsonValueKind.String ? value.GetString() ?? string.Empty : string.Empty;

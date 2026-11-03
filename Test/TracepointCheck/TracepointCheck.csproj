@@ -5,7 +5,8 @@
 
   <!--
     Tracepoint message test: compiles dnSpy.Debugger's tracepoint message parser (it doesn't use WPF or debugger objects)
-    and checks the keywords ($HITCOUNT, $TICK, $TIME and the older ones), escapes and {expressions}.
+    and checks the keywords ($HITCOUNT, $TICK, $TIME and the older ones), escapes and {expressions}, and the
+    dependent breakpoint tracker (only check a breakpoint after a breakpoint with a label was hit).
     check.ps1 runs it, see ../DecompilerStress/README.md.
   -->
   <PropertyGroup>
@@ -18,6 +19,7 @@
   <ItemGroup>
     <Compile Include="..\..\Extensions\dnSpy.Debugger\dnSpy.Debugger\Breakpoints\Code\CondChecker\ParsedTracepointMessage.cs" Link="CondChecker\ParsedTracepointMessage.cs" />
     <Compile Include="..\..\Extensions\dnSpy.Debugger\dnSpy.Debugger\Breakpoints\Code\CondChecker\TracepointMessageParser.cs" Link="CondChecker\TracepointMessageParser.cs" />
+    <Compile Include="..\..\Extensions\dnSpy.Debugger\dnSpy.Debugger\Breakpoints\Code\CondChecker\BreakpointDependencyTracker.cs" Link="CondChecker\BreakpointDependencyTracker.cs" />
     <None Include="..\..\Extensions\dnSpy.Debugger\dnSpy.Debugger\Dialogs\CodeBreakpoints\ShowCodeBreakpointSettingsVM.cs" Link="ShowCodeBreakpointSettingsVM.cs" CopyToOutputDirectory="PreserveNewest" />
   </ItemGroup>
 

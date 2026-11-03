@@ -1772,6 +1772,33 @@ namespace dnSpy.Debugger.Properties {
         }
         
         /// <summary>
+        ///   Looks up a localized string similar to Only when a breakpoint with this label was hit:.
+        /// </summary>
+        public static string EditBreakpointSettings_DependsOn {
+            get {
+                return ResourceManager.GetString("EditBreakpointSettings_DependsOn", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to The breakpoint is checked only after a breakpoint with this label (Edit Labels in the Breakpoints window) was hit in the current debug session.
+        /// </summary>
+        public static string EditBreakpointSettings_DependsOnToolTip {
+            get {
+                return ResourceManager.GetString("EditBreakpointSettings_DependsOnToolTip", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Remove the breakpoint once it's hit.
+        /// </summary>
+        public static string EditBreakpointSettings_RemoveOnceHit {
+            get {
+                return ResourceManager.GetString("EditBreakpointSettings_RemoveOnceHit", resourceCulture);
+            }
+        }
+        
+        /// <summary>
         ///   Looks up a localized string similar to Continue execution.
         /// </summary>
         public static string EditBreakpointSettings_TraceContinue {

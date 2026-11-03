@@ -1,5 +1,6 @@
 <!--
     Copyright (C) 2014-2019 de4dot@gmail.com
+    Copyright (C) 2026- marinusmaurice@outlook.com
 
     This file is part of dnSpy
 
@@ -44,6 +45,8 @@
                 <RowDefinition Height="Auto" />
                 <RowDefinition Height="Auto" />
                 <RowDefinition Height="Auto" />
+                <RowDefinition Height="Auto" />
+                <RowDefinition Height="Auto" />
             </Grid.RowDefinitions>
             <Grid.ColumnDefinitions>
                 <ColumnDefinition Width="Auto"/>
@@ -71,6 +74,11 @@
             <Button Grid.Row="3" Grid.Column="3" Margin="5 0 0 0" Style="{StaticResource {x:Static ToolBar.ButtonStyleKey}}" ToolTipService.ShowOnDisabled="True" Command="{Binding TracepointMessageHelpCommand}" ToolTip="{x:Static p:dnSpy_Debugger_Resources.HelpToolTip}">
                 <img:DsImage ImageReference="{x:Static img:DsImages.StatusHelp}"/>
             </Button>
+
+            <CheckBox Grid.Row="4" Grid.Column="0" IsChecked="{Binding EnableDependsOn}" Margin="0 5 0 0" Content="{x:Static p:dnSpy_Debugger_Resources.EditBreakpointSettings_DependsOn}" ToolTip="{x:Static p:dnSpy_Debugger_Resources.EditBreakpointSettings_DependsOnToolTip}" />
+            <ComboBox Grid.Row="4" Grid.Column="1" Grid.ColumnSpan="2" IsEnabled="{Binding EnableDependsOn}" Margin="5 5 0 0" IsEditable="True" ItemsSource="{Binding KnownLabels}" Text="{Binding DependsOn_Text, UpdateSourceTrigger=PropertyChanged}" ToolTip="{x:Static p:dnSpy_Debugger_Resources.EditBreakpointSettings_DependsOnToolTip}" />
+
+            <CheckBox Grid.Row="5" Grid.Column="0" Grid.ColumnSpan="3" IsChecked="{Binding RemoveOnceHit}" Margin="0 5 0 0" Content="{x:Static p:dnSpy_Debugger_Resources.EditBreakpointSettings_RemoveOnceHit}" />
         </Grid>
 
         <Grid Grid.Row="1" Margin="5">

@@ -1,4 +1,6 @@
 /*
+    Copyright (C) 2026- marinusmaurice@outlook.com
+
     This file is part of dnSpy
 
     dnSpy is free software: you can redistribute it and/or modify
@@ -78,6 +80,9 @@ namespace dnSpy.Decompiler.ILSpyModern.Core {
 		/// <summary>
 		/// Size of the PE image copy that <see cref="File"/> holds
 		/// </summary>
+		/// <summary>true if the module was written to memory (with dnSpy's edits), false if it's the file on disk</summary>
+		public bool IsInMemory => tokenToDef is not null;
+
 		public long ImageSize => File is PEFile peFile ? peFile.Reader.GetEntireImage().Length : 0;
 
 		/// <summary>

@@ -52,6 +52,25 @@ namespace DiffCases {
 		public int Negate(int a) => -a;
 		public int Last => lastResult;
 #endif
+
+		// Renamed and changed method: similar code under another name
+#if V2
+		public int Clamp(int value, int max) {
+			if (value > max)
+				return max;
+			if (value < 0)
+				return -1;
+			return value;
+		}
+#else
+		public int Limit(int value, int max) {
+			if (value > max)
+				return max;
+			if (value < 0)
+				return 0;
+			return value;
+		}
+#endif
 	}
 
 	// Renamed type: the members use the type's own name, which doesn't count

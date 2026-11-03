@@ -1,5 +1,6 @@
 /*
     Copyright (C) 2014-2019 de4dot@gmail.com
+    Copyright (C) 2026- marinusmaurice@outlook.com
 
     This file is part of dnSpy
 
@@ -53,6 +54,8 @@ namespace dnSpy.Debugger.Breakpoints.Code {
 					Filter = LoadFilter(bpSect.TryGetSection("Filter")),
 					Trace = LoadTrace(bpSect.TryGetSection("Trace")),
 					Labels = new ReadOnlyCollection<string>(LoadLabels(bpSect)),
+					DependsOnLabel = bpSect.Attribute<string>("DependsOnLabel"),
+					RemoveOnceHit = bpSect.Attribute<bool?>("RemoveOnceHit") ?? false,
 				};
 				settings.Add(new DbgCodeBreakpointInfo(location, bpSettings));
 			}
@@ -123,6 +126,10 @@ namespace dnSpy.Debugger.Breakpoints.Code {
 					Save(bpSect.CreateSection("Trace"), bpSettings.Trace.Value);
 				if (bpSettings.Labels is not null && bpSettings.Labels.Count != 0)
 					SaveLabels(bpSect, bpSettings.Labels.ToArray());
+				if (!string.IsNullOrEmpty(bpSettings.DependsOnLabel))
+					bpSect.Attribute("DependsOnLabel", bpSettings.DependsOnLabel);
+				if (bpSettings.RemoveOnceHit)
+					bpSect.Attribute("RemoveOnceHit", true);
 			}
 		}
 

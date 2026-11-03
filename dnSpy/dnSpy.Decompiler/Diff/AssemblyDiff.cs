@@ -436,6 +436,108 @@ namespace dnSpy.Decompiler.Diff {
 				members.Remove(removed);
 				members[members.IndexOf(added)] = new MemberDiff(DiffKind.Renamed, removed.Old, added.New, added.MemberKind, added.Name, null, removed.Name);
 			}
+			FindRenamedChangedMethods(members);
+		}
+
+		// Methods need this much of their code in common (instructions and operands) to be matched as renamed and changed
+		const double RenamedChangedMinSimilarity = 0.7;
+		// Smaller bodies (eg. a getter, `a / b` and `a * b`) say too little about which method is which
+		const int RenamedChangedMinInstructions = 8;
+		const int RenamedChangedMaxPairs = 10000;
+
+		// A removed and an added method with the same signature (except the name) whose code is similar were renamed
+		// and changed, if each one is the other's most similar method. The details say what changed.
+		static void FindRenamedChangedMethods(List<MemberDiff> members) {
+			var removed = members.Where(a => a.Kind == DiffKind.Removed && a.Old is MethodDef).ToList();
+			var added = members.Where(a => a.Kind == DiffKind.Added && a.New is MethodDef).ToList();
+			if (removed.Count == 0 || added.Count == 0)
+				return;
+			var addedBySignature = added.GroupBy(a => GetRenameSignature(a), StringComparer.Ordinal).ToDictionary(a => a.Key, a => a.ToList(), StringComparer.Ordinal);
+			var bodyLines = new Dictionary<MemberDiff, string[]>();
+			string[] GetLines(MemberDiff member) {
+				if (!bodyLines.TryGetValue(member, out var lines))
+					bodyLines[member] = lines = GetBodyLines((MethodDef)(member.Old ?? member.New)!);
+				return lines;
+			}
+
+			var candidates = new List<(MemberDiff removed, MemberDiff added, double similarity)>();
+			foreach (var group in removed.GroupBy(a => GetRenameSignature(a), StringComparer.Ordinal)) {
+				if (!addedBySignature.TryGetValue(group.Key, out var addedGroup) || group.Count() * addedGroup.Count > RenamedChangedMaxPairs)
+					continue;
+				foreach (var r in group) {
+					var rLines = GetLines(r);
+					if (rLines.Length < RenamedChangedMinInstructions)
+						continue;
+					foreach (var a in addedGroup) {
+						var aLines = GetLines(a);
+						if (aLines.Length < RenamedChangedMinInstructions)
+							continue;
+						var similarity = GetSimilarity(rLines, aLines);
+						if (similarity >= RenamedChangedMinSimilarity)
+							candidates.Add((r, a, similarity));
+					}
+				}
+			}
+
+			// Each one's most similar method; a tie isn't a match
+			var bestOfRemoved = GetBest(candidates, a => a.removed);
+			var bestOfAdded = GetBest(candidates, a => a.added);
+			foreach (var kv in bestOfRemoved) {
+				var r = kv.Key;
+				var a = kv.Value;
+				if (a is null || !bestOfAdded.TryGetValue(a, out var bestRemoved) || bestRemoved != r)
+					continue;
+				members.Remove(r);
+				var details = CompareMembers(r.Old!, a.New!);
+				members[members.IndexOf(a)] = new MemberDiff(DiffKind.Renamed, r.Old, a.New, a.MemberKind, a.Name, details, r.Name);
+			}
+		}
+
+		static Dictionary<MemberDiff, MemberDiff?> GetBest(List<(MemberDiff removed, MemberDiff added, double similarity)> candidates, Func<(MemberDiff removed, MemberDiff added, double similarity), MemberDiff> getKey) {
+			var result = new Dictionary<MemberDiff, MemberDiff?>();
+			foreach (var group in candidates.GroupBy(getKey)) {
+				var ordered = group.OrderByDescending(a => a.similarity).ToList();
+				bool tie = ordered.Count > 1 && ordered[1].similarity == ordered[0].similarity;
+				var best = ordered[0];
+				result[group.Key] = tie ? null : (getKey(best) == best.removed ? best.added : best.removed);
+			}
+			return result;
+		}
+
+		static string GetRenameSignature(MemberDiff member) {
+			var method = (MethodDef)(member.Old ?? member.New)!;
+			var nested = IsCompilerGenerated(method.DeclaringType) ? "nested " : string.Empty;
+			return nested + FullNameFactory.MethodFullName(null, string.Empty, method.MethodSig, null, null, null, null) +
+				"`" + (method.MethodSig?.GenParamCount ?? 0).ToString(CultureInfo.InvariantCulture) + (method.IsStatic ? " static" : string.Empty);
+		}
+
+		// The instructions with their operands (branch targets as instruction indexes), one per line
+		static string[] GetBodyLines(MethodDef method) {
+			// "<locals>|init|<instructions>" or "<locals>|<instructions>"
+			var body = GetBody(method);
+			int start = body.IndexOf('|');
+			if (start < 0)
+				return Array.Empty<string>();
+			if (string.CompareOrdinal(body, start, "|init|", 0, 6) == 0)
+				start += 5;
+			return body.Substring(start + 1).Split(new[] { '\n' }, StringSplitOptions.RemoveEmptyEntries);
+		}
+
+		// Dice coefficient of the two multisets of lines: 1 if they have the same lines, 0 if none are the same
+		internal static double GetSimilarity(string[] a, string[] b) {
+			if (a.Length == 0 && b.Length == 0)
+				return 1;
+			var counts = new Dictionary<string, int>(StringComparer.Ordinal);
+			foreach (var s in a)
+				counts[s] = counts.TryGetValue(s, out var c) ? c + 1 : 1;
+			int common = 0;
+			foreach (var s in b) {
+				if (counts.TryGetValue(s, out var c) && c > 0) {
+					counts[s] = c - 1;
+					common++;
+				}
+			}
+			return 2.0 * common / (a.Length + b.Length);
 		}
 
 		static string GetRenameFingerprint(MemberDiff member) {

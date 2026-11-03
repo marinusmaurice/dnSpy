@@ -46,6 +46,11 @@ namespace dnSpy.Debugger.History {
 		DbgManager? dbgManager;
 		// Debugger thread only
 		DbgHistoryStopReason lastReason;
+		// The first stop of a debug session pays one-time costs (JIT of the formatters, loading the method's debug info),
+		// which went over the time limit and left the first snapshot without values
+		volatile bool hasRecorded;
+		const int FirstStopMinTimeLimitMilliseconds = 2000;
+		const int FirstStopTimeLimitFactor = 10;
 
 		public DbgHistory History { get; }
 
@@ -79,8 +84,10 @@ namespace dnSpy.Debugger.History {
 
 		// A new debug session clears the history. It's kept after the last process exited so it can still be viewed.
 		void DbgManager_IsDebuggingChanged(object? sender, EventArgs e) {
-			if (dbgManager?.IsDebugging == true)
+			if (dbgManager?.IsDebugging == true) {
 				History.Clear();
+				hasRecorded = false;
+			}
 		}
 
 		// Continue and Step always continue the live process, so the view returns to the live stop
@@ -154,7 +161,7 @@ namespace dnSpy.Debugger.History {
 		DbgHistorySnapshot Record(DbgThread thread, DbgHistoryStopReason reason) {
 			var time = DateTime.Now;
 			var state = new RecordState {
-				TimeLimitMilliseconds = dbgHistorySettings.TimeLimitMilliseconds,
+				TimeLimitMilliseconds = GetTimeLimitMilliseconds(dbgHistorySettings.TimeLimitMilliseconds, isFirstStop: !hasRecorded),
 				ValuesLeft = dbgHistorySettings.MaxValues,
 				MaxChildren = dbgHistorySettings.MaxChildren,
 			};
@@ -198,8 +205,12 @@ namespace dnSpy.Debugger.History {
 					thread.Process.DbgManager.Close(state.ObjectsToClose);
 			}
 
+			hasRecorded = true;
 			return new DbgHistorySnapshot(time, reason, thread.Process.Id, thread.Process.Name, thread.Runtime.Name, thread.Id, thread.UIName, frames, framesTruncated, values, state.IsPartial, valuesFrameIndex);
 		}
+
+		internal static long GetTimeLimitMilliseconds(int timeLimitMilliseconds, bool isFirstStop) =>
+			isFirstStop ? Math.Max((long)timeLimitMilliseconds * FirstStopTimeLimitFactor, FirstStopMinTimeLimitMilliseconds) : timeLimitMilliseconds;
 
 		string FormatFrame(DbgLanguage language, DbgStackFrame frame) {
 			const DbgStackFrameFormatterOptions frameOptions = DbgStackFrameFormatterOptions.ModuleNames | DbgStackFrameFormatterOptions.ParameterTypes |

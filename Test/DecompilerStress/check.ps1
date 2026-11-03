@@ -15,6 +15,7 @@
 	  - patch export/import: a patch made from ../PatchCases and its edited version, applied to a newer version (../PatchCheck)
 	  - the tracepoint message keywords ($HITCOUNT, $TICK, $TIME, ...) (../TracepointCheck)
 	  - pinned and recent files in File -> Recent Files (../RecentFilesCheck)
+	  - which release the update check offers, with and without beta versions (../UpdateCheck)
 	  - Open from NuGet's package sources from NuGet.config, search and download over V3, V2 and folder feeds (../NuGetFeedCheck)
 	  - portable mode: where the settings and data go with a dnSpy.xml next to dnSpy.exe or in bin (../PortableCheck)
 	  - the assemblies in Android packages: XALZ (LZ4) compressed files and assembly stores, also .NET 9+ ones in ELF files (../AndroidPackageCheck)
@@ -264,7 +265,22 @@ try {
 	Write-Host '== Tracepoints'
 	$traceCheck = Invoke-Checked "run TracepointCheck" { dotnet run --project (Join-Path $PSScriptRoot '..\TracepointCheck\TracepointCheck.csproj') -c Release -v:q -nologo }
 	if (-not ($traceCheck -contains 'All tracepoint checks passed')) { Fail 'Tracepoints: checks failed'; $traceCheck | ForEach-Object { Write-Host "  $_" } }
-	else { Write-Host '  OK: tracepoint keywords ($HITCOUNT, $TICK, $TIME), escapes, expressions, help text' }
+	else { Write-Host '  OK: tracepoint keywords ($HITCOUNT, $TICK, $TIME), escapes, expressions, help text, dependent breakpoints' }
+
+	# Updates: the release tag parser and which release is offered, with and without betas (no network)
+	Write-Host '== Update check'
+	$updateCheck = Invoke-Checked "run UpdateCheck" { dotnet run --project (Join-Path $PSScriptRoot '..\UpdateCheck\UpdateCheck.csproj') -c Release -v:q -nologo }
+	if (-not ($updateCheck -contains 'All update checks passed')) { Fail 'Update check: checks failed'; $updateCheck | ForEach-Object { Write-Host "  $_" } }
+	else { Write-Host '  OK: release tags (-beta.N), newest release with and without betas, drafts skipped' }
+
+	# dnSpy.Console --pdb: a portable PDB (metadata signature BSJB) of the Export cases' Release build, from its decompiled code
+	Write-Host '== Generate PDB'
+	$pdbDir = Join-Path $work 'pdb'
+	$pdbOutput = Invoke-Checked "generate PDB" { & $Console --no-color --pdb -o $pdbDir (Join-Path $work 'cases-Release\ExportCases.dll') }
+	$pdbFile = Join-Path $pdbDir 'ExportCases.pdb'
+	if (-not (Test-Path $pdbFile)) { Fail 'Generate PDB: no PDB written'; $pdbOutput | ForEach-Object { Write-Host "  $_" } }
+	elseif ([Text.Encoding]::ASCII.GetString([IO.File]::ReadAllBytes($pdbFile), 0, 4) -ne 'BSJB') { Fail 'Generate PDB: not a portable PDB' }
+	else { Write-Host "  OK: portable PDB written ($((Get-Item $pdbFile).Length) bytes)" }
 
 	# Recent files: dnSpy's recent file list (pinning) compiled on its own
 	Write-Host '== Recent files'
@@ -348,6 +364,7 @@ try {
 		'~ type DiffCases.Calculator'
 		'    ~ method <>c::System.Int32 <SumOfSquares>b__4_0(System.Int32)  // body'
 		'    ~ method System.Int32 Add(System.Int32,System.Int32)  // body'
+		'    ~ method System.Int32 Clamp(System.Int32,System.Int32)  // body  // renamed from System.Int32 Limit(System.Int32,System.Int32)'
 		'    - method System.Int32 Divide(System.Int32,System.Int32)'
 		'    + method System.Int32 Multiply(System.Int32,System.Int32)'
 		'    ~ method System.Int32 Opposite(System.Int32)  // renamed from System.Int32 Negate(System.Int32)'

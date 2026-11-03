@@ -19,6 +19,7 @@
 */
 
 using System;
+using System.Collections.ObjectModel;
 using System.Text;
 using System.Timers;
 using System.Windows.Input;
@@ -141,6 +142,45 @@ namespace dnSpy.Debugger.Dialogs.CodeBreakpoints {
 		}
 		bool trace_Continue;
 
+		public bool EnableDependsOn {
+			get => enableDependsOn;
+			set {
+				if (enableDependsOn == value)
+					return;
+				enableDependsOn = value;
+				OnPropertyChanged(nameof(EnableDependsOn));
+			}
+		}
+		bool enableDependsOn;
+
+		public string? DependsOn_Text {
+			get => dependsOn_Text;
+			set {
+				if (dependsOn_Text == value)
+					return;
+				dependsOn_Text = value;
+				OnPropertyChanged(nameof(DependsOn_Text));
+			}
+		}
+		string? dependsOn_Text;
+
+		// The labels of the other breakpoints, for the depends on combo box
+		public string[] KnownLabels { get; }
+
+		public bool RemoveOnceHit {
+			get => removeOnceHit;
+			set {
+				if (removeOnceHit == value)
+					return;
+				removeOnceHit = value;
+				OnPropertyChanged(nameof(RemoveOnceHit));
+			}
+		}
+		bool removeOnceHit;
+
+		// Not edited here, but kept (GetSettings() used to lose them)
+		readonly ReadOnlyCollection<string> labels;
+
 		public bool IsEnabled {
 			get => isEnabled;
 			set {
@@ -156,7 +196,9 @@ namespace dnSpy.Debugger.Dialogs.CodeBreakpoints {
 		readonly Lazy<DbgFilterExpressionEvaluatorService> dbgFilterExpressionEvaluatorService;
 		readonly Action<string> showMessage;
 
-		public ShowCodeBreakpointSettingsVM(DbgCodeBreakpointSettings settings, UIDispatcher uiDispatcher, Lazy<DbgFilterExpressionEvaluatorService> dbgFilterExpressionEvaluatorService, Action<string> showMessage) {
+		public ShowCodeBreakpointSettingsVM(DbgCodeBreakpointSettings settings, UIDispatcher uiDispatcher, Lazy<DbgFilterExpressionEvaluatorService> dbgFilterExpressionEvaluatorService, Action<string> showMessage, string[]? knownLabels = null) {
+			KnownLabels = knownLabels ?? Array.Empty<string>();
+			labels = settings.Labels ?? new ReadOnlyCollection<string>(Array.Empty<string>());
 			this.uiDispatcher = uiDispatcher ?? throw new ArgumentNullException(nameof(uiDispatcher));
 			this.dbgFilterExpressionEvaluatorService = dbgFilterExpressionEvaluatorService ?? throw new ArgumentNullException(nameof(dbgFilterExpressionEvaluatorService));
 			this.showMessage = showMessage ?? throw new ArgumentNullException(nameof(showMessage));
@@ -172,6 +214,9 @@ namespace dnSpy.Debugger.Dialogs.CodeBreakpoints {
 			Initialize(settings.HitCount);
 			Initialize(settings.Filter);
 			Initialize(settings.Trace);
+			EnableDependsOn = !string.IsNullOrWhiteSpace(settings.DependsOnLabel);
+			DependsOn_Text = settings.DependsOnLabel ?? string.Empty;
+			RemoveOnceHit = settings.RemoveOnceHit;
 		}
 
 		void Initialize(DbgCodeBreakpointCondition? condition) {
@@ -230,6 +275,9 @@ namespace dnSpy.Debugger.Dialogs.CodeBreakpoints {
 			HitCount = GetHitCount(),
 			Filter = GetFilter(),
 			Trace = GetTrace(),
+			Labels = labels,
+			DependsOnLabel = EnableDependsOn && !string.IsNullOrWhiteSpace(DependsOn_Text) ? DependsOn_Text!.Trim() : null,
+			RemoveOnceHit = RemoveOnceHit,
 		};
 
 		DbgCodeBreakpointCondition? GetCondition() {

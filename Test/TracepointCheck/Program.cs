@@ -42,6 +42,21 @@ foreach (var w in words) {
 	var m = parser.Parse(w);
 	Check(m.Parts.Length == 1 && m.Parts[0].Kind != TracepointMessageKind.WriteText, $"help keyword {w} isn't parsed as one keyword");
 }
+// Dependent breakpoints: armed once a breakpoint with the label was hit, case and spaces ignored, cleared per session
+var deps = new BreakpointDependencyTracker();
+Check(deps.IsArmed(null) && deps.IsArmed("") && deps.IsArmed("  "), "no dependency is always armed");
+Check(!deps.IsArmed("login"), "not armed before the label was hit");
+deps.OnHit(new[] { "other", " " });
+Check(!deps.IsArmed("login"), "another label doesn't arm it");
+deps.OnHit(null);
+deps.OnHit(new[] { " Login " });
+Check(deps.IsArmed("login") && deps.IsArmed(" LOGIN"), "armed after a breakpoint with the label was hit");
+Check(deps.IsArmed("other"), "every label of the hit breakpoint counts");
+deps.Clear();
+Check(!deps.IsArmed("login"), "a new debug session clears it");
+var threads = System.Linq.Enumerable.Range(0, 8).Select(i => System.Threading.Tasks.Task.Run(() => { for (int j = 0; j < 1000; j++) { deps.OnHit(new[] { "t" + (j % 50) }); deps.IsArmed("t" + i); } })).ToArray();
+System.Threading.Tasks.Task.WaitAll(threads);
+Check(deps.IsArmed("t49"), "thread-safe");
 if (fails == 0)
 	Console.WriteLine("All tracepoint checks passed");
 return fails == 0 ? 0 : 1;

@@ -1,5 +1,6 @@
 /*
     Copyright (C) 2014-2019 de4dot@gmail.com
+    Copyright (C) 2026- marinusmaurice@outlook.com
 
     This file is part of dnSpy
 
@@ -167,6 +168,17 @@ namespace dnSpy.MainApp.Settings {
 		}
 		bool checkForUpdates;
 
+		public bool IncludePrereleases {
+			get => includePrereleases;
+			set {
+				if (includePrereleases != value) {
+					includePrereleases = value;
+					OnPropertyChanged(nameof(IncludePrereleases));
+				}
+			}
+		}
+		bool includePrereleases;
+
 		public GeneralAppSettingsPage(IThemeServiceImpl themeService, IWindowsExplorerIntegrationService windowsExplorerIntegrationService, IDocumentTabServiceSettings documentTabServiceSettings, DocumentTreeViewSettingsImpl documentTreeViewSettings, IDsDocumentServiceSettings documentServiceSettings, AppSettingsImpl appSettings, MessageBoxService messageBoxService) {
 			this.themeService = themeService ?? throw new ArgumentNullException(nameof(themeService));
 			this.windowsExplorerIntegrationService = windowsExplorerIntegrationService ?? throw new ArgumentNullException(nameof(windowsExplorerIntegrationService));
@@ -189,6 +201,7 @@ namespace dnSpy.MainApp.Settings {
 			DeserializeResources = documentTreeViewSettings.DeserializeResources;
 			UseMemoryMappedIO = documentServiceSettings.UseMemoryMappedIO;
 			CheckForUpdates = appSettings.CheckForUpdates;
+			IncludePrereleases = appSettings.IncludePrereleases;
 		}
 
 		public override string[]? GetSearchStrings() => ThemesVM.Select(a => a.Name).ToArray();
@@ -200,6 +213,7 @@ namespace dnSpy.MainApp.Settings {
 			windowsExplorerIntegrationService.WindowsExplorerIntegration = WindowsExplorerIntegration;
 			appSettings.AllowMoreThanOneInstance = AllowMoreThanOneInstance;
 			appSettings.CheckForUpdates = CheckForUpdates;
+			appSettings.IncludePrereleases = IncludePrereleases;
 			documentTabServiceSettings.DecompileFullType = DecompileFullType;
 			documentTabServiceSettings.RestoreTabs = RestoreTabs;
 			documentTreeViewSettings.DeserializeResources = DeserializeResources;

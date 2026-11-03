@@ -330,6 +330,21 @@
   <data name="CmdLineDescription_List" xml:space="preserve">
     <value>list the types and members of the assemblies with their visibility and metadata tokens: dnSpy.Console --list file.dll</value>
   </data>
+  <data name="CmdLineDescription_Pdb" xml:space="preserve">
+    <value>write a portable PDB with the decompiled C# code embedded as source for each file, to debug it in Visual Studio (the DLL needs a debug directory): dnSpy.Console --pdb -o C:\pdbs file.dll</value>
+  </data>
+  <data name="PdbNeedsFiles" xml:space="preserve">
+    <value>--pdb needs one or more files</value>
+  </data>
+  <data name="PdbNeedsOutputDir" xml:space="preserve">
+    <value>--pdb needs the output directory (-o), so a PDB next to the file isn't overwritten</value>
+  </data>
+  <data name="PdbNoLanguage" xml:space="preserve">
+    <value>No language can write PDBs</value>
+  </data>
+  <data name="PdbCreated" xml:space="preserve">
+    <value>PDB saved to {0}</value>
+  </data>
   <data name="CmdLineDescription_Protection" xml:space="preserve">
     <value>look for signs of obfuscators and packers (marker attributes, unreadable names, encrypted method bodies, embedded assemblies): dnSpy.Console --protection file.dll</value>
   </data>

@@ -59,7 +59,7 @@ Suggested first, in this order:
 - [ ] **S** Translate the 7.2.0.0 strings (Compare Assemblies, Compare with File..., the diff node, the Open from NuGet dialog, `dnSpy.Console --diff`/`--diff-code` help) in `dnSpy/dnSpy/Properties` and `dnSpy/dnSpy.Console/Properties`; they show in English for now.
 - [x] **S** Assembly diff: compare the resources too, and match renamed members (7.10.0.0: renamed types and members (same signature and code, one candidate) and resources by name, with the entries of `.resources` files; `Test/DiffCases` in `check.ps1`). Not matched yet: a renamed member whose code also changed, a type renamed together with its members.
 - [x] **S** Export to Project: WinForms forms got a raw `Form1.resources` file next to `Form1.cs` instead of `Form1.resx` under it (7.21.1.0: `.resx` files are written from the raw resource data without deserializing, images/icons/sounds as `Resources\` files; `Test/WinFormsResx` in `check.ps1`). Not tried in the WinForms designer.
-- [ ] **M** Generate a PDB from decompiled code, to debug third-party DLLs in Visual Studio.
+- [ ] **M** Generate a PDB from decompiled code, to debug third-party DLLs in Visual Studio. (7.22.0.0: `dnSpy.Console --pdb`; still to do: a menu command in dnSpy, and trying the PDB in Visual Studio's debugger.)
 - [ ] **M** ReadyToRun / NativeAOT viewer: show the precompiled native code next to the IL.
 - [x] **M** Single-file bundles: open a .NET 6+ single-file `.exe` and browse the DLLs inside (7.1.0.0; .NET Core 3.x to .NET 10 bundles, also compressed ones; references between the bundle's assemblies, eg. a self-contained app's runtime, resolve to the bundle's copies).
 - [x] **S–M** Xamarin/MAUI Android: unpack compressed `XALZ` assemblies from APKs (7.17.0.0: `.apk`/`.aab` open like a NuGet package; `XALZ` (LZ4) assemblies and .NET 6–8 assembly stores (format 1) with `assemblies.manifest`; `Test/AndroidPackageCheck` in `check.ps1`, not click-tested). .NET 9+ stores (format 2/3 in `libassemblies.<abi>.blob.so` / `libassembly-store.so`): 7.21.0.0, tested with a real .NET 10 MAUI app.
@@ -113,7 +113,8 @@ Suggested first, in this order:
 - [x] **S** Update checker based on GitHub releases (7.3.0.0: daily check and Help → Check for Updates, release notes, Update Now downloads the build's zip, checks its SHA-256, replaces the files after dnSpy exits and restarts it).
 - [ ] **S** Translate the 7.3.0.0 strings (update dialog, Check for Updates, the General page's update option) in `dnSpy/dnSpy/Properties`.
 - [ ] **S** Translate the strings of 7.5.0.0 and later (Debug History, command palette, side-by-side, patches, Detect Protection, Test Compile, pinned recent files, Android packages); they show in English for now.
-- [ ] **S** Updates: an option for prereleases (beta tags), and updating a dnSpy in a folder that needs admin rights (today it opens the release page).
+- [x] **S** Updates: an option for prereleases (beta tags) (7.22.0.0: Include beta versions; `Test/UpdateCheck`).
+- [ ] **S** Updates: updating a dnSpy in a folder that needs admin rights (today it opens the release page).
 
 ### Extensibility and scripting
 

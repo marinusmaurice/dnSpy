@@ -1,5 +1,6 @@
 /*
     Copyright (C) 2014-2019 de4dot@gmail.com
+    Copyright (C) 2026- marinusmaurice@outlook.com
 
     This file is part of dnSpy
 
@@ -18,6 +19,7 @@
 */
 
 using System;
+using System.Collections.Generic;
 using System.ComponentModel.Composition;
 using System.Linq;
 using dnSpy.Contracts.App;
@@ -46,7 +48,9 @@ namespace dnSpy.Debugger.Dialogs.CodeBreakpoints {
 
 		public override DbgCodeBreakpointSettings? Show(DbgCodeBreakpointSettings settings) {
 			var dlg = new ShowCodeBreakpointSettingsDlg();
-			using (var vm = new ShowCodeBreakpointSettingsVM(settings, uiDispatcher, dbgFilterExpressionEvaluatorService, s => messageBoxService.Show(s, ownerWindow: dlg))) {
+			var knownLabels = dbgCodeBreakpointsService.Value.Breakpoints.Where(a => !a.IsHidden).SelectMany(a => a.Settings.Labels ?? (IEnumerable<string>)Array.Empty<string>()).
+				Select(a => a.Trim()).Where(a => a.Length != 0).Distinct(StringComparer.OrdinalIgnoreCase).OrderBy(a => a, StringComparer.CurrentCultureIgnoreCase).ToArray();
+			using (var vm = new ShowCodeBreakpointSettingsVM(settings, uiDispatcher, dbgFilterExpressionEvaluatorService, s => messageBoxService.Show(s, ownerWindow: dlg), knownLabels)) {
 				dlg.DataContext = vm;
 				dlg.Owner = appWindow.MainWindow;
 				var res = dlg.ShowDialog();
@@ -63,7 +67,13 @@ namespace dnSpy.Debugger.Dialogs.CodeBreakpoints {
 				return;
 			var newSettings = Show(breakpoints[0].Settings);
 			if (newSettings is not null)
-				dbgCodeBreakpointsService.Value.Modify(breakpoints.Select(a => new DbgCodeBreakpointAndSettings(a, newSettings.Value)).ToArray());
+				// Each breakpoint keeps its own labels (the dialog box doesn't edit them)
+				dbgCodeBreakpointsService.Value.Modify(breakpoints.Select(a => new DbgCodeBreakpointAndSettings(a, WithLabels(newSettings.Value, a.Settings.Labels))).ToArray());
+		}
+
+		static DbgCodeBreakpointSettings WithLabels(DbgCodeBreakpointSettings settings, System.Collections.ObjectModel.ReadOnlyCollection<string> labels) {
+			settings.Labels = labels;
+			return settings;
 		}
 	}
 }
