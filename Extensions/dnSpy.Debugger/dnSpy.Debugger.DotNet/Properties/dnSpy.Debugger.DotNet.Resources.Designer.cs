@@ -266,5 +266,176 @@ namespace dnSpy.Debugger.DotNet.Properties {
                 return ResourceManager.GetString("UnknownVariableOrObjectId", resourceCulture);
             }
         }
+        /// <summary>
+        ///   Looks up a localized string similar to _Async Tasks.
+        /// </summary>
+        public static string AsyncTasksCommand {
+            get {
+                return ResourceManager.GetString("AsyncTasksCommand", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Async Tasks.
+        /// </summary>
+        public static string Window_AsyncTasks {
+            get {
+                return ResourceManager.GetString("Window_AsyncTasks", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Refresh.
+        /// </summary>
+        public static string AsyncTasks_Refresh {
+            get {
+                return ResourceManager.GetString("AsyncTasks_Refresh", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Show completed tasks.
+        /// </summary>
+        public static string AsyncTasks_ShowCompleted {
+            get {
+                return ResourceManager.GetString("AsyncTasks_ShowCompleted", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to ID.
+        /// </summary>
+        public static string AsyncTasks_Column_Id {
+            get {
+                return ResourceManager.GetString("AsyncTasks_Column_Id", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Status.
+        /// </summary>
+        public static string AsyncTasks_Column_Status {
+            get {
+                return ResourceManager.GetString("AsyncTasks_Column_Status", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Async Method.
+        /// </summary>
+        public static string AsyncTasks_Column_Method {
+            get {
+                return ResourceManager.GetString("AsyncTasks_Column_Method", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to State.
+        /// </summary>
+        public static string AsyncTasks_Column_State {
+            get {
+                return ResourceManager.GetString("AsyncTasks_Column_State", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Type.
+        /// </summary>
+        public static string AsyncTasks_Column_Type {
+            get {
+                return ResourceManager.GetString("AsyncTasks_Column_Type", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Running.
+        /// </summary>
+        public static string AsyncTasks_State_Running {
+            get {
+                return ResourceManager.GetString("AsyncTasks_State_Running", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Finished.
+        /// </summary>
+        public static string AsyncTasks_State_Finished {
+            get {
+                return ResourceManager.GetString("AsyncTasks_State_Finished", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Waiting at await #{0}.
+        /// </summary>
+        public static string AsyncTasks_State_Awaiting {
+            get {
+                return ResourceManager.GetString("AsyncTasks_State_Awaiting", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Pause the program (Debug → Break All, or a breakpoint) to see its tasks..
+        /// </summary>
+        public static string AsyncTasks_Status_NotPaused {
+            get {
+                return ResourceManager.GetString("AsyncTasks_Status_NotPaused", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to The tasks of this program can't be read (only .NET Framework and .NET programs are supported)..
+        /// </summary>
+        public static string AsyncTasks_Status_NotSupported {
+            get {
+                return ResourceManager.GetString("AsyncTasks_Status_NotSupported", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to The heap can't be read right now. Step or break again, then click Refresh..
+        /// </summary>
+        public static string AsyncTasks_Status_HeapNotAvailable {
+            get {
+                return ResourceManager.GetString("AsyncTasks_Status_HeapNotAvailable", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Reading the tasks....
+        /// </summary>
+        public static string AsyncTasks_Status_Reading {
+            get {
+                return ResourceManager.GetString("AsyncTasks_Status_Reading", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to {0} tasks, {1} of them async methods..
+        /// </summary>
+        public static string AsyncTasks_Status_Count {
+            get {
+                return ResourceManager.GetString("AsyncTasks_Status_Count", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to {0} completed tasks are hidden..
+        /// </summary>
+        public static string AsyncTasks_Status_Hidden {
+            get {
+                return ResourceManager.GetString("AsyncTasks_Status_Hidden", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Only the first {0} tasks on the heap were read..
+        /// </summary>
+        public static string AsyncTasks_Status_Truncated {
+            get {
+                return ResourceManager.GetString("AsyncTasks_Status_Truncated", resourceCulture);
+            }
+        }
+        
     }
 }

@@ -1,5 +1,6 @@
 /*
     Copyright (C) 2014-2019 de4dot@gmail.com
+    Copyright (C) 2026- marinusmaurice@outlook.com
 
     This file is part of dnSpy
 
@@ -187,6 +188,63 @@ namespace dndbg.Engine {
 		public void EnableNGENPolicy(CorDebugNGENPolicy policy) {
 			if (obj is ICorDebugProcess5 p5) {
 				int hr = p5.EnableNGENPolicy(policy);
+			}
+		}
+
+		/// <summary>
+		/// Enumerates the objects on the GC heap, or returns null if it's not possible now
+		/// (no ICorDebugProcess5 or the GC structures aren't valid, eg. during a GC)
+		/// </summary>
+		public IEnumerable<COR_HEAPOBJECT>? EnumerateHeap() {
+			if (obj is not ICorDebugProcess5 p5)
+				return null;
+			try {
+				p5.GetGCHeapInformation(out var info);
+				if (info.areGCStructuresValid == 0)
+					return null;
+				p5.EnumerateHeap(out var heapEnum);
+				return heapEnum is null ? null : EnumerateHeap(heapEnum);
+			}
+			catch {
+				return null;
+			}
+		}
+
+		static IEnumerable<COR_HEAPOBJECT> EnumerateHeap(ICorDebugHeapEnum heapEnum) {
+			var objects = new COR_HEAPOBJECT[256];
+			for (;;) {
+				int hr = heapEnum.Next((uint)objects.Length, objects, out uint fetched);
+				if (hr < 0 || fetched == 0)
+					yield break;
+				for (int i = 0; i < (int)fetched && i < objects.Length; i++)
+					yield return objects[i];
+				if (fetched < objects.Length)
+					yield break;
+			}
+		}
+
+		/// <summary>
+		/// Gets the object at an address on the GC heap
+		/// </summary>
+		public CorValue? GetObject(ulong address) {
+			if (obj is not ICorDebugProcess5 p5)
+				return null;
+			int hr = p5.GetObject(address, out var value);
+			return hr < 0 || value is null ? null : new CorValue(value);
+		}
+
+		/// <summary>
+		/// Gets the type of a heap object (see <see cref="EnumerateHeap()"/>)
+		/// </summary>
+		public CorType? GetTypeForTypeID(COR_TYPEID id) {
+			if (obj is not ICorDebugProcess5 p5)
+				return null;
+			try {
+				p5.GetTypeForTypeID(id, out var type);
+				return type is null ? null : new CorType(type);
+			}
+			catch {
+				return null;
 			}
 		}
 

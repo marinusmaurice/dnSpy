@@ -1,5 +1,6 @@
 /*
     Copyright (C) 2014-2019 de4dot@gmail.com
+    Copyright (C) 2026- marinusmaurice@outlook.com
 
     This file is part of dnSpy
 
@@ -220,6 +221,11 @@ namespace dndbg.COM.CorDebug {
 		public IntPtr hStdInput;
 		public IntPtr hStdOutput;
 		public IntPtr hStdError;
+	}
+	struct COR_HEAPOBJECT {
+		public ulong address;
+		public ulong size;
+		public COR_TYPEID type;
 	}
 	struct COR_HEAPINFO {
 		public int areGCStructuresValid;
@@ -1180,7 +1186,8 @@ namespace dndbg.COM.CorDebug {
 		void Reset();
 		void Clone([MarshalAs(UnmanagedType.Interface)] out ICorDebugEnum ppEnum);
 		void GetCount(out uint pcelt);
-		void Next([In] uint celt, [MarshalAs(UnmanagedType.Interface)] [Out] ICorDebugHeapEnum objects, out uint pceltFetched);
+		[PreserveSig]
+		int Next([In] uint celt, [MarshalAs(UnmanagedType.LPArray, SizeParamIndex = 0)] [Out] COR_HEAPOBJECT[] objects, out uint pceltFetched);
 	}
 	[Guid("A2FA0F8E-D045-11DF-AC8E-CE2ADFD72085"), InterfaceType(ComInterfaceType.InterfaceIsIUnknown)]
 	[ComImport, SuppressUnmanagedCodeSecurity]

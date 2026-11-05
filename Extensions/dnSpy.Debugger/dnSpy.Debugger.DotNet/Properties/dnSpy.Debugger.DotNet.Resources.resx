@@ -186,4 +186,61 @@
   <data name="UnknownVariableOrObjectId" xml:space="preserve">
     <value>Unknown variable or object ID</value>
   </data>
+  <data name="AsyncTasksCommand" xml:space="preserve">
+    <value>_Async Tasks</value>
+  </data>
+  <data name="Window_AsyncTasks" xml:space="preserve">
+    <value>Async Tasks</value>
+  </data>
+  <data name="AsyncTasks_Refresh" xml:space="preserve">
+    <value>Refresh</value>
+  </data>
+  <data name="AsyncTasks_ShowCompleted" xml:space="preserve">
+    <value>Show completed tasks</value>
+  </data>
+  <data name="AsyncTasks_Column_Id" xml:space="preserve">
+    <value>ID</value>
+  </data>
+  <data name="AsyncTasks_Column_Status" xml:space="preserve">
+    <value>Status</value>
+  </data>
+  <data name="AsyncTasks_Column_Method" xml:space="preserve">
+    <value>Async Method</value>
+  </data>
+  <data name="AsyncTasks_Column_State" xml:space="preserve">
+    <value>State</value>
+  </data>
+  <data name="AsyncTasks_Column_Type" xml:space="preserve">
+    <value>Type</value>
+  </data>
+  <data name="AsyncTasks_State_Running" xml:space="preserve">
+    <value>Running</value>
+  </data>
+  <data name="AsyncTasks_State_Finished" xml:space="preserve">
+    <value>Finished</value>
+  </data>
+  <data name="AsyncTasks_State_Awaiting" xml:space="preserve">
+    <value>Waiting at await #{0}</value>
+  </data>
+  <data name="AsyncTasks_Status_NotPaused" xml:space="preserve">
+    <value>Pause the program (Debug → Break All, or a breakpoint) to see its tasks.</value>
+  </data>
+  <data name="AsyncTasks_Status_NotSupported" xml:space="preserve">
+    <value>The tasks of this program can't be read (only .NET Framework and .NET programs are supported).</value>
+  </data>
+  <data name="AsyncTasks_Status_HeapNotAvailable" xml:space="preserve">
+    <value>The heap can't be read right now. Step or break again, then click Refresh.</value>
+  </data>
+  <data name="AsyncTasks_Status_Reading" xml:space="preserve">
+    <value>Reading the tasks...</value>
+  </data>
+  <data name="AsyncTasks_Status_Count" xml:space="preserve">
+    <value>{0} tasks, {1} of them async methods.</value>
+  </data>
+  <data name="AsyncTasks_Status_Hidden" xml:space="preserve">
+    <value>{0} completed tasks are hidden.</value>
+  </data>
+  <data name="AsyncTasks_Status_Truncated" xml:space="preserve">
+    <value>Only the first {0} tasks on the heap were read.</value>
+  </data>
 </root>

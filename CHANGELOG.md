@@ -7,6 +7,14 @@ What changed in each release of this fork, newest first. The release workflow pu
 
 Each section starts with a short summary, then **New Features** (new things you can do), **Enhancements** (existing things that work better) and **Bug Fixes**, with a link to the commit for each item. Technical details are in [All changes in detail](docs/CHANGES.md#all-changes-in-detail) and in [docs/MODERNIZATION_PLAN.md](docs/MODERNIZATION_PLAN.md).
 
+## 7.24.0.0
+
+An Async Tasks window for the debugger. Also has everything in 7.23.0.0 and earlier.
+
+### New Features
+
+- **Async Tasks window** (**Debug → Windows → Async Tasks**): while the program is paused, lists its tasks with their status and, for async methods, the method and the `await` it's waiting at (eg. "Worker.FetchAsync – Waiting at await #2"). Double-click (or Enter) opens the async method. Completed tasks are hidden unless **Show completed tasks** is ticked. The tasks are found by walking the program's heap and only their fields are read, so no code runs in the debugged process and it also works at an unhandled exception. The async method and its `await` are shown for .NET Core 3.0 and later; for .NET Framework the window shows the tasks' status and type. At most 5000 tasks are read. Logical call stacks (which async method awaits which) aren't shown yet.
+
 ## 7.23.0.0
 
 Search the decompiled code, find usages per assembly, generate a PDB from the menu, and an exception helper when the debugger stops at an exception. Also has everything in 7.22.0.0 and earlier.

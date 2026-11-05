@@ -1,5 +1,6 @@
 /*
     Copyright (C) 2014-2019 de4dot@gmail.com
+    Copyright (C) 2026- marinusmaurice@outlook.com
 
     This file is part of dnSpy
 
@@ -39,7 +40,7 @@ using dnSpy.Debugger.DotNet.CorDebug.Impl.Evaluation.Hooks;
 using dnSpy.Debugger.DotNet.Metadata;
 
 namespace dnSpy.Debugger.DotNet.CorDebug.Impl.Evaluation {
-	sealed partial class DbgCorDebugInternalRuntimeImpl : DbgCorDebugInternalRuntime, IDbgDotNetRuntime, ICorDebugRuntime {
+	sealed partial class DbgCorDebugInternalRuntimeImpl : DbgCorDebugInternalRuntime, IDbgDotNetRuntime, IDbgDotNetHeapRuntime, ICorDebugRuntime {
 		public override DbgRuntime Runtime { get; }
 		public override DmdRuntime ReflectionRuntime { get; }
 		public override CorDebugRuntimeVersion Version { get; }
@@ -255,6 +256,12 @@ namespace dnSpy.Debugger.DotNet.CorDebug.Impl.Evaluation {
 		}
 
 		public DbgDotNetValue? LoadFieldAddress(DbgEvaluationInfo evalInfo, DbgDotNetValue? obj, DmdFieldInfo field) => null;
+
+		public DbgDotNetValue[]? GetHeapObjects(DbgEvaluationInfo evalInfo, DmdType type, int maxCount) {
+			if (Dispatcher.CheckAccess())
+				return engine.GetHeapObjects_CorDebug(type, maxCount);
+			return Dispatcher.TryInvokeRethrow(() => engine.GetHeapObjects_CorDebug(type, maxCount), out var result) ? result : null;
+		}
 
 		public DbgDotNetValueResult LoadField(DbgEvaluationInfo evalInfo, DbgDotNetValue? obj, DmdFieldInfo field) {
 			if (Dispatcher.CheckAccess())
