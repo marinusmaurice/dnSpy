@@ -75,7 +75,7 @@ Suggested first, in this order:
 - [ ] **L** Edit and Continue: edit a method while paused and keep running.
 - [ ] **M–L** Heap and memory analysis with ClrMD: objects by type/count/size, "who references this", open `.dmp` files offline.
 - [ ] **L** Remote debugging: another machine, Docker containers, WSL.
-- [ ] **M** Async Tasks window: logical call stacks across `await`s.
+- [ ] **L** Async Tasks window: logical call stacks across `await`s. (Looked at for 7.23.0.0, not done: needs either the runtime's task tracking (`Task.s_asyncDebuggingEnabled`, then `Task.s_currentActiveTasks`) switched on before the tasks are created, or a heap walk: `ICorDebugProcess5.EnumerateHeap` is declared in `dndbg/COM/CorDebug.cs` but nothing wraps it. Per task: the state machine type (the async method), `<>1__state` (which await), and `m_continuationObject` (the awaiting task, which gives the logical call stack). An engine service in the CorDebug extension, a way through the DotNet debugger layers, and a tool window.)
 - [x] **S** Exception helper popup: inner exceptions, "break when thrown" toggle, copy details. (7.23.0.0, click-tested: type, message, inner exceptions and call stack read from the fields, no code runs; the inner exceptions' stack traces aren't shown.)
 - [ ] **S** Offer to attach automatically when an app calls `Debugger.Launch()` (avoids the JIT dialog).
 - [ ] **M** Update the Unity/Mono debugger against current Unity and upstream mono/debugger-libs.
