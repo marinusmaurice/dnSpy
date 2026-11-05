@@ -1,5 +1,6 @@
 /*
     Copyright (C) 2014-2019 de4dot@gmail.com
+    Copyright (C) 2026- marinusmaurice@outlook.com
 
     This file is part of dnSpy
 
@@ -92,6 +93,11 @@ namespace dnSpy.Analyzer.TreeNodes {
 				AddNode(child);
 		}
 
-		protected override void OnCompleted() => completed();
+		protected override void OnCompleted() {
+			// The results were added while searching; now they're grouped by assembly (if there's more than one)
+			if (CompletedSuccessfully)
+				AssemblyGroupNode.GroupByAssembly(node);
+			completed();
+		}
 	}
 }

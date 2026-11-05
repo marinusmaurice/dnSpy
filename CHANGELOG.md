@@ -7,6 +7,20 @@ What changed in each release of this fork, newest first. The release workflow pu
 
 Each section starts with a short summary, then **New Features** (new things you can do), **Enhancements** (existing things that work better) and **Bug Fixes**, with a link to the commit for each item. Technical details are in [All changes in detail](docs/CHANGES.md#all-changes-in-detail) and in [docs/MODERNIZATION_PLAN.md](docs/MODERNIZATION_PLAN.md).
 
+## 7.23.0.0
+
+Search the decompiled code, find usages per assembly, generate a PDB from the menu, and an exception helper when the debugger stops at an exception. Also has everything in 7.22.0.0 and earlier.
+
+### New Features
+
+- **Search the decompiled code**: the Search window's **Search For** list has **Code (decompiled)**. Each type is decompiled with the current language and every matching line is a result (the line, and the type and member it's in); double-click opens that member. Plain text uses Match Case, Match Whole Words and Match Any Word as before; `/regex/` searches with a regular expression (eg. `/throw new \w+Exception/`). Decompiling big assemblies takes time, so **Selected Files** is faster than **All Files**; the search can be stopped. At most 100 results per type.
+- **Generate PDB...**: right-click an assembly or module in the assembly explorer (one or several) to write a portable PDB with its decompiled C# (ILSpy 11) code embedded as source, the same as `dnSpy.Console --pdb`. With one file, the PDB is saved next to the DLL by default, where debuggers look for it. Checked: the PDB's ID matches the DLL's debug directory entry, the decompiled sources are embedded, and the methods have line information. Not tried in Visual Studio's debugger yet.
+- **Exception helper**: when the debugger stops because of an exception (unhandled, or one you break on in Exception Settings), a window shows the exception's type, message and process, its inner exceptions (type and message) and the call stack, with **Break when this exception type is thrown** and **Copy Details**. It replaces the message box dnSpy showed for unhandled exceptions. The details are read from the exception's fields, so no code runs in the debugged process. The inner exceptions' own stack traces aren't shown.
+
+### Enhancements
+
+- Analyzer (Used By, Instantiated By, Exposed By, ...): when the results are in more than one assembly, they're grouped under a node per assembly with the number of results ("MyApp (1.0.0.0) – 3") once the search has finished. Up to 100 results, the groups are expanded.
+
 ## 7.22.0.0
 
 Breakpoints that wait for another breakpoint or remove themselves, PDBs of decompiled code, beta versions in the update check, and a better assembly diff. Also has everything in 7.21.1.0 and earlier.

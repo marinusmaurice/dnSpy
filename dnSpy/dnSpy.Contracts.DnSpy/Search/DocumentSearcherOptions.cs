@@ -1,5 +1,6 @@
 /*
     Copyright (C) 2014-2019 de4dot@gmail.com
+    Copyright (C) 2026- marinusmaurice@outlook.com
 
     This file is part of dnSpy
 
@@ -50,6 +51,11 @@ namespace dnSpy.Contracts.Search {
 		public bool SearchDecompiledData { get; set; }
 
 		/// <summary>
+		/// Searches the decompiled code of the types (each line), with the decompiler of the search results' context
+		/// </summary>
+		public bool SearchCode { get; set; }
+
+		/// <summary>
 		/// Constructor
 		/// </summary>
 		public DocumentSearcherOptions() {
@@ -73,6 +79,7 @@ namespace dnSpy.Contracts.Search {
 			other.SearchComparer = SearchComparer;
 			other.Filter = Filter;
 			other.SearchDecompiledData = SearchDecompiledData;
+			other.SearchCode = SearchCode;
 			return other;
 		}
 	}

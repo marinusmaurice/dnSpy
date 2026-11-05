@@ -1,5 +1,6 @@
 /*
     Copyright (C) 2014-2019 de4dot@gmail.com
+    Copyright (C) 2026- marinusmaurice@outlook.com
 
     This file is part of dnSpy
 
@@ -404,6 +405,10 @@ namespace dnSpy.Search {
 		}
 
 		void Search(IDsDocument ownerModule, string nsOwner, TypeDef type) {
+			if (options.SearchCode) {
+				SearchCode(ownerModule, type);
+				return;
+			}
 			CheckCustomAttributes(ownerModule, type, nsOwner);
 
 			var res = options.Filter.GetResult(type);
@@ -429,6 +434,61 @@ namespace dnSpy.Search {
 				Search(ownerModule, subType);
 			}
 		}
+
+		// Most results of one type: a common word could match most of a big type's lines
+		const int MaxCodeResultsPerType = 100;
+
+		// Decompiles the type (and its nested types) with the current language and adds a result for each matching
+		// line; the result opens the member the line is in
+		void SearchCode(IDsDocument ownerModule, TypeDef type) {
+			var res = options.Filter.GetResult(type);
+			if (res.FilterType == FilterType.Hide)
+				return;
+			var decompiler = options.Context.Decompiler;
+			var output = new LineDecompilerOutput();
+			var ctx = new DecompilationContext {
+				CancellationToken = options.CancellationToken,
+				GetDisableAssemblyLoad = () => options.DocumentTreeView.DocumentService.DisableAssemblyLoad(),
+				AsyncMethodBodyDecompilation = false,
+			};
+			try {
+				decompiler.Decompile(type, output, ctx);
+			}
+			catch (OperationCanceledException) {
+				throw;
+			}
+			catch (Exception) {
+				// A type the decompiler can't decompile: search the rest
+				return;
+			}
+			int count = 0;
+			foreach (var (text, member) in output.Lines) {
+				options.CancellationToken.ThrowIfCancellationRequested();
+				var line = text.Trim();
+				if (line.Length == 0 || !IsMatch(line, null))
+					continue;
+				var target = member ?? type;
+				options.OnMatch(new SearchResult {
+					Context = options.Context,
+					Object = target,
+					NameObject = new CodeLineSearchResult(line),
+					ObjectImageReference = GetImageReference(target),
+					LocationObject = new CodeMemberLocation(target),
+					LocationImageReference = options.DotNetImageService.GetImageReference(target.DeclaringType ?? type),
+					Document = ownerModule,
+				});
+				if (++count >= MaxCodeResultsPerType)
+					break;
+			}
+		}
+
+		ImageReference GetImageReference(IMemberDef member) => member switch {
+			MethodDef method => options.DotNetImageService.GetImageReference(method),
+			FieldDef field => options.DotNetImageService.GetImageReference(field),
+			PropertyDef property => options.DotNetImageService.GetImageReference(property),
+			EventDef evt => options.DotNetImageService.GetImageReference(evt),
+			_ => options.DotNetImageService.GetImageReference((TypeDef)member),
+		};
 
 		static string FixTypeName(string name) {
 			int i;
@@ -461,6 +521,11 @@ namespace dnSpy.Search {
 		}
 
 		void Search(IDsDocument ownerModule, TypeDef type) {
+			// Only a selected nested type (Search location: selected files); a top-level type's code has its nested types
+			if (options.SearchCode) {
+				SearchCode(ownerModule, type);
+				return;
+			}
 			CheckCustomAttributes(ownerModule, type, type.DeclaringType);
 
 			var res = options.Filter.GetResult(type);

@@ -2106,6 +2106,18 @@ Filter can be changed in Assembly Explorer options.</value>
   <data name="Protection_NodeName" xml:space="preserve">
     <value>Protection:</value>
   </data>
+  <data name="GeneratePdbCommand" xml:space="preserve">
+    <value>Generate PDB...</value>
+  </data>
+  <data name="GeneratePdbTitle" xml:space="preserve">
+    <value>Generate PDB</value>
+  </data>
+  <data name="GeneratePdbCreated" xml:space="preserve">
+    <value>Created {0}</value>
+  </data>
+  <data name="PdbFiles" xml:space="preserve">
+    <value>PDB Files</value>
+  </data>
   <data name="Protection_DetectCommand" xml:space="preserve">
     <value>Detect Protection</value>
   </data>
@@ -2222,5 +2234,11 @@ Filter can be changed in Assembly Explorer options.</value>
   </data>
   <data name="ShortCutKeyF1" xml:space="preserve">
     <value>F1</value>
+  </data>
+  <data name="SearchWindow_DecompiledCode" xml:space="preserve">
+    <value>Code (decompiled)</value>
+  </data>
+  <data name="SearchWindow_DecompiledCode_ToolTip" xml:space="preserve">
+    <value>Searches each line of the decompiled code (current language). Use /regex/ for a regular expression.</value>
   </data>
 </root>

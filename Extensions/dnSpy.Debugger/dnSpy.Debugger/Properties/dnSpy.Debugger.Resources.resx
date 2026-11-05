@@ -1686,4 +1686,28 @@ Are you sure you want to expand it?</value>
   <data name="DbgHistory_Column_StopCount" xml:space="preserve">
     <value>Stops</value>
   </data>
+  <data name="ExceptionHelper_Thrown" xml:space="preserve">
+    <value>Exception Thrown</value>
+  </data>
+  <data name="ExceptionHelper_Unhandled" xml:space="preserve">
+    <value>Exception Unhandled</value>
+  </data>
+  <data name="ExceptionHelper_BreakWhenThrown" xml:space="preserve">
+    <value>_Break when this exception type is thrown</value>
+  </data>
+  <data name="ExceptionHelper_CopyDetails" xml:space="preserve">
+    <value>_Copy Details</value>
+  </data>
+  <data name="ExceptionHelper_DetailsNotAvailable" xml:space="preserve">
+    <value>The inner exceptions and stack trace aren't available: {0}</value>
+  </data>
+  <data name="ExceptionHelper_NoThread" xml:space="preserve">
+    <value>the exception has no thread</value>
+  </data>
+  <data name="ExceptionHelper_NotAString" xml:space="preserve">
+    <value>ToString() didn't return a string</value>
+  </data>
+  <data name="ExceptionHelper_CallStack" xml:space="preserve">
+    <value>Call stack:</value>
+  </data>
 </root>

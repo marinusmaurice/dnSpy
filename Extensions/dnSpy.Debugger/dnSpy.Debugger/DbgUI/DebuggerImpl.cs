@@ -1,5 +1,6 @@
 /*
     Copyright (C) 2014-2019 de4dot@gmail.com
+    Copyright (C) 2026- marinusmaurice@outlook.com
 
     This file is part of dnSpy
 
@@ -424,24 +425,13 @@ namespace dnSpy.Debugger.DbgUI {
 		void DbgManager_MessageUserMessage(object? sender, DbgMessageUserMessageEventArgs e) =>
 			UI(() => ShowError_UI(e.Message));
 
+		// The exception helper (ExceptionHelperService) shows the exception once the process is paused
 		void DbgManager_MessageExceptionThrown(object? sender, DbgMessageExceptionThrownEventArgs e) {
-			if (!debuggerSettings.IgnoreUnhandledExceptions && e.Exception.IsUnhandled) {
+			if (!debuggerSettings.IgnoreUnhandledExceptions && e.Exception.IsUnhandled)
 				e.Pause = true;
-				UI(() => ShowUnhandledException_UI(e));
-			}
 		}
 
 		void UI(Action callback) => uiDispatcher.UI(callback);
-
-		void ShowUnhandledException_UI(DbgMessageExceptionThrownEventArgs exm) {
-			var sb = new StringBuilder();
-			sb.AppendLine(string.Format(dnSpy_Debugger_Resources.UnhandledExceptionMessage_ProcessName_ProcessId, exm.Exception.Process.Name, exm.Exception.Process.Id));
-			sb.AppendLine();
-			sb.AppendLine(string.Format(dnSpy_Debugger_Resources.ExceptionName, dbgExceptionFormatterService.Value.ToString(exm.Exception.Id)));
-			sb.AppendLine();
-			sb.AppendLine(string.Format(dnSpy_Debugger_Resources.ExceptionMessage, exm.Exception.Message ?? dnSpy_Debugger_Resources.ExceptionMessageIsNull));
-			ShowError_UI(sb.ToString());
-		}
 
 		void ActivateWindow_UI() {
 			NativeMethods.SetForegroundWindow(new WindowInteropHelper(appWindow.Value.MainWindow).Handle);

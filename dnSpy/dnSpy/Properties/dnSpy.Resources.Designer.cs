@@ -3495,6 +3495,42 @@ namespace dnSpy.Properties {
         }
         
         /// <summary>
+        ///   Looks up a localized string similar to Generate PDB....
+        /// </summary>
+        public static string GeneratePdbCommand {
+            get {
+                return ResourceManager.GetString("GeneratePdbCommand", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Created {0}.
+        /// </summary>
+        public static string GeneratePdbCreated {
+            get {
+                return ResourceManager.GetString("GeneratePdbCreated", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Generate PDB.
+        /// </summary>
+        public static string GeneratePdbTitle {
+            get {
+                return ResourceManager.GetString("GeneratePdbTitle", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to PDB Files.
+        /// </summary>
+        public static string PdbFiles {
+            get {
+                return ResourceManager.GetString("PdbFiles", resourceCulture);
+            }
+        }
+        
+        /// <summary>
         ///   Looks up a localized string similar to Detect Protection.
         /// </summary>
         public static string Protection_DetectCommand {
@@ -6362,6 +6398,23 @@ namespace dnSpy.Properties {
         public static string ShortCutKeyF1 {
             get {
                 return ResourceManager.GetString("ShortCutKeyF1", resourceCulture);
+            }
+        }
+        /// <summary>
+        ///   Looks up a localized string similar to Code (decompiled).
+        /// </summary>
+        public static string SearchWindow_DecompiledCode {
+            get {
+                return ResourceManager.GetString("SearchWindow_DecompiledCode", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Searches each line of the decompiled code (current language). Use /regex/ for a regular expression.
+        /// </summary>
+        public static string SearchWindow_DecompiledCode_ToolTip {
+            get {
+                return ResourceManager.GetString("SearchWindow_DecompiledCode_ToolTip", resourceCulture);
             }
         }
     }

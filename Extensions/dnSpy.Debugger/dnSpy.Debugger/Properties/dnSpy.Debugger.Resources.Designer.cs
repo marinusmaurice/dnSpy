@@ -4746,5 +4746,75 @@ namespace dnSpy.Debugger.Properties {
                 return ResourceManager.GetString("DbgHistory_Column_StopCount", resourceCulture);
             }
         }
+        /// <summary>
+        ///   Looks up a localized string similar to Exception Thrown.
+        /// </summary>
+        public static string ExceptionHelper_Thrown {
+            get {
+                return ResourceManager.GetString("ExceptionHelper_Thrown", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Exception Unhandled.
+        /// </summary>
+        public static string ExceptionHelper_Unhandled {
+            get {
+                return ResourceManager.GetString("ExceptionHelper_Unhandled", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to _Break when this exception type is thrown.
+        /// </summary>
+        public static string ExceptionHelper_BreakWhenThrown {
+            get {
+                return ResourceManager.GetString("ExceptionHelper_BreakWhenThrown", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to _Copy Details.
+        /// </summary>
+        public static string ExceptionHelper_CopyDetails {
+            get {
+                return ResourceManager.GetString("ExceptionHelper_CopyDetails", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to The inner exceptions and stack trace aren&apos;t available: {0}.
+        /// </summary>
+        public static string ExceptionHelper_DetailsNotAvailable {
+            get {
+                return ResourceManager.GetString("ExceptionHelper_DetailsNotAvailable", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to the exception has no thread.
+        /// </summary>
+        public static string ExceptionHelper_NoThread {
+            get {
+                return ResourceManager.GetString("ExceptionHelper_NoThread", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to ToString() didn&apos;t return a string.
+        /// </summary>
+        public static string ExceptionHelper_NotAString {
+            get {
+                return ResourceManager.GetString("ExceptionHelper_NotAString", resourceCulture);
+            }
+        }
+        /// <summary>
+        ///   Looks up a localized string similar to Call stack:.
+        /// </summary>
+        public static string ExceptionHelper_CallStack {
+            get {
+                return ResourceManager.GetString("ExceptionHelper_CallStack", resourceCulture);
+            }
+        }
     }
 }

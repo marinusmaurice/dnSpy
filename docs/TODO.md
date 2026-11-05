@@ -60,7 +60,7 @@ Suggested first, in this order:
 - [ ] **S** Translate the 7.2.0.0 strings (Compare Assemblies, Compare with File..., the diff node, the Open from NuGet dialog, `dnSpy.Console --diff`/`--diff-code` help) in `dnSpy/dnSpy/Properties` and `dnSpy/dnSpy.Console/Properties`; they show in English for now.
 - [x] **S** Assembly diff: compare the resources too, and match renamed members (7.10.0.0: renamed types and members (same signature and code, one candidate) and resources by name, with the entries of `.resources` files; `Test/DiffCases` in `check.ps1`). Not matched yet: a renamed member whose code also changed, a type renamed together with its members.
 - [x] **S** Export to Project: WinForms forms got a raw `Form1.resources` file next to `Form1.cs` instead of `Form1.resx` under it (7.21.1.0: `.resx` files are written from the raw resource data without deserializing, images/icons/sounds as `Resources\` files; `Test/WinFormsResx` in `check.ps1`). Not tried in the WinForms designer.
-- [ ] **M** Generate a PDB from decompiled code, to debug third-party DLLs in Visual Studio. (7.22.0.0: `dnSpy.Console --pdb`; still to do: a menu command in dnSpy, and trying the PDB in Visual Studio's debugger.)
+- [x] **M** Generate a PDB from decompiled code, to debug third-party DLLs in Visual Studio. (7.22.0.0: `dnSpy.Console --pdb`; 7.23.0.0: assembly explorer context menu → Generate PDB..., click-tested; the PDB's ID matches the DLL, sources embedded, sequence points. Still to do: trying the PDB in Visual Studio's debugger.)
 - [ ] **M** ReadyToRun / NativeAOT viewer: show the precompiled native code next to the IL.
 - [x] **M** Single-file bundles: open a .NET 6+ single-file `.exe` and browse the DLLs inside (7.1.0.0; .NET Core 3.x to .NET 10 bundles, also compressed ones; references between the bundle's assemblies, eg. a self-contained app's runtime, resolve to the bundle's copies).
 - [x] **S–M** Xamarin/MAUI Android: unpack compressed `XALZ` assemblies from APKs (7.17.0.0: `.apk`/`.aab` open like a NuGet package; `XALZ` (LZ4) assemblies and .NET 6–8 assembly stores (format 1) with `assemblies.manifest`; `Test/AndroidPackageCheck` in `check.ps1`, not click-tested). .NET 9+ stores (format 2/3 in `libassemblies.<abi>.blob.so` / `libassembly-store.so`): 7.21.0.0, tested with a real .NET 10 MAUI app.
@@ -76,7 +76,7 @@ Suggested first, in this order:
 - [ ] **M–L** Heap and memory analysis with ClrMD: objects by type/count/size, "who references this", open `.dmp` files offline.
 - [ ] **L** Remote debugging: another machine, Docker containers, WSL.
 - [ ] **M** Async Tasks window: logical call stacks across `await`s.
-- [ ] **S** Exception helper popup: inner exceptions, "break when thrown" toggle, copy details.
+- [x] **S** Exception helper popup: inner exceptions, "break when thrown" toggle, copy details. (7.23.0.0, click-tested: type, message, inner exceptions and call stack read from the fields, no code runs; the inner exceptions' stack traces aren't shown.)
 - [ ] **S** Offer to attach automatically when an app calls `Debugger.Launch()` (avoids the JIT dialog).
 - [ ] **M** Update the Unity/Mono debugger against current Unity and upstream mono/debugger-libs.
 
@@ -96,8 +96,8 @@ Suggested first, in this order:
 
 ### Search and navigation
 
-- [ ] **M** Regex and full-text search across decompiled code.
-- [ ] **S** Find usages: group by assembly, filter read/write, export.
+- [x] **M** Regex and full-text search across decompiled code. (7.23.0.0: Search window → Search For: Code (decompiled), `/regex/`, click-tested. Later: search in parallel, it's slow on big assemblies.)
+- [ ] **S** Find usages: group by assembly, filter read/write, export. (7.23.0.0: grouped by assembly, click-tested; still to do: filter read/write, export.)
 - [ ] **S** Bookmarks with notes, saved per assembly.
 - [ ] **M** Graph views: call graph, type hierarchy, dependencies.
 

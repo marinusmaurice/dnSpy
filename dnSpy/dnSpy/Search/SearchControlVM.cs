@@ -1,5 +1,6 @@
 /*
     Copyright (C) 2014-2019 de4dot@gmail.com
+    Copyright (C) 2026- marinusmaurice@outlook.com
 
     This file is part of dnSpy
 
@@ -165,6 +166,7 @@ namespace dnSpy.Search {
 			Add(SearchType.Member, dnSpy_Resources.SearchWindow_Member, DsImages.Property, dnSpy_Resources.SearchWindow_Member_Key, VisibleMembersFlags.MethodDef | VisibleMembersFlags.FieldDef | VisibleMembersFlags.PropertyDef | VisibleMembersFlags.EventDef);
 			Add(SearchType.Any, dnSpy_Resources.SearchWindow_AllAbove, DsImages.ClassPublic, dnSpy_Resources.SearchWindow_AllAbove_Key, VisibleMembersFlags.TreeViewAll | VisibleMembersFlags.ParamDef | VisibleMembersFlags.Local);
 			Add(SearchType.Literal, dnSpy_Resources.SearchWindow_Literal, DsImages.ConstantPublic, dnSpy_Resources.SearchWindow_Literal_Key, VisibleMembersFlags.MethodBody | VisibleMembersFlags.FieldDef | VisibleMembersFlags.ParamDef | VisibleMembersFlags.PropertyDef | VisibleMembersFlags.Resource | VisibleMembersFlags.ResourceElement | VisibleMembersFlags.Attributes);
+			Add(SearchType.DecompiledCode, dnSpy_Resources.SearchWindow_DecompiledCode, DsImages.Search, dnSpy_Resources.SearchWindow_DecompiledCode_ToolTip, VisibleMembersFlags.TypeDef);
 
 			UpdateSearchType();
 			searchSettings.PropertyChanged += SearchSettings_PropertyChanged;
@@ -192,6 +194,7 @@ namespace dnSpy.Search {
 					SearchComparer = CreateSearchComparer(),
 					Filter = new FlagsDocumentTreeNodeFilter(selectedSearchTypeVM.Flags),
 					SearchDecompiledData = SearchSettings.SearchDecompiledData,
+					SearchCode = selectedSearchTypeVM.SearchType == SearchType.DecompiledCode,
 				};
 				fileSearcher = fileSearcherProvider.Create(options, documentTreeView);
 				fileSearcher.SyntaxHighlight = SearchSettings.SyntaxHighlight;

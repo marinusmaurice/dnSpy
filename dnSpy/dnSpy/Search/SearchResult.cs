@@ -1,5 +1,6 @@
 /*
     Copyright (C) 2014-2019 de4dot@gmail.com
+    Copyright (C) 2026- marinusmaurice@outlook.com
 
     This file is part of dnSpy
 
@@ -188,6 +189,23 @@ namespace dnSpy.Search {
 
 			if (o is ResourceElementNode resElNode) {
 				output.WriteFilename(resElNode.Name);
+				return;
+			}
+
+			if (o is CodeLineSearchResult codeLine) {
+				output.Write(BoxedTextColor.Text, codeLine.Line);
+				return;
+			}
+
+			if (o is CodeMemberLocation codeLocation) {
+				var member = codeLocation.Member;
+				if (member is TypeDef type)
+					Context.Decompiler.WriteType(output, type, true);
+				else {
+					Context.Decompiler.WriteType(output, member.DeclaringType, true);
+					output.Write(BoxedTextColor.Operator, ".");
+					CreateUI(output, member, false);
+				}
 				return;
 			}
 
