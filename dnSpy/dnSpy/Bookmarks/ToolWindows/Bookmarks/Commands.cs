@@ -1,5 +1,6 @@
 /*
     Copyright (C) 2014-2019 de4dot@gmail.com
+    Copyright (C) 2026- marinusmaurice@outlook.com
 
     This file is part of dnSpy
 
@@ -126,6 +127,17 @@ namespace dnSpy.Bookmarks.ToolWindows.Bookmarks {
 		public override void Execute(BookmarksCtxMenuContext context) => context.Operations.EditLabels();
 		public override bool IsEnabled(BookmarksCtxMenuContext context) => context.Operations.CanEditLabels;
 		public override string? GetInputGestureText(BookmarksCtxMenuContext context) => string.Format(dnSpy_Resources.ShortCutKeyCtrl_DIGIT, "2");
+	}
+
+	[ExportMenuItem(Header = "res:EditNoteCommand", Group = MenuConstants.GROUP_CTX_BOOKMARKS_SETTINGS, Order = 20)]
+	sealed class EditNoteBookmarksCtxMenuCommand : BookmarksCtxMenuCommand {
+		[ImportingConstructor]
+		EditNoteBookmarksCtxMenuCommand(Lazy<IBookmarksContent> bookmarkesContent)
+			: base(bookmarkesContent) {
+		}
+
+		public override void Execute(BookmarksCtxMenuContext context) => context.Operations.EditNote();
+		public override bool IsEnabled(BookmarksCtxMenuContext context) => context.Operations.CanEditNote;
 	}
 
 	[ExportMenuItem(Header = "res:RemoveBookmarkCommand", InputGestureText = "res:ShortCutKeyDelete", Icon = DsImagesAttribute.Cancel, Group = MenuConstants.GROUP_CTX_BOOKMARKS_CMDS1, Order = 0)]

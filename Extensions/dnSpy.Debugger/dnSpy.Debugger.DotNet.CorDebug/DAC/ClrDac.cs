@@ -41,6 +41,24 @@ namespace dnSpy.Debugger.DotNet.CorDebug.DAC {
 		/// with this file name (generic instantiations included), or null if the heap can't be walked
 		/// </summary>
 		public virtual ulong[]? GetObjectsByType(uint token, string moduleFileName, int maxCount, CancellationToken cancellationToken) => null;
+
+		/// <summary>
+		/// The shortest chain of references from a GC root to the object at <paramref name="address"/>: the root's
+		/// object first, the object last. An empty array if no root references it, null if the heap can't be walked.
+		/// </summary>
+		public virtual ClrDacRootPathStep[]? GetRootPath(ulong address, CancellationToken cancellationToken) => null;
+	}
+
+	sealed class ClrDacRootPathStep {
+		public ulong Address { get; }
+		public string TypeName { get; }
+		/// <summary>How the previous object references this one (a field name, "[index]"), or for the first step the kind of root</summary>
+		public string Via { get; }
+		public ClrDacRootPathStep(ulong address, string typeName, string via) {
+			Address = address;
+			TypeName = typeName;
+			Via = via;
+		}
 	}
 
 	sealed class ClrDacHeapType {

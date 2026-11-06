@@ -6534,5 +6534,41 @@ namespace dnSpy.Properties {
             }
         }
         
+        /// <summary>
+        ///   Looks up a localized string similar to Note.
+        /// </summary>
+        public static string Column_Note {
+            get {
+                return ResourceManager.GetString("Column_Note", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Edit _Note....
+        /// </summary>
+        public static string EditNoteCommand {
+            get {
+                return ResourceManager.GetString("EditNoteCommand", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to _Note.
+        /// </summary>
+        public static string EditNoteMsgBoxLabel {
+            get {
+                return ResourceManager.GetString("EditNoteMsgBoxLabel", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Edit Note.
+        /// </summary>
+        public static string EditNoteTitle {
+            get {
+                return ResourceManager.GetString("EditNoteTitle", resourceCulture);
+            }
+        }
+        
     }
 }

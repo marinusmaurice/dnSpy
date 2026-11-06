@@ -199,6 +199,73 @@ namespace dnSpy.Debugger.DotNet.CorDebug.DAC {
 			return GetObjects(IsMatch, maxCount, cancellationToken);
 		}
 
+		// Breadth first from all roots, so the path is one of the shortest. Each object is visited once.
+		const int MaxVisitedObjects = 20_000_000;
+		public override ClrDacRootPathStep[]? GetRootPath(ulong address, CancellationToken cancellationToken) {
+			var heap = GetHeap();
+			if (heap is null || address == 0)
+				return null;
+			int pointerSize = IntPtr.Size;
+			try {
+				pointerSize = clrRuntime.DataTarget.DataReader.PointerSize;
+			}
+			catch (Exception ex) when (ex is ClrDiagnosticsException || ex is InvalidOperationException) {
+			}
+			var parents = new Dictionary<ulong, (ulong parent, string via)>();
+			var queue = new Queue<ulong>();
+			try {
+				foreach (var root in heap.EnumerateRoots()) {
+					var obj = root.Object;
+					if (obj.Address == 0 || parents.ContainsKey(obj.Address))
+						continue;
+					parents.Add(obj.Address, (0, root.RootKind.ToString()));
+					if (obj.Address == address)
+						return CreatePath(heap, parents, address);
+					queue.Enqueue(obj.Address);
+				}
+				int i = 0;
+				while (queue.Count > 0 && parents.Count < MaxVisitedObjects) {
+					if ((++i & 0xFFF) == 0)
+						cancellationToken.ThrowIfCancellationRequested();
+					var current = queue.Dequeue();
+					var obj = heap.GetObject(current);
+					if (!obj.IsValid)
+						continue;
+					foreach (var reference in obj.EnumerateReferencesWithFields(carefully: false, considerDependantHandles: true)) {
+						var child = reference.Object.Address;
+						if (child == 0 || parents.ContainsKey(child))
+							continue;
+						string via;
+						if (reference.IsDependentHandle)
+							via = "(dependent handle)";
+						else if (reference.IsArrayElement)
+							via = "[" + Math.Max(0, (reference.Offset - 2 * pointerSize) / pointerSize).ToString(System.Globalization.CultureInfo.InvariantCulture) + "]";
+						else
+							via = "." + (reference.Field?.Name ?? "?");
+						parents.Add(child, (current, via));
+						if (child == address)
+							return CreatePath(heap, parents, address);
+						queue.Enqueue(child);
+					}
+				}
+			}
+			catch (Exception ex) when (ex is ClrDiagnosticsException || ex is InvalidOperationException || ex is IOException) {
+				return null;
+			}
+			return Array.Empty<ClrDacRootPathStep>();
+		}
+
+		static ClrDacRootPathStep[] CreatePath(ClrHeap heap, Dictionary<ulong, (ulong parent, string via)> parents, ulong address) {
+			var steps = new List<ClrDacRootPathStep>();
+			for (ulong current = address; current != 0 && steps.Count < 10000;) {
+				var (parent, via) = parents[current];
+				steps.Add(new ClrDacRootPathStep(current, heap.GetObjectType(current)?.Name ?? "?", via));
+				current = parent;
+			}
+			steps.Reverse();
+			return steps.ToArray();
+		}
+
 		ulong[]? GetObjects(Func<ClrType, bool> isMatch, int maxCount, CancellationToken cancellationToken) {
 			var heap = GetHeap();
 			if (heap is null)

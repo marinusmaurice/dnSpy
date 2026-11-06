@@ -1,5 +1,6 @@
 /*
     Copyright (C) 2014-2019 de4dot@gmail.com
+    Copyright (C) 2026- marinusmaurice@outlook.com
 
     This file is part of dnSpy
 
@@ -85,6 +86,8 @@ namespace dnSpy.Bookmarks.ToolWindows.Bookmarks {
 		public abstract void EditName();
 		public abstract bool CanEditLabels { get; }
 		public abstract void EditLabels();
+		public abstract bool CanEditNote { get; }
+		public abstract void EditNote();
 		public abstract bool ShowTokens { get; set; }
 		public abstract bool ShowModuleNames { get; set; }
 		public abstract bool ShowParameterTypes { get; set; }
@@ -154,6 +157,10 @@ namespace dnSpy.Bookmarks.ToolWindows.Bookmarks {
 
 					case BookmarksWindowColumnIds.Location:
 						formatter.WriteLocation(output, vm);
+						break;
+
+					case BookmarksWindowColumnIds.Note:
+						output.Write(BoxedTextColor.Text, vm.Note);
 						break;
 
 					case BookmarksWindowColumnIds.Module:
@@ -326,6 +333,24 @@ namespace dnSpy.Bookmarks.ToolWindows.Bookmarks {
 					}).ToArray());
 				}
 			}
+		}
+
+		public override bool CanEditNote => SelectedItems.Count > 0;
+		public override void EditNote() {
+			if (!CanEditNote)
+				return;
+			foreach (var vm in bookmarksVM.AllItems)
+				vm.ClearEditingValueProperties();
+			var newNote = messageBoxService.Ask<string>(dnSpy_Resources.EditNoteMsgBoxLabel, SelectedItems[0].Note, dnSpy_Resources.EditNoteTitle);
+			if (newNote is null)
+				return;
+			newNote = newNote.Trim();
+			bookmarksService.Value.Modify(SelectedItems.Select(a => {
+				var bm = a.Bookmark;
+				var settings = bm.Settings;
+				settings.Note = newNote;
+				return new BookmarkAndSettings(bm, settings);
+			}).ToArray());
 		}
 
 		public override bool ShowTokens {

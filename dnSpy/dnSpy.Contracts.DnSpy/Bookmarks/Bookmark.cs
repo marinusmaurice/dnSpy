@@ -1,5 +1,6 @@
 /*
     Copyright (C) 2014-2019 de4dot@gmail.com
+    Copyright (C) 2026- marinusmaurice@outlook.com
 
     This file is part of dnSpy
 
@@ -48,6 +49,18 @@ namespace dnSpy.Contracts.Bookmarks {
 		/// Labels
 		/// </summary>
 		public abstract ReadOnlyCollection<string> Labels { get; set; }
+
+		/// <summary>
+		/// Gets/sets the note (see <see cref="BookmarkSettings.Note"/>)
+		/// </summary>
+		public virtual string Note {
+			get => Settings.Note ?? string.Empty;
+			set {
+				var settings = Settings;
+				settings.Note = value;
+				Settings = settings;
+			}
+		}
 
 		/// <summary>
 		/// Gets the bookmark location

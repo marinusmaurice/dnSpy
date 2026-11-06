@@ -1,5 +1,6 @@
 /*
     Copyright (C) 2014-2019 de4dot@gmail.com
+    Copyright (C) 2026- marinusmaurice@outlook.com
 
     This file is part of dnSpy
 
@@ -40,6 +41,11 @@ namespace dnSpy.Contracts.Bookmarks {
 		/// </summary>
 		public ReadOnlyCollection<string> Labels { get; set; }
 
+		/// <summary>
+		/// A note about the bookmark, or null/empty
+		/// </summary>
+		public string? Note { get; set; }
+
 #pragma warning disable CS1591 // Missing XML comment for publicly visible type or member
 		public static bool operator ==(BookmarkSettings left, BookmarkSettings right) => left.Equals(right);
 		public static bool operator !=(BookmarkSettings left, BookmarkSettings right) => !left.Equals(right);
@@ -53,7 +59,8 @@ namespace dnSpy.Contracts.Bookmarks {
 		public bool Equals(BookmarkSettings other) =>
 			IsEnabled == other.IsEnabled &&
 			StringComparer.Ordinal.Equals(Name ?? string.Empty, other.Name ?? string.Empty) &&
-			LabelsEquals(Labels, other.Labels);
+			LabelsEquals(Labels, other.Labels) &&
+			StringComparer.Ordinal.Equals(Note ?? string.Empty, other.Note ?? string.Empty);
 
 		static bool LabelsEquals(ReadOnlyCollection<string>? a, ReadOnlyCollection<string>? b) {
 			if (a is null)
@@ -93,6 +100,7 @@ namespace dnSpy.Contracts.Bookmarks {
 		public override int GetHashCode() =>
 			(IsEnabled ? 1 : 0) ^
 			StringComparer.Ordinal.GetHashCode(Name ?? string.Empty) ^
-			LabelsGetHashCode(Labels);
+			LabelsGetHashCode(Labels) ^
+			StringComparer.Ordinal.GetHashCode(Note ?? string.Empty);
 	}
 }

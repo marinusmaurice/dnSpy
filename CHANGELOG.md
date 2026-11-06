@@ -7,6 +7,16 @@ What changed in each release of this fork, newest first. The release workflow pu
 
 Each section starts with a short summary, then **New Features** (new things you can do), **Enhancements** (existing things that work better) and **Bug Fixes**, with a link to the commit for each item. Technical details are in [All changes in detail](docs/CHANGES.md#all-changes-in-detail) and in [docs/MODERNIZATION_PLAN.md](docs/MODERNIZATION_PLAN.md).
 
+## 7.28.0.0
+
+Find out why an object is still alive, export the heap table, and add notes to bookmarks. Also has everything in 7.27.0.0 and earlier.
+
+### New Features
+
+- **Why is this object alive?** In the Heap window, select an object and click **Why Alive?** (or right-click it): the chain of references from a GC root (a local variable on a thread's stack, a static field's handle, a GC handle, the finalizer queue) to the object, with the field name or array index of each step, eg. `Stack` → `List<Customer>` → `._items` → `Customer[]` → `[0]` → `Customer`. It's the shortest such chain. If nothing references the object, it says it's garbage. Works for .NET Framework and .NET.
+- **Export the heap table**: **Export...** in the Heap window saves the types as shown (filtered and sorted) as CSV: type, count, size, and the change since the previous break.
+- **Bookmark notes**: the Bookmarks window has a **Note** column; right-click bookmarks and choose **Edit Note...** (for one or several). Notes are saved with the bookmarks and can be searched and sorted.
+
 ## 7.27.0.0
 
 A Heap window to find memory leaks, Find All Instances of a type, and the Async Tasks window for .NET Framework programs. Also has everything in 7.26.0.0 and earlier.

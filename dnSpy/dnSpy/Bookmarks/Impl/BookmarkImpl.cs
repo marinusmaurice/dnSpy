@@ -1,5 +1,6 @@
 /*
     Copyright (C) 2014-2019 de4dot@gmail.com
+    Copyright (C) 2026- marinusmaurice@outlook.com
 
     This file is part of dnSpy
 
@@ -86,6 +87,8 @@ namespace dnSpy.Bookmarks.Impl {
 					settings.Name = string.Empty;
 				if (settings.Labels is null)
 					settings.Labels = emptyLabels;
+				if (settings.Note is null)
+					settings.Note = string.Empty;
 			}
 		}
 		static readonly ReadOnlyCollection<string> emptyLabels = new ReadOnlyCollection<string>(Array.Empty<string>());

@@ -1,5 +1,6 @@
 /*
     Copyright (C) 2014-2019 de4dot@gmail.com
+    Copyright (C) 2026- marinusmaurice@outlook.com
 
     This file is part of dnSpy
 
@@ -50,6 +51,7 @@ namespace dnSpy.Bookmarks.Impl {
 					IsEnabled = isEnabled.Value,
 					Name = bmSect.Attribute<string>("Name") ?? string.Empty,
 					Labels = new ReadOnlyCollection<string>(LoadLabels(bmSect)),
+					Note = bmSect.Attribute<string>("Note") ?? string.Empty,
 				};
 				settings.Add(new BookmarkInfo(location, bmSettings));
 			}
@@ -71,6 +73,8 @@ namespace dnSpy.Bookmarks.Impl {
 				bmSect.Attribute("Name", bm.Name ?? string.Empty);
 				if (bmSettings.Labels is not null && bmSettings.Labels.Count != 0)
 					SaveLabels(bmSect, bmSettings.Labels.ToArray());
+				if (!string.IsNullOrEmpty(bmSettings.Note))
+					bmSect.Attribute("Note", bmSettings.Note);
 			}
 		}
 

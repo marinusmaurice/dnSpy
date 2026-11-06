@@ -1,5 +1,6 @@
 /*
     Copyright (C) 2014-2019 de4dot@gmail.com
+    Copyright (C) 2026- marinusmaurice@outlook.com
 
     This file is part of dnSpy
 
@@ -57,6 +58,7 @@ namespace dnSpy.Bookmarks.ToolWindows.Bookmarks {
 		public IBookmarkContext Context { get; }
 		public Bookmark Bookmark { get; }
 		public object NameObject => new FormatterObject<BookmarkVM>(this, PredefinedTextClassifierTags.BookmarksWindowName);
+		public string Note => Bookmark.Note;
 		public object LabelsObject => new FormatterObject<BookmarkVM>(this, PredefinedTextClassifierTags.BookmarksWindowLabels);
 		public object LocationObject => new FormatterObject<BookmarkVM>(this, PredefinedTextClassifierTags.BookmarksWindowLocation);
 		public object ModuleObject => new FormatterObject<BookmarkVM>(this, PredefinedTextClassifierTags.BookmarksWindowModule);
@@ -153,6 +155,8 @@ namespace dnSpy.Bookmarks.ToolWindows.Bookmarks {
 				OnPropertyChanged(nameof(NameObject));
 			if (!LabelsEquals(oldSettings.Labels, newSettings.Labels))
 				OnPropertyChanged(nameof(LabelsObject));
+			if ((oldSettings.Note ?? string.Empty) != (newSettings.Note ?? string.Empty))
+				OnPropertyChanged(nameof(Note));
 		}
 
 		static bool LabelsEquals(ReadOnlyCollection<string> a, ReadOnlyCollection<string> b) {

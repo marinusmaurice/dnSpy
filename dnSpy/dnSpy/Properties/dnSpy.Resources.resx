@@ -2280,4 +2280,16 @@ Filter can be changed in Assembly Explorer options.</value>
   <data name="SourceLink_Header_Pdb" xml:space="preserve">
     <value>PDB: {0}</value>
   </data>
+  <data name="Column_Note" xml:space="preserve">
+    <value>Note</value>
+  </data>
+  <data name="EditNoteCommand" xml:space="preserve">
+    <value>Edit _Note...</value>
+  </data>
+  <data name="EditNoteMsgBoxLabel" xml:space="preserve">
+    <value>_Note</value>
+  </data>
+  <data name="EditNoteTitle" xml:space="preserve">
+    <value>Edit Note</value>
+  </data>
 </root>

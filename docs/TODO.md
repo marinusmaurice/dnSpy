@@ -73,7 +73,7 @@ Suggested first, in this order:
 ### Debugger
 
 - [ ] **L** Edit and Continue: edit a method while paused and keep running.
-- [x] **M–L** Heap and memory analysis with ClrMD: objects by type/count/size and the change since the previous break, Find All Instances, fields (7.27.0.0). Still open: "who references this" (GC roots), open `.dmp` files offline.
+- [x] **M–L** Heap and memory analysis with ClrMD: objects by type/count/size and the change since the previous break, Find All Instances, fields (7.27.0.0). "Who references this": Why Alive? (7.28.0.0). Still open: open `.dmp` files offline.
 - [ ] **L** Remote debugging: another machine, Docker containers, WSL.
 - [x] **L** Async Tasks window (7.24.0.0: tasks from a heap walk, async method and await, double-click opens the method). Logical call stacks: 7.25.0.0. Copy: 7.26.0.0. 7.27.0.0: .NET Framework tasks listed (status and type). Still open: async method names for .NET Framework.
 - [x] **S** Exception helper popup: inner exceptions, "break when thrown" toggle, copy details. (7.23.0.0, click-tested: type, message, inner exceptions and call stack read from the fields, no code runs; the inner exceptions' stack traces aren't shown.)
@@ -98,7 +98,7 @@ Suggested first, in this order:
 
 - [x] **M** Regex and full-text search across decompiled code. (7.23.0.0: Search window → Search For: Code (decompiled), `/regex/`, click-tested. Later: search in parallel, it's slow on big assemblies.)
 - [x] **S** Find usages: group by assembly (7.23.0.0), export (7.25.0.0). Read/write: fields have Read By and Assigned By, properties Used By per getter and setter.
-- [ ] **S** Bookmarks with notes, saved per assembly.
+- [x] **S** Bookmarks with notes (7.28.0.0: Note column and Edit Note...; bookmarks were already saved with their assembly and location).
 - [ ] **M** Graph views: call graph, type hierarchy, dependencies.
 
 ### UI and quality of life

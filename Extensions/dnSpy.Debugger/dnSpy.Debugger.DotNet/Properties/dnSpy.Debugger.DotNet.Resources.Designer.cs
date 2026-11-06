@@ -635,5 +635,68 @@ namespace dnSpy.Debugger.DotNet.Properties {
             }
         }
         
+        /// <summary>
+        ///   Looks up a localized string similar to Export....
+        /// </summary>
+        public static string Heap_Export {
+            get {
+                return ResourceManager.GetString("Heap_Export", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to CSV files (*.csv)|*.csv.
+        /// </summary>
+        public static string Heap_Export_Filter {
+            get {
+                return ResourceManager.GetString("Heap_Export_Filter", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Why Alive?.
+        /// </summary>
+        public static string Heap_WhyAlive {
+            get {
+                return ResourceManager.GetString("Heap_WhyAlive", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Why Is This Object _Alive?.
+        /// </summary>
+        public static string Heap_WhyAliveCommand {
+            get {
+                return ResourceManager.GetString("Heap_WhyAliveCommand", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Searching for the references that keep the object alive....
+        /// </summary>
+        public static string Heap_RootPath_Searching {
+            get {
+                return ResourceManager.GetString("Heap_RootPath_Searching", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to {0} isn't referenced by any GC root: it's garbage and goes away at the next garbage collection..
+        /// </summary>
+        public static string Heap_RootPath_None {
+            get {
+                return ResourceManager.GetString("Heap_RootPath_None", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Why {0} is alive: {1} references from a GC root (first row) to the object (last row)..
+        /// </summary>
+        public static string Heap_RootPath_Title {
+            get {
+                return ResourceManager.GetString("Heap_RootPath_Title", resourceCulture);
+            }
+        }
+        
     }
 }

@@ -66,4 +66,38 @@ namespace dnSpy.Contracts.Debugger.DotNet.Evaluation {
 		/// <returns></returns>
 		DbgDotNetValue[]? GetHeapObjects(DbgEvaluationInfo evalInfo, ulong typeHandle, int maxCount);
 	}
+
+	/// <summary>
+	/// A step in the chain of references that keeps an object alive (see <see cref="IDbgDotNetHeapRootPathRuntime"/>)
+	/// </summary>
+	public sealed class DbgDotNetHeapRootPathStep {
+		/// <summary>Address of the object</summary>
+		public ulong Address { get; }
+		/// <summary>Type name of the object</summary>
+		public string TypeName { get; }
+		/// <summary>How the previous object references this one (eg. ".items" or "[3]"); the first step: the kind of GC root (eg. "Stack", "StrongHandle")</summary>
+		public string Via { get; }
+
+		/// <summary>Constructor</summary>
+		public DbgDotNetHeapRootPathStep(ulong address, string typeName, string via) {
+			Address = address;
+			TypeName = typeName;
+			Via = via;
+		}
+	}
+
+	/// <summary>
+	/// Implemented by a <see cref="IDbgDotNetRuntime"/> that can find why an object is still alive
+	/// </summary>
+	public interface IDbgDotNetHeapRootPathRuntime {
+		/// <summary>
+		/// The shortest chain of references from a GC root to the object (root first), an empty array if nothing
+		/// references it (it's garbage), or null if the heap can't be read now. The process must be paused.
+		/// </summary>
+		/// <param name="evalInfo">Evaluation info</param>
+		/// <param name="address">Address of the object</param>
+		/// <param name="cancellationToken">Cancellation token</param>
+		/// <returns></returns>
+		DbgDotNetHeapRootPathStep[]? GetRootPath(DbgEvaluationInfo evalInfo, ulong address, CancellationToken cancellationToken);
+	}
 }

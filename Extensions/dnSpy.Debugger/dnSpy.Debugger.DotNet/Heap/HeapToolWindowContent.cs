@@ -25,11 +25,13 @@ using System.ComponentModel.Composition;
 using System.Globalization;
 using System.IO;
 using System.Linq;
+using System.Text;
 using System.Threading;
 using System.Windows;
 using System.Windows.Data;
 using System.Windows.Input;
 using dnlib.DotNet;
+using dnSpy.Contracts.App;
 using dnSpy.Contracts.Debugger;
 using dnSpy.Contracts.Debugger.CallStack;
 using dnSpy.Contracts.Debugger.DotNet.Evaluation;
@@ -134,13 +136,15 @@ namespace dnSpy.Debugger.DotNet.Heap {
 
 	sealed class HeapObjectVM {
 		public DbgDotNetValue Value { get; }
+		public ulong AddressValue { get; }
 		public string Address { get; }
 		public string TypeName { get; }
 		public string Summary { get; }
 
 		public HeapObjectVM(DbgDotNetValue value, string summary) {
 			Value = value;
-			Address = HeapReader.FormatAddress(HeapReader.GetAddress(value));
+			AddressValue = HeapReader.GetAddress(value);
+			Address = HeapReader.FormatAddress(AddressValue);
 			TypeName = HeapReader.FormatTypeName(value.Type);
 			Summary = summary;
 		}
@@ -162,6 +166,8 @@ namespace dnSpy.Debugger.DotNet.Heap {
 		readonly UIDispatcher uiDispatcher;
 		readonly Lazy<DbgManager> dbgManager;
 		readonly Lazy<DbgLanguageService> dbgLanguageService;
+		readonly IPickSaveFilename pickSaveFilename;
+		readonly IMessageBoxService messageBoxService;
 		Dictionary<string, DbgDotNetHeapTypeStatistics>? previousStats;
 		Dictionary<string, DbgDotNetHeapTypeStatistics>? currentStats;
 		int refreshId;
@@ -178,6 +184,8 @@ namespace dnSpy.Debugger.DotNet.Heap {
 		public ObservableCollection<HeapFieldVM> Fields { get; } = new ObservableCollection<HeapFieldVM>();
 		public ICommand RefreshCommand { get; }
 		public ICommand BackCommand { get; }
+		public ICommand ExportCommand { get; }
+		public ICommand WhyAliveCommand { get; }
 
 		public string Filter {
 			get => filter;
@@ -250,15 +258,19 @@ namespace dnSpy.Debugger.DotNet.Heap {
 		}
 
 		[ImportingConstructor]
-		HeapVM(UIDispatcher uiDispatcher, Lazy<DbgManager> dbgManager, Lazy<DbgLanguageService> dbgLanguageService) {
+		HeapVM(UIDispatcher uiDispatcher, Lazy<DbgManager> dbgManager, Lazy<DbgLanguageService> dbgLanguageService, IPickSaveFilename pickSaveFilename, IMessageBoxService messageBoxService) {
 			this.uiDispatcher = uiDispatcher;
 			this.dbgManager = dbgManager;
 			this.dbgLanguageService = dbgLanguageService;
+			this.pickSaveFilename = pickSaveFilename;
+			this.messageBoxService = messageBoxService;
 			TypesView = CollectionViewSource.GetDefaultView(Types);
 			TypesView.Filter = o => filter.Length == 0 || (o is HeapTypeVM t && t.TypeName.IndexOf(filter, StringComparison.OrdinalIgnoreCase) >= 0);
 			TypesView.SortDescriptions.Add(new SortDescription(nameof(HeapTypeVM.Size), ListSortDirection.Descending));
 			RefreshCommand = new RelayCommand(a => Refresh());
 			BackCommand = new RelayCommand(a => Back(), a => objectStack.Count > 0);
+			ExportCommand = new RelayCommand(a => Export(), a => Types.Count > 0);
+			WhyAliveCommand = new RelayCommand(a => ShowRootPath(a as HeapObjectVM ?? SelectedObject), a => (a as HeapObjectVM ?? SelectedObject) is not null);
 		}
 
 		void Initialize() {
@@ -492,6 +504,63 @@ namespace dnSpy.Debugger.DotNet.Heap {
 				return;
 			objectStack.Push(currentObject.Value);
 			ShowFields(currentObject.Value.title + "." + field.Name, obj);
+		}
+
+		/// <summary>
+		/// Saves the types shown (filtered and sorted as in the window) as CSV
+		/// </summary>
+		void Export() {
+			var file = pickSaveFilename.GetFilename(null, "csv", dnSpy_Debugger_DotNet_Resources.Heap_Export_Filter);
+			if (file is null)
+				return;
+			var sb = new StringBuilder();
+			sb.AppendLine("Type,Count,Size,CountChange,SizeChange");
+			foreach (var item in TypesView) {
+				if (item is not HeapTypeVM t)
+					continue;
+				sb.Append(Csv(t.TypeName)).Append(',');
+				sb.Append(t.Count.ToString(CultureInfo.InvariantCulture)).Append(',');
+				sb.Append(t.Size.ToString(CultureInfo.InvariantCulture)).Append(',');
+				sb.Append(t.CountDelta?.ToString(CultureInfo.InvariantCulture) ?? string.Empty).Append(',');
+				sb.Append(t.SizeDelta?.ToString(CultureInfo.InvariantCulture) ?? string.Empty);
+				sb.AppendLine();
+			}
+			try {
+				File.WriteAllText(file, sb.ToString(), new UTF8Encoding(true));
+			}
+			catch (Exception ex) when (ex is IOException || ex is UnauthorizedAccessException || ex is NotSupportedException || ex is ArgumentException) {
+				messageBoxService.Show(ex.Message);
+			}
+		}
+
+		static string Csv(string s) => s.IndexOfAny(new[] { ',', '"', '\r', '\n' }) < 0 ? s : "\"" + s.Replace("\"", "\"\"") + "\"";
+
+		/// <summary>
+		/// Shows the chain of references from a GC root to the object in the fields list
+		/// </summary>
+		void ShowRootPath(HeapObjectVM? obj) {
+			if (obj is null)
+				return;
+			Fields.Clear();
+			objectStack.Clear();
+			currentObject = null;
+			int id = objectsId;
+			FieldsText = dnSpy_Debugger_DotNet_Resources.Heap_RootPath_Searching;
+			RunOnRuntime((evalInfo, dnRuntime) => (dnRuntime as IDbgDotNetHeapRootPathRuntime)?.GetRootPath(evalInfo, obj.AddressValue, CancellationToken.None), (steps, error) => {
+				if (id != objectsId || currentObject is not null)
+					return;
+				if (steps is null) {
+					FieldsText = error ?? dnSpy_Debugger_DotNet_Resources.AsyncTasks_Status_HeapNotAvailable;
+					return;
+				}
+				if (steps.Length == 0) {
+					FieldsText = string.Format(dnSpy_Debugger_DotNet_Resources.Heap_RootPath_None, obj.TypeName + " " + obj.Address);
+					return;
+				}
+				FieldsText = string.Format(dnSpy_Debugger_DotNet_Resources.Heap_RootPath_Title, obj.TypeName + " " + obj.Address, steps.Length - 1);
+				foreach (var step in steps)
+					Fields.Add(new HeapFieldVM(new HeapFieldInfo(step.Via, HeapReader.FormatAddress(step.Address), step.TypeName.Replace('+', '.'), null)));
+			});
 		}
 
 		void Back() {

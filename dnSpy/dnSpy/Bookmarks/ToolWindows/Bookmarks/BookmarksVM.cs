@@ -1,5 +1,6 @@
 /*
     Copyright (C) 2014-2019 de4dot@gmail.com
+    Copyright (C) 2026- marinusmaurice@outlook.com
 
     This file is part of dnSpy
 
@@ -153,6 +154,7 @@ namespace dnSpy.Bookmarks.ToolWindows.Bookmarks {
 					new GridViewColumnDesc(BookmarksWindowColumnIds.Labels, dnSpy_Resources.Column_Labels),
 					new GridViewColumnDesc(BookmarksWindowColumnIds.Location, dnSpy_Resources.Column_Location),
 					new GridViewColumnDesc(BookmarksWindowColumnIds.Module, dnSpy_Resources.Column_Module),
+					new GridViewColumnDesc(BookmarksWindowColumnIds.Note, dnSpy_Resources.Column_Note),
 				},
 			};
 			Descs.SortedColumnChanged += (a, b) => SortList();
@@ -164,6 +166,8 @@ namespace dnSpy.Bookmarks.ToolWindows.Bookmarks {
 			new SearchColumnDefinition(PredefinedTextClassifierTags.BookmarksWindowLabels, "l", dnSpy_Resources.Column_Labels),
 			new SearchColumnDefinition(PredefinedTextClassifierTags.BookmarksWindowLocation, "o", dnSpy_Resources.Column_Location),
 			new SearchColumnDefinition(PredefinedTextClassifierTags.BookmarksWindowModule, "m", dnSpy_Resources.Column_Module),
+			// The note column isn't classified (plain text), so the tag is only a name
+			new SearchColumnDefinition("BookmarksWindowNote", "t", dnSpy_Resources.Column_Note),
 		};
 
 		// UI thread
@@ -464,6 +468,10 @@ namespace dnSpy.Bookmarks.ToolWindows.Bookmarks {
 				diff = StringComparer.OrdinalIgnoreCase.Compare(GetModule_UI(x), GetModule_UI(y));
 				break;
 
+			case BookmarksWindowColumnIds.Note:
+				diff = StringComparer.OrdinalIgnoreCase.Compare(x.Note, y.Note);
+				break;
+
 			default:
 				throw new InvalidOperationException();
 			}
@@ -497,6 +505,7 @@ namespace dnSpy.Bookmarks.ToolWindows.Bookmarks {
 				GetLabels_UI(vm),
 				GetLocation_UI(vm),
 				GetModule_UI(vm),
+				vm.Note,
 			};
 			sbOutput.Reset();
 			return bookmarkContext.SearchMatcher.IsMatchAll(allStrings);

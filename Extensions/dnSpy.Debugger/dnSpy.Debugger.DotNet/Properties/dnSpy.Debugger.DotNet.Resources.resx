@@ -309,4 +309,25 @@
   <data name="Heap_TypeNotLoaded" xml:space="preserve">
     <value>The type isn't loaded in the debugged process.</value>
   </data>
+  <data name="Heap_Export" xml:space="preserve">
+    <value>Export...</value>
+  </data>
+  <data name="Heap_Export_Filter" xml:space="preserve">
+    <value>CSV files (*.csv)|*.csv</value>
+  </data>
+  <data name="Heap_WhyAlive" xml:space="preserve">
+    <value>Why Alive?</value>
+  </data>
+  <data name="Heap_WhyAliveCommand" xml:space="preserve">
+    <value>Why Is This Object _Alive?</value>
+  </data>
+  <data name="Heap_RootPath_Searching" xml:space="preserve">
+    <value>Searching for the references that keep the object alive...</value>
+  </data>
+  <data name="Heap_RootPath_None" xml:space="preserve">
+    <value>{0} isn't referenced by any GC root: it's garbage and goes away at the next garbage collection.</value>
+  </data>
+  <data name="Heap_RootPath_Title" xml:space="preserve">
+    <value>Why {0} is alive: {1} references from a GC root (first row) to the object (last row).</value>
+  </data>
 </root>

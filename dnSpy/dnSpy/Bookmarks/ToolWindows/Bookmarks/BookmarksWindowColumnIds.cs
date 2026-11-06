@@ -1,5 +1,6 @@
 /*
     Copyright (C) 2014-2019 de4dot@gmail.com
+    Copyright (C) 2026- marinusmaurice@outlook.com
 
     This file is part of dnSpy
 
@@ -24,5 +25,6 @@ namespace dnSpy.Bookmarks.ToolWindows.Bookmarks {
 		public const int Labels = 1;
 		public const int Location = 2;
 		public const int Module = 3;
+		public const int Note = 4;
 	}
 }
