@@ -73,9 +73,9 @@ Suggested first, in this order:
 ### Debugger
 
 - [ ] **L** Edit and Continue: edit a method while paused and keep running.
-- [ ] **M–L** Heap and memory analysis with ClrMD: objects by type/count/size, "who references this", open `.dmp` files offline.
+- [x] **M–L** Heap and memory analysis with ClrMD: objects by type/count/size and the change since the previous break, Find All Instances, fields (7.27.0.0). Still open: "who references this" (GC roots), open `.dmp` files offline.
 - [ ] **L** Remote debugging: another machine, Docker containers, WSL.
-- [x] **L** Async Tasks window (7.24.0.0: tasks from a heap walk, async method and await, double-click opens the method). Logical call stacks: 7.25.0.0. Copy: 7.26.0.0. Still open: .NET Framework programs (the heap walk fails there with CORDBG_E_READVIRTUAL_FAILURE; it would need another way to find the tasks, eg. the runtime's task tracking).
+- [x] **L** Async Tasks window (7.24.0.0: tasks from a heap walk, async method and await, double-click opens the method). Logical call stacks: 7.25.0.0. Copy: 7.26.0.0. 7.27.0.0: .NET Framework tasks listed (status and type). Still open: async method names for .NET Framework.
 - [x] **S** Exception helper popup: inner exceptions, "break when thrown" toggle, copy details. (7.23.0.0, click-tested: type, message, inner exceptions and call stack read from the fields, no code runs; the inner exceptions' stack traces aren't shown.)
 - [x] **S** Offer to attach automatically when an app calls `Debugger.Launch()` (7.25.0.0: Debug → Use dnSpy as the Just-In-Time Debugger; the attach handshake was tested with a launcher, the registration itself still needs a test by the owner, see above).
 - [ ] **M** Update the Unity/Mono debugger against current Unity and upstream mono/debugger-libs.

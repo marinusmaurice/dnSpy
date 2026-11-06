@@ -1,5 +1,6 @@
 /*
     Copyright (C) 2014-2019 de4dot@gmail.com
+    Copyright (C) 2026- marinusmaurice@outlook.com
 
     This file is part of dnSpy
 
@@ -17,11 +18,39 @@
     along with dnSpy.  If not, see <http://www.gnu.org/licenses/>.
 */
 
+using System.Threading;
 using dnSpy.Contracts.Disassembly;
 
 namespace dnSpy.Debugger.DotNet.CorDebug.DAC {
 	abstract class ClrDac {
 		public abstract ClrDacThreadInfo? GetThreadInfo(int tid);
 		public abstract bool TryGetSymbolCore(ulong address, out SymbolResolverResult result);
+
+		/// <summary>
+		/// The types on the GC heap with their object count and total size, or null if the heap can't be walked
+		/// </summary>
+		public virtual ClrDacHeapType[]? GetHeapStatistics(CancellationToken cancellationToken) => null;
+
+		/// <summary>
+		/// Addresses of the objects with this method table, or null if the heap can't be walked
+		/// </summary>
+		public virtual ulong[]? GetObjectsByMethodTable(ulong methodTable, int maxCount, CancellationToken cancellationToken) => null;
+
+		/// <summary>
+		/// Addresses of the objects whose type, or one of its base types, is the type with this token in a module
+		/// with this file name (generic instantiations included), or null if the heap can't be walked
+		/// </summary>
+		public virtual ulong[]? GetObjectsByType(uint token, string moduleFileName, int maxCount, CancellationToken cancellationToken) => null;
+	}
+
+	sealed class ClrDacHeapType {
+		public string Name { get; }
+		public ulong MethodTable { get; }
+		public long Count { get; set; }
+		public long TotalSize { get; set; }
+		public ClrDacHeapType(string name, ulong methodTable) {
+			Name = name;
+			MethodTable = methodTable;
+		}
 	}
 }

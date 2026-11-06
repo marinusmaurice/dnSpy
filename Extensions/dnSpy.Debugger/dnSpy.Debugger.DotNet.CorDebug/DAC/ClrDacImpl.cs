@@ -1,5 +1,6 @@
 /*
     Copyright (C) 2014-2019 de4dot@gmail.com
+    Copyright (C) 2026- marinusmaurice@outlook.com
 
     This file is part of dnSpy
 
@@ -20,6 +21,8 @@
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
+using System.IO;
+using System.Threading;
 using dnSpy.Contracts.Disassembly;
 using Microsoft.Diagnostics.Runtime;
 
@@ -135,6 +138,89 @@ namespace dnSpy.Debugger.DotNet.CorDebug.DAC {
 
 			result = default;
 			return false;
+		}
+
+		// The heap is walked through the DAC while the process is paused (Flush() runs at every pause)
+		ClrHeap? GetHeap() {
+			try {
+				var heap = clrRuntime.Heap;
+				return heap.CanWalkHeap ? heap : null;
+			}
+			catch (Exception ex) when (ex is ClrDiagnosticsException || ex is InvalidOperationException || ex is IOException) {
+				return null;
+			}
+		}
+
+		public override ClrDacHeapType[]? GetHeapStatistics(CancellationToken cancellationToken) {
+			var heap = GetHeap();
+			if (heap is null)
+				return null;
+			var dict = new Dictionary<ulong, ClrDacHeapType>();
+			try {
+				int i = 0;
+				foreach (var obj in heap.EnumerateObjects()) {
+					if ((++i & 0x3FFF) == 0)
+						cancellationToken.ThrowIfCancellationRequested();
+					var type = obj.Type;
+					if (type is null)
+						continue;
+					if (!dict.TryGetValue(type.MethodTable, out var info))
+						dict.Add(type.MethodTable, info = new ClrDacHeapType(type.Name ?? "?", type.MethodTable));
+					info.Count++;
+					info.TotalSize += (long)obj.Size;
+				}
+			}
+			catch (Exception ex) when (ex is ClrDiagnosticsException || ex is InvalidOperationException || ex is IOException) {
+				return null;
+			}
+			var result = new ClrDacHeapType[dict.Count];
+			dict.Values.CopyTo(result, 0);
+			return result;
+		}
+
+		public override ulong[]? GetObjectsByMethodTable(ulong methodTable, int maxCount, CancellationToken cancellationToken) =>
+			GetObjects(type => type.MethodTable == methodTable, maxCount, cancellationToken);
+
+		public override ulong[]? GetObjectsByType(uint token, string moduleFileName, int maxCount, CancellationToken cancellationToken) {
+			var matches = new Dictionary<ulong, bool>();
+			bool IsMatch(ClrType type) {
+				if (matches.TryGetValue(type.MethodTable, out bool res))
+					return res;
+				res = false;
+				for (var t = type; t is not null; t = t.BaseType) {
+					if ((uint)t.MetadataToken == token && StringComparer.OrdinalIgnoreCase.Equals(Path.GetFileName(t.Module?.Name ?? string.Empty), moduleFileName)) {
+						res = true;
+						break;
+					}
+				}
+				matches[type.MethodTable] = res;
+				return res;
+			}
+			return GetObjects(IsMatch, maxCount, cancellationToken);
+		}
+
+		ulong[]? GetObjects(Func<ClrType, bool> isMatch, int maxCount, CancellationToken cancellationToken) {
+			var heap = GetHeap();
+			if (heap is null)
+				return null;
+			var result = new List<ulong>();
+			try {
+				int i = 0;
+				foreach (var obj in heap.EnumerateObjects()) {
+					if ((++i & 0x3FFF) == 0)
+						cancellationToken.ThrowIfCancellationRequested();
+					var type = obj.Type;
+					if (type is null || !isMatch(type))
+						continue;
+					result.Add(obj.Address);
+					if (result.Count >= maxCount)
+						break;
+				}
+			}
+			catch (Exception ex) when (ex is ClrDiagnosticsException || ex is InvalidOperationException || ex is IOException) {
+				return null;
+			}
+			return result.ToArray();
 		}
 	}
 }

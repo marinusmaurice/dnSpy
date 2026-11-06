@@ -1,4 +1,4 @@
-﻿<?xml version="1.0" encoding="utf-8"?>
+<?xml version="1.0" encoding="utf-8"?>
 <root>
   <!-- 
     Microsoft ResX Schema 
@@ -229,7 +229,7 @@
     <value>The tasks of this program can't be read (only .NET Framework and .NET programs are supported).</value>
   </data>
   <data name="AsyncTasks_Status_HeapNotAvailable" xml:space="preserve">
-    <value>The heap can't be read right now. Step or break again, then click Refresh. (For .NET Framework programs the runtime's heap walk often fails; .NET programs are supported.)</value>
+    <value>The heap can't be read right now. Step or break again, then click Refresh.</value>
   </data>
   <data name="AsyncTasks_Status_Reading" xml:space="preserve">
     <value>Reading the tasks...</value>
@@ -251,5 +251,62 @@
   </data>
   <data name="AsyncTasks_CopyAll" xml:space="preserve">
     <value>Copy _All</value>
+  </data>
+  <data name="HeapCommand" xml:space="preserve">
+    <value>_Heap</value>
+  </data>
+  <data name="Window_Heap" xml:space="preserve">
+    <value>Heap</value>
+  </data>
+  <data name="FindAllInstancesCommand" xml:space="preserve">
+    <value>Find All _Instances</value>
+  </data>
+  <data name="Heap_Filter" xml:space="preserve">
+    <value>Filter:</value>
+  </data>
+  <data name="Heap_Back" xml:space="preserve">
+    <value>Back</value>
+  </data>
+  <data name="Heap_Column_Count" xml:space="preserve">
+    <value>Count</value>
+  </data>
+  <data name="Heap_Column_Size" xml:space="preserve">
+    <value>Size (bytes)</value>
+  </data>
+  <data name="Heap_Column_CountDelta" xml:space="preserve">
+    <value>Count +/-</value>
+  </data>
+  <data name="Heap_Column_SizeDelta" xml:space="preserve">
+    <value>Size +/-</value>
+  </data>
+  <data name="Heap_Column_Address" xml:space="preserve">
+    <value>Address</value>
+  </data>
+  <data name="Heap_Column_Fields" xml:space="preserve">
+    <value>Fields</value>
+  </data>
+  <data name="Heap_Column_Name" xml:space="preserve">
+    <value>Name</value>
+  </data>
+  <data name="Heap_Column_Value" xml:space="preserve">
+    <value>Value</value>
+  </data>
+  <data name="Heap_Status_Reading" xml:space="preserve">
+    <value>Reading the heap...</value>
+  </data>
+  <data name="Heap_Status_Count" xml:space="preserve">
+    <value>{0} objects, {1} bytes, {2} types.</value>
+  </data>
+  <data name="Heap_Status_Compared" xml:space="preserve">
+    <value>+/- = change since the previous break.</value>
+  </data>
+  <data name="Heap_Objects_Count" xml:space="preserve">
+    <value>{0}: {1} objects</value>
+  </data>
+  <data name="Heap_Objects_Max" xml:space="preserve">
+    <value>(only the first {0})</value>
+  </data>
+  <data name="Heap_TypeNotLoaded" xml:space="preserve">
+    <value>The type isn't loaded in the debugged process.</value>
   </data>
 </root>

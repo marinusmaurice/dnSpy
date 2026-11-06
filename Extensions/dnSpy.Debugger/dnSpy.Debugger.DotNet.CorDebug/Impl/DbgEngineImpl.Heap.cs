@@ -19,24 +19,80 @@
 
 using System;
 using System.Collections.Generic;
+using System.IO;
 using System.Linq;
+using System.Threading;
 using dndbg.COM.CorDebug;
+using dndbg.Engine;
 using dnSpy.Contracts.Debugger.DotNet.Evaluation;
 using dnSpy.Debugger.DotNet.Metadata;
 
+// The GC heap: the objects are found with ClrMD (the DAC, see ClrDac), which works for .NET Framework and
+// .NET; ICorDebugProcess5.EnumerateHeap is the fallback (in .NET Framework it stops early with
+// CORDBG_E_READVIRTUAL_FAILURE). The objects are then read through ICorDebug like any other value.
 namespace dnSpy.Debugger.DotNet.CorDebug.Impl {
 	abstract partial class DbgEngineImpl {
 		/// <summary>
-		/// Walks the GC heap and returns the objects whose type is <paramref name="type"/> or a derived type
+		/// The objects whose type is <paramref name="type"/> or a derived type
 		/// </summary>
 		internal DbgDotNetValue[]? GetHeapObjects_CorDebug(DmdType type, int maxCount) {
 			debuggerThread.VerifyAccess();
 			if (!IsPaused || maxCount <= 0)
 				return null;
 			var process = dnDebugger.Processes.FirstOrDefault()?.CorProcess;
+			if (process is null)
+				return null;
+
+			var defType = type.IsConstructedGenericType ? type.GetGenericTypeDefinition() : type;
+			var moduleFileName = Path.GetFileName(defType.Module.FullyQualifiedName);
+			var addresses = clrDac.GetObjectsByType((uint)defType.MetadataToken, moduleFileName, maxCount, CancellationToken.None);
+			if (addresses is not null)
+				return CreateValues(process, addresses, type.AppDomain);
+			return GetHeapObjectsWithCorDebug(process, type, maxCount);
+		}
+
+		internal DbgDotNetHeapTypeStatistics[]? GetHeapStatistics_CorDebug(CancellationToken cancellationToken) {
+			debuggerThread.VerifyAccess();
+			if (!IsPaused)
+				return null;
+			return clrDac.GetHeapStatistics(cancellationToken)?.Select(a => new DbgDotNetHeapTypeStatistics(a.Name, a.MethodTable, a.Count, a.TotalSize)).ToArray();
+		}
+
+		internal DbgDotNetValue[]? GetHeapObjects_CorDebug(DmdAppDomain reflectionAppDomain, ulong typeHandle, int maxCount) {
+			debuggerThread.VerifyAccess();
+			if (!IsPaused || maxCount <= 0)
+				return null;
+			var process = dnDebugger.Processes.FirstOrDefault()?.CorProcess;
+			if (process is null)
+				return null;
+			var addresses = clrDac.GetObjectsByMethodTable(typeHandle, maxCount, CancellationToken.None);
+			return addresses is null ? null : CreateValues(process, addresses, reflectionAppDomain);
+		}
+
+		DbgDotNetValue[] CreateValues(CorProcess process, ulong[] addresses, DmdAppDomain reflectionAppDomain) {
+			var result = new List<DbgDotNetValue>(addresses.Length);
+			foreach (var address in addresses) {
+				var obj = process.GetObject(address);
+				if (obj is null)
+					continue;
+				// .NET: a strong handle so the value is a reference like any other object value.
+				// .NET Framework: creating (and freeing) handles for these objects crashed the debugged process
+				// (access violation in clr.dll), so the object value itself is used. It's valid until the
+				// process continues, which is when these values are closed anyway.
+				var value = (this is DotNetFrameworkDbgEngineImpl ? null : obj.CreateHandle(CorDebugHandleType.HANDLE_STRONG)) ?? obj;
+				try {
+					result.Add(CreateDotNetValue_CorDebug(value, reflectionAppDomain, tryCreateStrongHandle: false));
+				}
+				catch (Exception ex) when (ex is InvalidOperationException || ex is ArgumentException) {
+				}
+			}
+			return result.ToArray();
+		}
+
+		DbgDotNetValue[]? GetHeapObjectsWithCorDebug(CorProcess process, DmdType type, int maxCount) {
 			var errorHr = new System.Runtime.CompilerServices.StrongBox<int>();
-			var objects = process?.EnumerateHeap(errorHr);
-			if (process is null || objects is null)
+			var objects = process.EnumerateHeap(errorHr);
+			if (objects is null)
 				return null;
 
 			var reflectionAppDomain = type.AppDomain;
@@ -61,7 +117,6 @@ namespace dnSpy.Debugger.DotNet.CorDebug.Impl {
 				if (!isMatch)
 					continue;
 
-				// A strong handle so the value is a reference like any other object value
 				var handle = process.GetObject(heapObject.address)?.CreateHandle(CorDebugHandleType.HANDLE_STRONG);
 				if (handle is null)
 					continue;
@@ -69,7 +124,6 @@ namespace dnSpy.Debugger.DotNet.CorDebug.Impl {
 				if (result.Count >= maxCount)
 					break;
 			}
-			// Eg. .NET Framework: the heap walk stops with CORDBG_E_READVIRTUAL_FAILURE and handles can't be created
 			if (result.Count == 0 && errorHr.Value < 0)
 				return null;
 			return result.ToArray();

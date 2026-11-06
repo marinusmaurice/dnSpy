@@ -22,6 +22,7 @@ using System;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.IO;
+using System.Linq;
 using System.Runtime.CompilerServices;
 using System.Threading;
 using dndbg.COM.CorDebug;
@@ -40,7 +41,7 @@ using dnSpy.Debugger.DotNet.CorDebug.Impl.Evaluation.Hooks;
 using dnSpy.Debugger.DotNet.Metadata;
 
 namespace dnSpy.Debugger.DotNet.CorDebug.Impl.Evaluation {
-	sealed partial class DbgCorDebugInternalRuntimeImpl : DbgCorDebugInternalRuntime, IDbgDotNetRuntime, IDbgDotNetHeapRuntime, ICorDebugRuntime {
+	sealed partial class DbgCorDebugInternalRuntimeImpl : DbgCorDebugInternalRuntime, IDbgDotNetRuntime, IDbgDotNetHeapRuntime, IDbgDotNetHeapStatisticsRuntime, ICorDebugRuntime {
 		public override DbgRuntime Runtime { get; }
 		public override DmdRuntime ReflectionRuntime { get; }
 		public override CorDebugRuntimeVersion Version { get; }
@@ -261,6 +262,19 @@ namespace dnSpy.Debugger.DotNet.CorDebug.Impl.Evaluation {
 			if (Dispatcher.CheckAccess())
 				return engine.GetHeapObjects_CorDebug(type, maxCount);
 			return Dispatcher.TryInvokeRethrow(() => engine.GetHeapObjects_CorDebug(type, maxCount), out var result) ? result : null;
+		}
+
+		public DbgDotNetHeapTypeStatistics[]? GetHeapStatistics(DbgEvaluationInfo evalInfo, CancellationToken cancellationToken) {
+			if (Dispatcher.CheckAccess())
+				return engine.GetHeapStatistics_CorDebug(cancellationToken);
+			return Dispatcher.TryInvokeRethrow(() => engine.GetHeapStatistics_CorDebug(cancellationToken), out var result) ? result : null;
+		}
+
+		public DbgDotNetValue[]? GetHeapObjects(DbgEvaluationInfo evalInfo, ulong typeHandle, int maxCount) {
+			var appDomain = evalInfo.Frame.AppDomain?.GetReflectionAppDomain() ?? ReflectionRuntime.GetAppDomains()[0];
+			if (Dispatcher.CheckAccess())
+				return engine.GetHeapObjects_CorDebug(appDomain, typeHandle, maxCount);
+			return Dispatcher.TryInvokeRethrow(() => engine.GetHeapObjects_CorDebug(appDomain, typeHandle, maxCount), out var result) ? result : null;
 		}
 
 		public DbgDotNetValueResult LoadField(DbgEvaluationInfo evalInfo, DbgDotNetValue? obj, DmdFieldInfo field) {

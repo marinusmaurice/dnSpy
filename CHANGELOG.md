@@ -7,6 +7,24 @@ What changed in each release of this fork, newest first. The release workflow pu
 
 Each section starts with a short summary, then **New Features** (new things you can do), **Enhancements** (existing things that work better) and **Bug Fixes**, with a link to the commit for each item. Technical details are in [All changes in detail](docs/CHANGES.md#all-changes-in-detail) and in [docs/MODERNIZATION_PLAN.md](docs/MODERNIZATION_PLAN.md).
 
+## 7.27.0.0
+
+A Heap window to find memory leaks, Find All Instances of a type, and the Async Tasks window for .NET Framework programs. Also has everything in 7.26.0.0 and earlier.
+
+### New Features
+
+- **Heap window** (**Debug → Windows → Heap**): while the program is paused, every type on the heap with its number of objects and total size, and how much each changed since the previous break (Count +/- and Size +/-). Break, let the program run, break again, and sort by the change to see what grows: the classic way to find a memory leak. Click a column header to sort, type in Filter to find a type. Select a type to list its objects (up to 1000) with a summary of their fields; select an object to see all its fields; double-click a field to open the object it refers to (Back goes back).
+- **Find All Instances**: while debugging, right-click a class in the code or in the assembly explorer and choose **Find All Instances** to list its live objects (and those of derived classes) in the Heap window.
+- Both work for .NET Framework and .NET programs. Only fields are read: no code runs in the debugged process.
+
+### Enhancements
+
+- **Async Tasks** now lists the tasks of .NET Framework programs too (status and type; the async method names are still .NET Core 3.0 and later only).
+
+### Bug Fixes
+
+- The heap is now read with ClrMD (Microsoft's library for reading .NET processes) instead of the debugger API's heap enumeration, which stopped early in .NET Framework programs. And for .NET Framework, dnSpy no longer creates debugger references (strong handles) to heap objects: in testing that crashed the debugged program in `clr.dll`.
+
 ## 7.26.0.0
 
 Open a member's real source code with Source Link and the symbol servers, copy from the Async Tasks window, and install dnSpy with Scoop or winget. Also has everything in 7.25.0.0 and earlier.

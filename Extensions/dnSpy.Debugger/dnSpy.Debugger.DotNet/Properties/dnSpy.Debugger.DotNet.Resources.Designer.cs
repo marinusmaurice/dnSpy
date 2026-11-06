@@ -393,7 +393,7 @@ namespace dnSpy.Debugger.DotNet.Properties {
         }
         
         /// <summary>
-        ///   Looks up a localized string similar to The heap can't be read right now. Step or break again, then click Refresh. (For .NET Framework programs the runtime's heap walk often fails; .NET programs are supported.).
+        ///   Looks up a localized string similar to The heap can't be read right now. Step or break again, then click Refresh..
         /// </summary>
         public static string AsyncTasks_Status_HeapNotAvailable {
             get {
@@ -461,6 +461,177 @@ namespace dnSpy.Debugger.DotNet.Properties {
         public static string AsyncTasks_CopyAll {
             get {
                 return ResourceManager.GetString("AsyncTasks_CopyAll", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to _Heap.
+        /// </summary>
+        public static string HeapCommand {
+            get {
+                return ResourceManager.GetString("HeapCommand", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Heap.
+        /// </summary>
+        public static string Window_Heap {
+            get {
+                return ResourceManager.GetString("Window_Heap", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Find All _Instances.
+        /// </summary>
+        public static string FindAllInstancesCommand {
+            get {
+                return ResourceManager.GetString("FindAllInstancesCommand", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Filter:.
+        /// </summary>
+        public static string Heap_Filter {
+            get {
+                return ResourceManager.GetString("Heap_Filter", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Back.
+        /// </summary>
+        public static string Heap_Back {
+            get {
+                return ResourceManager.GetString("Heap_Back", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Count.
+        /// </summary>
+        public static string Heap_Column_Count {
+            get {
+                return ResourceManager.GetString("Heap_Column_Count", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Size (bytes).
+        /// </summary>
+        public static string Heap_Column_Size {
+            get {
+                return ResourceManager.GetString("Heap_Column_Size", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Count +/-.
+        /// </summary>
+        public static string Heap_Column_CountDelta {
+            get {
+                return ResourceManager.GetString("Heap_Column_CountDelta", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Size +/-.
+        /// </summary>
+        public static string Heap_Column_SizeDelta {
+            get {
+                return ResourceManager.GetString("Heap_Column_SizeDelta", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Address.
+        /// </summary>
+        public static string Heap_Column_Address {
+            get {
+                return ResourceManager.GetString("Heap_Column_Address", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Fields.
+        /// </summary>
+        public static string Heap_Column_Fields {
+            get {
+                return ResourceManager.GetString("Heap_Column_Fields", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Name.
+        /// </summary>
+        public static string Heap_Column_Name {
+            get {
+                return ResourceManager.GetString("Heap_Column_Name", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Value.
+        /// </summary>
+        public static string Heap_Column_Value {
+            get {
+                return ResourceManager.GetString("Heap_Column_Value", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Reading the heap....
+        /// </summary>
+        public static string Heap_Status_Reading {
+            get {
+                return ResourceManager.GetString("Heap_Status_Reading", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to {0} objects, {1} bytes, {2} types..
+        /// </summary>
+        public static string Heap_Status_Count {
+            get {
+                return ResourceManager.GetString("Heap_Status_Count", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to +/- = change since the previous break..
+        /// </summary>
+        public static string Heap_Status_Compared {
+            get {
+                return ResourceManager.GetString("Heap_Status_Compared", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to {0}: {1} objects.
+        /// </summary>
+        public static string Heap_Objects_Count {
+            get {
+                return ResourceManager.GetString("Heap_Objects_Count", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to (only the first {0}).
+        /// </summary>
+        public static string Heap_Objects_Max {
+            get {
+                return ResourceManager.GetString("Heap_Objects_Max", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to The type isn't loaded in the debugged process..
+        /// </summary>
+        public static string Heap_TypeNotLoaded {
+            get {
+                return ResourceManager.GetString("Heap_TypeNotLoaded", resourceCulture);
             }
         }
         
