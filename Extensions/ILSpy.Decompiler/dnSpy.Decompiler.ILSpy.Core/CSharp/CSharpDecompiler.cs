@@ -1,4 +1,5 @@
 // Copyright (c) 2011 AlphaSierraPapa for the SharpDevelop Team
+// Copyright (C) 2026- marinusmaurice@outlook.com
 // 
 // Permission is hereby granted, free of charge, to any person obtaining a copy of this
 // software and associated documentation files (the "Software"), to deal in the Software
@@ -222,6 +223,24 @@ namespace dnSpy.Decompiler.ILSpy.Core.CSharp {
 			var state = CreateAstBuilder(ctx, langSettings.Settings, currentType: ev.DeclaringType, isSingleMember: true);
 			try {
 				state.AstBuilder.AddEvent(ev);
+				RunTransformsAndGenerateCode(ref state, output, ctx);
+			}
+			finally {
+				state.Dispose();
+			}
+		}
+
+		// All the namespace's types in one view
+		public override void DecompileNamespace(string @namespace, IEnumerable<TypeDef> types, IDecompilerOutput output, DecompilationContext ctx) {
+			var typeArray = types.ToArray();
+			if (typeArray.Length == 0) {
+				base.DecompileNamespace(@namespace, typeArray, output, ctx);
+				return;
+			}
+			var state = CreateAstBuilder(ctx, langSettings.Settings, currentModule: typeArray[0].Module);
+			try {
+				foreach (var type in typeArray)
+					state.AstBuilder.AddType(type);
 				RunTransformsAndGenerateCode(ref state, output, ctx);
 			}
 			finally {

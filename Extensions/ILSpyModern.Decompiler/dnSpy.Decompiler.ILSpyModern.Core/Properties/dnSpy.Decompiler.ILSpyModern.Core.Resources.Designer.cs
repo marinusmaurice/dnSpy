@@ -356,5 +356,14 @@ namespace dnSpy.Decompiler.ILSpyModern.Core.Properties {
                 return ResourceManager.GetString("Settings_LatestLanguageVersion", resourceCulture);
             }
         }
+        /// <summary>
+        ///   Looks up a localized string similar to C# version to decompile to (C# (ILSpy 11) only; also in View → Options → Decompiler).
+        /// </summary>
+        public static string LanguageVersionToolBar_ToolTip {
+            get {
+                return ResourceManager.GetString("LanguageVersionToolBar_ToolTip", resourceCulture);
+            }
+        }
+        
     }
 }

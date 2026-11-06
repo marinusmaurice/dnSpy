@@ -1,5 +1,6 @@
 /*
     Copyright (C) 2014-2019 de4dot@gmail.com
+    Copyright (C) 2026- marinusmaurice@outlook.com
 
     This file is part of dnSpy
 
@@ -19,32 +20,73 @@
 
 using System;
 using System.ComponentModel.Composition;
+using System.Diagnostics;
 using System.Linq;
 using System.Threading;
+using System.Threading.Tasks;
 using dnSpy.Contracts.App;
+using dnSpy.Contracts.Debugger;
 using dnSpy.Contracts.Debugger.Attach;
+using dnSpy.Debugger.Properties;
 
 namespace dnSpy.Debugger.Attach {
 	[Export(typeof(IAppCommandLineArgsHandler))]
 	sealed class AppCommandLineArgsHandler : IAppCommandLineArgsHandler {
 		readonly Lazy<AttachableProcessesService> attachableProcessesService;
+		readonly Lazy<DbgManager> dbgManager;
+		readonly IMessageBoxService messageBoxService;
 
 		[ImportingConstructor]
-		AppCommandLineArgsHandler(Lazy<AttachableProcessesService> attachableProcessesService) =>
+		AppCommandLineArgsHandler(Lazy<AttachableProcessesService> attachableProcessesService, Lazy<DbgManager> dbgManager, IMessageBoxService messageBoxService) {
 			this.attachableProcessesService = attachableProcessesService;
+			this.dbgManager = dbgManager;
+			this.messageBoxService = messageBoxService;
+		}
 
 		public double Order => 0;
 
 		public async void OnNewArgs(IAppCommandLineArgs args) {
 			if (args.DebugAttachPid is int pid && pid != 0) {
-				var processes = await attachableProcessesService.Value.GetAttachableProcessesAsync(null, new[] { pid }, null, CancellationToken.None).ConfigureAwait(false);
-				var process = processes.FirstOrDefault(p => p.ProcessId == pid);
-				process?.Attach();
+				// -e: started as the JIT debugger (Debugger.Launch() or a crash). The process waits until the event is set.
+				uint jitEvent = args.DebugEvent;
+				try {
+					if (jitEvent != 0 && messageBoxService.Show(string.Format(dnSpy_Debugger_Resources.JitDebugger_AttachQuestion, GetProcessName(pid), pid), MsgBoxButton.Yes | MsgBoxButton.No) != MsgBoxButton.Yes)
+						return;
+					var processes = await attachableProcessesService.Value.GetAttachableProcessesAsync(null, new[] { pid }, null, CancellationToken.None).ConfigureAwait(false);
+					var process = processes.FirstOrDefault(p => p.ProcessId == pid);
+					if (process is null)
+						return;
+					process.Attach();
+					if (jitEvent != 0)
+						await WaitUntilAttachedAsync(pid).ConfigureAwait(false);
+				}
+				finally {
+					JitDebuggerRegistration.SignalEvent(jitEvent);
+				}
 			}
 			else if (args.DebugAttachProcess is string processName && !string.IsNullOrEmpty(processName)) {
 				var processes = await attachableProcessesService.Value.GetAttachableProcessesAsync(processName, CancellationToken.None).ConfigureAwait(false);
 				var process = processes.FirstOrDefault();
 				process?.Attach();
+			}
+		}
+
+		static string GetProcessName(int pid) {
+			try {
+				using var process = Process.GetProcessById(pid);
+				return process.ProcessName;
+			}
+			catch (Exception ex) when (ex is ArgumentException || ex is InvalidOperationException) {
+				return "?";
+			}
+		}
+
+		// The event must be set after the debugger has attached, else the process continues without it
+		async Task WaitUntilAttachedAsync(int pid) {
+			for (int i = 0; i < 300; i++) {
+				if (dbgManager.Value.Processes.Any(a => a.Id == pid))
+					return;
+				await Task.Delay(100).ConfigureAwait(false);
 			}
 		}
 	}

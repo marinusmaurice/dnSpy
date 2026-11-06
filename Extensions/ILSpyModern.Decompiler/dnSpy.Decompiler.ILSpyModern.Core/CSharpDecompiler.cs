@@ -19,6 +19,7 @@
 
 using System;
 using System.Collections.Generic;
+using System.Linq;
 using System.Reflection.Metadata;
 using dnlib.DotNet;
 using dnSpy.Contracts.Decompiler;
@@ -92,6 +93,22 @@ namespace dnSpy.Decompiler.ILSpyModern.Core {
 
 		public override void Decompile(TypeDef type, IDecompilerOutput output, DecompilationContext ctx) =>
 			Decompile(type.Module, output, ctx, CreateILSpySettings(type), null, (d, m) => d.DecompileTypes(new[] { (TypeDefinitionHandle)m.GetHandle(type) }));
+
+		/// <summary>
+		/// Decompiles all the namespace's types into one view (one namespace declaration with all its types)
+		/// </summary>
+		public override void DecompileNamespace(string @namespace, IEnumerable<TypeDef> types, IDecompilerOutput output, DecompilationContext ctx) {
+			var typeArray = types.Where(a => a.Module is not null).ToArray();
+			if (typeArray.Length == 0) {
+				base.DecompileNamespace(@namespace, typeArray, output, ctx);
+				return;
+			}
+			var module = typeArray[0].Module;
+			var settings = langSettings.CreateILSpySettings();
+			if (typeArray.Any(IsFileLocalTypeHiddenByILSpy))
+				settings.SwitchStatementOnString = false;
+			Decompile(module, output, ctx, settings, null, (d, m) => d.DecompileTypes(typeArray.Where(a => a.Module == module).Select(a => (TypeDefinitionHandle)m.GetHandle(a)).ToArray()));
+		}
 
 		ICSharpCode.Decompiler.DecompilerSettings CreateILSpySettings(TypeDef type) {
 			var settings = langSettings.CreateILSpySettings();

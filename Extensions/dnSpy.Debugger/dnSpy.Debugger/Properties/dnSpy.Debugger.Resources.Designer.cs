@@ -4816,5 +4816,34 @@ namespace dnSpy.Debugger.Properties {
                 return ResourceManager.GetString("ExceptionHelper_CallStack", resourceCulture);
             }
         }
+        /// <summary>
+        ///   Looks up a localized string similar to Use dnSpy as the _Just-In-Time Debugger.
+        /// </summary>
+        public static string JitDebuggerCommand {
+            get {
+                return ResourceManager.GetString("JitDebuggerCommand", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to {0} (process {1}) wants a debugger (Debugger.Launch() or a crash). Attach dnSpy's debugger?.
+        /// </summary>
+        public static string JitDebugger_AttachQuestion {
+            get {
+                return ResourceManager.GetString("JitDebugger_AttachQuestion", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to dnSpy couldn't change the just-in-time debugger setting. Run dnSpy as administrator and try again.
+        ///
+        ///{0}.
+        /// </summary>
+        public static string JitDebugger_RegistryError {
+            get {
+                return ResourceManager.GetString("JitDebugger_RegistryError", resourceCulture);
+            }
+        }
+        
     }
 }

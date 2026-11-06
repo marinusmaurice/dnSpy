@@ -243,4 +243,7 @@
   <data name="AsyncTasks_Status_Truncated" xml:space="preserve">
     <value>Only the first {0} tasks on the heap were read.</value>
   </data>
+  <data name="AsyncTasks_Column_CallStack" xml:space="preserve">
+    <value>Async Call Stack</value>
+  </data>
 </root>

@@ -106,6 +106,7 @@ namespace dnSpy.Debugger.DotNet.AsyncTasks {
 		public string Method => Info.AsyncMethod ?? string.Empty;
 		public string State => Info.StateText;
 		public string Type => Info.TypeName;
+		public string CallStack => Info.LogicalCallStack;
 		public bool CanGoTo => Info.Module is not null;
 
 		public AsyncTaskVM(AsyncTaskInfo info) => Info = info;

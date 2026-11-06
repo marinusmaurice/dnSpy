@@ -1,5 +1,6 @@
 /*
     Copyright (C) 2014-2019 de4dot@gmail.com
+    Copyright (C) 2026- marinusmaurice@outlook.com
 
     This file is part of dnSpy
 
@@ -181,6 +182,12 @@ namespace dnSpy.MainApp {
 					case "-e":
 						if (TryParseUInt32(next, out uint debugEvent))
 							DebugEvent = debugEvent;
+						i++;
+						break;
+
+					// .NET Framework's DbgManagedDebugger also passes the AppDomain ID and a text (see JitDebugger.cs); not used
+					case "--appdomain":
+					case "--exttext":
 						i++;
 						break;
 

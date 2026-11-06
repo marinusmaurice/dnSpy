@@ -36,6 +36,7 @@
                     <GridViewColumn Header="{x:Static p:dnSpy_Debugger_DotNet_Resources.AsyncTasks_Column_Status}" Width="130" DisplayMemberBinding="{Binding Status}" />
                     <GridViewColumn Header="{x:Static p:dnSpy_Debugger_DotNet_Resources.AsyncTasks_Column_Method}" Width="300" DisplayMemberBinding="{Binding Method}" />
                     <GridViewColumn Header="{x:Static p:dnSpy_Debugger_DotNet_Resources.AsyncTasks_Column_State}" Width="130" DisplayMemberBinding="{Binding State}" />
+                    <GridViewColumn Header="{x:Static p:dnSpy_Debugger_DotNet_Resources.AsyncTasks_Column_CallStack}" Width="400" DisplayMemberBinding="{Binding CallStack}" />
                     <GridViewColumn Header="{x:Static p:dnSpy_Debugger_DotNet_Resources.AsyncTasks_Column_Type}" Width="450" DisplayMemberBinding="{Binding Type}" />
                 </GridView>
             </ListView.View>

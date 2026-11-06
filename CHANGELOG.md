@@ -7,6 +7,18 @@ What changed in each release of this fork, newest first. The release workflow pu
 
 Each section starts with a short summary, then **New Features** (new things you can do), **Enhancements** (existing things that work better) and **Bug Fixes**, with a link to the commit for each item. Technical details are in [All changes in detail](docs/CHANGES.md#all-changes-in-detail) and in [docs/MODERNIZATION_PLAN.md](docs/MODERNIZATION_PLAN.md).
 
+## 7.25.0.0
+
+A C# version picker in the toolbar, whole namespaces decompiled in one view, async call stacks in the Async Tasks window, exporting analyzer results, and dnSpy as the just-in-time debugger for `Debugger.Launch()`. Also has everything in 7.24.0.0 and earlier.
+
+### New Features
+
+- **C# version in the toolbar**: next to the language drop-down, pick the C# version C# (ILSpy 11) decompiles to (C# 1 to 14, or Latest). The open C# (ILSpy 11) tabs are decompiled again right away. It's the same setting as in View → Options → Decompiler, and the box is disabled for the other languages.
+- **Decompile a whole namespace**: clicking a namespace in the assembly explorer shows all its types decompiled in one view (C# (ILSpy 11) and the old C#), instead of only a list of the type names.
+- **Async call stacks**: the Async Tasks window has an **Async Call Stack** column that shows which async method waits for which, eg. `Runner.OuterAsync → Worker.ChainAsync → Worker.FetchAsync`. It follows each task's continuation (the awaiting async method, a `WhenAll` task, a `ContinueWith` task).
+- **Export analyzer results**: right-click a search node in the Analyzer (Used By, Read By, Assigned By, ...) and choose **Export Results...** to save the results as CSV (search, assembly, result, member, token) or as text grouped by assembly. Reading and writing a field were already separate (Read By and Assigned By), and so were a property's getter and setter.
+- **Just-in-time debugger**: **Debug → Use dnSpy as the Just-In-Time Debugger** registers dnSpy for `Debugger.Launch()` (for .NET and .NET Framework; dnSpy must run as administrator to change it; the previous debugger is put back when you turn it off). When a program then calls `Debugger.Launch()`, dnSpy asks whether to attach, attaches, and lets the program continue. Before, dnSpy accepted the JIT debugger arguments but never signaled the program, which then waited for the debugger.
+
 ## 7.24.0.0
 
 An Async Tasks window for the debugger. Also has everything in 7.23.0.0 and earlier.

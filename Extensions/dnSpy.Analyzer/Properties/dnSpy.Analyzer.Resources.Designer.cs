@@ -338,5 +338,41 @@ namespace dnSpy.Analyzer.Properties {
                 return ResourceManager.GetString("UsesTreeNode", resourceCulture);
             }
         }
+        /// <summary>
+        ///   Looks up a localized string similar to _Export Results....
+        /// </summary>
+        public static string ExportResultsCommand {
+            get {
+                return ResourceManager.GetString("ExportResultsCommand", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to CSV files (*.csv)|*.csv|Text files (*.txt)|*.txt.
+        /// </summary>
+        public static string ExportResults_Filter {
+            get {
+                return ResourceManager.GetString("ExportResults_Filter", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to The results couldn't be saved: {0}.
+        /// </summary>
+        public static string ExportResults_Error {
+            get {
+                return ResourceManager.GetString("ExportResults_Error", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Search,Assembly,Result,Member,Token.
+        /// </summary>
+        public static string ExportResults_Header {
+            get {
+                return ResourceManager.GetString("ExportResults_Header", resourceCulture);
+            }
+        }
+        
     }
 }

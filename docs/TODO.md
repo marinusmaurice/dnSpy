@@ -32,7 +32,7 @@ Each item gets its own branch from `master`, named after its target version (eg.
 - [x] **S** Translations for the new strings (C# (ILSpy 11) settings page, console help) (7.0.6.0). 26 of the 33 strings reuse the old C# language's translations; the 7 new ones (switch expressions, string interpolation, language version, clean up, the member order letters, the language version label, "Latest") were translated without a native speaker's review.
 - [x] **S** Debug History: the first recorded stop has no locals ("partial: a time or value limit was reached"): the first capture goes over the 150 ms limit, probably evaluation warm-up (found in the 2026-11-02 click-test). Fixed in 7.22.0.0: the first stop of a session gets 10x the time limit (at least 2 s); click-tested 2026-11-03 (the first stop has its locals and call stack).
 - [ ] **S** Owner checks with real data (no test data unattended): Open from NuGet with a private feed (7.11.0.0), a .NET 6–8 or Xamarin `.apk` (7.17.0.0) and a .NET 9 one (format 2 store, 7.21.0.0; a .NET 10 MAUI app was tested), Detect Protection on a really obfuscated assembly (7.16.0.0), the `dnSpy.Console --pdb` PDB in Visual Studio's debugger (7.22.0.0).
-- [ ] **S** Not checked yet: the .NET Framework build of the 7.5–7.22 features (all click-tests used the .NET 10 build), the 32-bit and .NET Framework release zips, a real self-update through the update dialog (eg. 7.21 → 7.22), the beta channel (needs a `-beta` release). Click-tested only through the tests that run without the UI: File → Export Patch.../Apply Patch... (7.8.0.0), the tracepoint keywords in the dialog (7.9.0.0), the diff node with renames and resources (7.10.0.0), the Android "store can't be read" message (7.21.0.0).
+- [ ] **S** Not checked yet: turn on Debug → Use dnSpy as the Just-In-Time Debugger (as administrator) and call `Debugger.Launch()` from a .NET and a .NET Framework program (7.25.0.0; it changes the registry, so it was not done unattended); the .NET Framework build of the 7.5–7.22 features (all click-tests used the .NET 10 build), the 32-bit and .NET Framework release zips, a real self-update through the update dialog (eg. 7.21 → 7.22), the beta channel (needs a `-beta` release). Click-tested only through the tests that run without the UI: File → Export Patch.../Apply Patch... (7.8.0.0), the tracepoint keywords in the dialog (7.9.0.0), the diff node with renames and resources (7.10.0.0), the Android "store can't be read" message (7.21.0.0).
 - [ ] **S** Have native speakers review the 7 new C# (ILSpy 11) strings in `Extensions/ILSpyModern.Decompiler/dnSpy.Decompiler.ILSpyModern.Core/Properties/*.resx` (cs, de, es-ES, fa, fr, hu, it, pt-BR, pt-PT, ru, tr, uk, zh-CN).
 - [x] **S** Per-monitor DPI / 4K scaling check (7.0.6.0, configuration only): all three builds' executables (.NET x64 publish, .NET Framework `dnSpy.exe` and `dnSpy-x86.exe`) embed `app.manifest` with `PerMonitorV2`; the text editor, hex editor and tabs handle DPI changes (`DpiService`); the C# (ILSpy 11) settings page has no fixed sizes (one `MinWidth` in DIPs). Not checked visually: Windows display scaling wasn't changed on the test machine. To check by hand: run at 150%/200% and on two monitors with different scaling, drag the window between them, and look at the menus, tool windows, the Options dialog and the code view.
 
@@ -64,10 +64,10 @@ Suggested first, in this order:
 - [ ] **M** ReadyToRun / NativeAOT viewer: show the precompiled native code next to the IL.
 - [x] **M** Single-file bundles: open a .NET 6+ single-file `.exe` and browse the DLLs inside (7.1.0.0; .NET Core 3.x to .NET 10 bundles, also compressed ones; references between the bundle's assemblies, eg. a self-contained app's runtime, resolve to the bundle's copies).
 - [x] **S–M** Xamarin/MAUI Android: unpack compressed `XALZ` assemblies from APKs (7.17.0.0: `.apk`/`.aab` open like a NuGet package; `XALZ` (LZ4) assemblies and .NET 6–8 assembly stores (format 1) with `assemblies.manifest`; `Test/AndroidPackageCheck` in `check.ps1`, not click-tested). .NET 9+ stores (format 2/3 in `libassemblies.<abi>.blob.so` / `libassembly-store.so`): 7.21.0.0, tested with a real .NET 10 MAUI app.
-- [ ] **S** C# language version picker in the toolbar.
-- [ ] **M** Decompile a whole namespace (all its types in one view; both C# languages only list the types today).
+- [x] **S** C# language version picker in the toolbar. (7.25.0.0)
+- [x] **M** Decompile a whole namespace (7.25.0.0: all its types in one view, both C# languages).
 - [x] **S** `using` aliases in C# (ILSpy 11)'s debugger info (the old language's `ImportInfo` aliases), for Watch expressions that use an alias. Not needed (checked 2026-10-31): neither language writes `using X = Y;`. ICSharpCode.Decompiler 11.2's `IntroduceUsingDeclarations` only adds `UsingDeclaration`s (its `UseAliases = true` is `TypeSystemAstBuilder`'s `int`-for-`System.Int32` keywords), and the old language also records namespaces only (`TextTokenWriter.EndNode`). Aliases from a real PDB's import scopes don't go through the decompiler.
-- [ ] **M** Source Link and symbol servers: fetch real source and PDBs (Microsoft/NuGet symbol servers), fall back to decompiling.
+- [ ] **M** Source Link and symbol servers: fetch real source and PDBs (Microsoft/NuGet symbol servers), fall back to decompiling. (Picked for 7.25.0.0, moved to the next release for budget.)
 - [ ] **M** Remove the old ILSpy 2.3 decompiler and its submodules (ICSharpCode.Decompiler 2.3, NRefactory) after a release or two with both. Note it in the release: extensions that use the old `ICSharpCode.Decompiler` stop working.
 
 ### Debugger
@@ -75,9 +75,9 @@ Suggested first, in this order:
 - [ ] **L** Edit and Continue: edit a method while paused and keep running.
 - [ ] **M–L** Heap and memory analysis with ClrMD: objects by type/count/size, "who references this", open `.dmp` files offline.
 - [ ] **L** Remote debugging: another machine, Docker containers, WSL.
-- [x] **L** Async Tasks window (7.24.0.0: tasks from a heap walk, async method and await, double-click opens the method). Still open: logical call stacks across `await`s (follow `m_continuationObject`), async method names for .NET Framework.
+- [x] **L** Async Tasks window (7.24.0.0: tasks from a heap walk, async method and await, double-click opens the method). Logical call stacks: 7.25.0.0. Still open: async method names for .NET Framework.
 - [x] **S** Exception helper popup: inner exceptions, "break when thrown" toggle, copy details. (7.23.0.0, click-tested: type, message, inner exceptions and call stack read from the fields, no code runs; the inner exceptions' stack traces aren't shown.)
-- [ ] **S** Offer to attach automatically when an app calls `Debugger.Launch()` (avoids the JIT dialog).
+- [x] **S** Offer to attach automatically when an app calls `Debugger.Launch()` (7.25.0.0: Debug → Use dnSpy as the Just-In-Time Debugger; the attach handshake was tested with a launcher, the registration itself still needs a test by the owner, see above).
 - [ ] **M** Update the Unity/Mono debugger against current Unity and upstream mono/debugger-libs.
 
 ### Editing and patching
@@ -97,7 +97,7 @@ Suggested first, in this order:
 ### Search and navigation
 
 - [x] **M** Regex and full-text search across decompiled code. (7.23.0.0: Search window → Search For: Code (decompiled), `/regex/`, click-tested. Later: search in parallel, it's slow on big assemblies.)
-- [ ] **S** Find usages: group by assembly, filter read/write, export. (7.23.0.0: grouped by assembly, click-tested; still to do: filter read/write, export.)
+- [x] **S** Find usages: group by assembly (7.23.0.0), export (7.25.0.0). Read/write: fields have Read By and Assigned By, properties Used By per getter and setter.
 - [ ] **S** Bookmarks with notes, saved per assembly.
 - [ ] **M** Graph views: call graph, type hierarchy, dependencies.
 

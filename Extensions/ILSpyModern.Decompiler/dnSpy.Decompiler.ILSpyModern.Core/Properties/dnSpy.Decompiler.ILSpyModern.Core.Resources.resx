@@ -216,4 +216,7 @@
   <data name="Settings_LatestLanguageVersion" xml:space="preserve">
     <value>Latest</value>
   </data>
+  <data name="LanguageVersionToolBar_ToolTip" xml:space="preserve">
+    <value>C# version to decompile to (C# (ILSpy 11) only; also in View → Options → Decompiler)</value>
+  </data>
 </root>

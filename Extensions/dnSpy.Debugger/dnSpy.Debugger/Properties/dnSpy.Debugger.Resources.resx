@@ -1710,4 +1710,15 @@ Are you sure you want to expand it?</value>
   <data name="ExceptionHelper_CallStack" xml:space="preserve">
     <value>Call stack:</value>
   </data>
+  <data name="JitDebuggerCommand" xml:space="preserve">
+    <value>Use dnSpy as the _Just-In-Time Debugger</value>
+  </data>
+  <data name="JitDebugger_AttachQuestion" xml:space="preserve">
+    <value>{0} (process {1}) wants a debugger (Debugger.Launch() or a crash). Attach dnSpy's debugger?</value>
+  </data>
+  <data name="JitDebugger_RegistryError" xml:space="preserve">
+    <value>dnSpy couldn't change the just-in-time debugger setting. Run dnSpy as administrator and try again.
+
+{0}</value>
+  </data>
 </root>

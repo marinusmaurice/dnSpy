@@ -210,4 +210,16 @@
   <data name="UsesTreeNode" xml:space="preserve">
     <value>Uses</value>
   </data>
+  <data name="ExportResultsCommand" xml:space="preserve">
+    <value>_Export Results...</value>
+  </data>
+  <data name="ExportResults_Filter" xml:space="preserve">
+    <value>CSV files (*.csv)|*.csv|Text files (*.txt)|*.txt</value>
+  </data>
+  <data name="ExportResults_Error" xml:space="preserve">
+    <value>The results couldn't be saved: {0}</value>
+  </data>
+  <data name="ExportResults_Header" xml:space="preserve">
+    <value>Search,Assembly,Result,Member,Token</value>
+  </data>
 </root>

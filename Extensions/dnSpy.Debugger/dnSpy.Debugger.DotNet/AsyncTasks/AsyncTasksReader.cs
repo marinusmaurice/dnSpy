@@ -56,6 +56,44 @@ namespace dnSpy.Debugger.DotNet.AsyncTasks {
 		/// <summary>The async method (or its MoveNext method), to go to its code</summary>
 		public ModuleId? Module { get; set; }
 		public uint MethodToken { get; set; }
+		/// <summary>The task's address on the heap, to find the tasks that wait for it</summary>
+		public ulong Address { get; set; }
+		/// <summary>Addresses of the objects in Task.m_continuationObject that are (or point to) tasks: the tasks that wait for this one</summary>
+		public List<ulong> ContinuationAddresses { get; } = new List<ulong>();
+		/// <summary>The task that waits for this one (eg. the async method that awaits it), or null</summary>
+		public AsyncTaskInfo? AwaitedBy { get; set; }
+
+		/// <summary>Short name for the logical call stack: the async method, else the type without namespace</summary>
+		public string ShortName {
+			get {
+				if (AsyncMethod is not null)
+					return AsyncMethod;
+				var name = TypeName;
+				int index = name.IndexOf('[');
+				if (index >= 0)
+					name = name.Substring(0, index);
+				index = name.LastIndexOf('.');
+				return index >= 0 ? name.Substring(index + 1) : name;
+			}
+		}
+
+		/// <summary>
+		/// The logical call stack, outermost first: "Program.Main → Worker.ChainAsync → Worker.FetchAsync".
+		/// Empty if no task waits for this one.
+		/// </summary>
+		public string LogicalCallStack {
+			get {
+				if (AwaitedBy is null)
+					return string.Empty;
+				var names = new List<string>();
+				var seen = new HashSet<AsyncTaskInfo>();
+				for (var t = this; t is not null && seen.Add(t) && names.Count < MaxCallStackDepth; t = t.AwaitedBy)
+					names.Add(t.ShortName);
+				names.Reverse();
+				return string.Join(" → ", names);
+			}
+		}
+		const int MaxCallStackDepth = 50;
 
 		public bool IsCompleted => Status == AsyncTaskStatus.RanToCompletion || Status == AsyncTaskStatus.Canceled;
 
@@ -129,8 +167,27 @@ namespace dnSpy.Debugger.DotNet.AsyncTasks {
 				evalInfo.CancellationToken.ThrowIfCancellationRequested();
 				tasks[i] = reader.ReadTask(values[i]);
 			}
+			LinkContinuations(tasks);
 			// The heap values are closed when the process continues
 			return new AsyncTasksResult(tasks, values.Length > MaxTasks);
+		}
+
+		// A task's continuation that is another task (an async method's state machine box, a WhenAll
+		// promise, a ContinueWith task) is the task that waits for it
+		static void LinkContinuations(AsyncTaskInfo[] tasks) {
+			var byAddress = new Dictionary<ulong, AsyncTaskInfo>();
+			foreach (var task in tasks) {
+				if (task.Address != 0)
+					byAddress[task.Address] = task;
+			}
+			foreach (var task in tasks) {
+				foreach (var address in task.ContinuationAddresses) {
+					if (byAddress.TryGetValue(address, out var awaiter) && awaiter != task) {
+						task.AwaitedBy = awaiter;
+						break;
+					}
+				}
+			}
 		}
 
 		static AsyncTaskStatus GetStatus(int flags) {
@@ -170,6 +227,9 @@ namespace dnSpy.Debugger.DotNet.AsyncTasks {
 				};
 
 				// .NET Core 3.0 and later: an async method's task is an AsyncTaskMethodBuilder<T>.AsyncStateMachineBox<TStateMachine>
+				info.Address = GetAddress(task);
+				ReadContinuations(task, info.ContinuationAddresses);
+
 				var stateMachineType = GetStateMachineType(type);
 				if (stateMachineType is not null) {
 					var (method, module, token) = GetAsyncMethod(stateMachineType);
@@ -183,6 +243,71 @@ namespace dnSpy.Debugger.DotNet.AsyncTasks {
 					}
 				}
 				return info;
+			}
+
+			static ulong GetAddress(DbgDotNetValue value) => value.IsNull ? 0 : value.GetRawAddressValue(onlyDataAddress: false)?.Address ?? 0;
+
+			// m_continuationObject is null, a task, a List<object> (several continuations), a delegate
+			// (its target is the awaiting state machine box) or a TaskContinuation (eg. an
+			// AwaitTaskContinuation with the box's MoveNext delegate in m_action)
+			void ReadContinuations(DbgDotNetValue task, List<ulong> addresses) {
+				var cont = ReadField(task, "m_continuationObject");
+				if (cont is null)
+					return;
+				try {
+					if (cont.IsNull)
+						return;
+					var listItems = ReadField(cont, "_items");
+					if (listItems is not null) {
+						try {
+							int size = ReadInt32(cont, "_size") ?? 0;
+							if (!listItems.IsNull && listItems.GetArrayCount(out uint count)) {
+								for (uint i = 0; i < count && i < (uint)size && i < 100; i++) {
+									var res = listItems.GetArrayElementAt(i);
+									if (res.Value is DbgDotNetValue item) {
+										AddContinuation(item, addresses);
+										item.Dispose();
+									}
+								}
+							}
+						}
+						finally {
+							listItems.Dispose();
+						}
+						return;
+					}
+					AddContinuation(cont, addresses);
+				}
+				finally {
+					cont.Dispose();
+				}
+			}
+
+			void AddContinuation(DbgDotNetValue cont, List<ulong> addresses) {
+				if (cont.IsNull)
+					return;
+				addresses.Add(GetAddress(cont));
+				// TaskContinuation types: the task (ContinueWith) or the action (await with a context)
+				foreach (var name in new[] { "m_task", "m_action", "_target" }) {
+					var value = ReadField(cont, name);
+					if (value is null)
+						continue;
+					try {
+						if (!value.IsNull) {
+							addresses.Add(GetAddress(value));
+							// A delegate's target (eg. the state machine box whose MoveNext it calls)
+							var target = name == "_target" ? null : ReadField(value, "_target");
+							if (target is not null) {
+								if (!target.IsNull)
+									addresses.Add(GetAddress(target));
+								target.Dispose();
+							}
+						}
+					}
+					finally {
+						value.Dispose();
+					}
+				}
 			}
 
 			static DmdType? GetStateMachineType(DmdType type) {

@@ -437,5 +437,14 @@ namespace dnSpy.Debugger.DotNet.Properties {
             }
         }
         
+        /// <summary>
+        ///   Looks up a localized string similar to Async Call Stack.
+        /// </summary>
+        public static string AsyncTasks_Column_CallStack {
+            get {
+                return ResourceManager.GetString("AsyncTasks_Column_CallStack", resourceCulture);
+            }
+        }
+        
     }
 }
