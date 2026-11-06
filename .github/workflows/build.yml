@@ -145,6 +145,17 @@ jobs:
           Set-Content -Path C:\builtfiles\release-notes.md -Value ($notes + "`n" + $downloads) -Encoding utf8
           Get-Content C:\builtfiles\release-notes.md
 
+      # Scoop and winget manifests with the zips' hashes (Build/packaging/New-PackageManifests.ps1). Not for pre-releases;
+      # the release step below skips files that don't exist.
+      - name: Write the package manager manifests
+        if: startsWith(github.ref, 'refs/tags/') && !contains(github.ref_name, '-')
+        shell: pwsh
+        run: |
+          $version = '${{ github.ref_name }}'.TrimStart('v')
+          .\Build\packaging\New-PackageManifests.ps1 -Version $version -ZipDir C:\builtfiles -OutDir C:\builtfiles\packaging -Repository '${{ github.repository }}'
+          Copy-Item C:\builtfiles\packaging\dnspy.json C:\builtfiles\dnspy.json
+          Compress-Archive -Path C:\builtfiles\packaging\winget\* -DestinationPath C:\builtfiles\winget-manifest.zip
+
       # Create a new release: create a tag, then 'git push origin <tagname>', wait for it to build
       - name: Create a new GitHub release if a new tag is pushed
         uses: softprops/action-gh-release@v2
@@ -153,6 +164,8 @@ jobs:
             C:\builtfiles\dnSpy-netframework.zip
             C:\builtfiles\dnSpy-net-win32.zip
             C:\builtfiles\dnSpy-net-win64.zip
+            C:\builtfiles\dnspy.json
+            C:\builtfiles\winget-manifest.zip
           # Tags like v7.0.0-beta.1 are published as pre-releases
           prerelease: ${{ contains(github.ref_name, '-') }}
           body_path: C:\builtfiles\release-notes.md

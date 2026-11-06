@@ -6417,5 +6417,122 @@ namespace dnSpy.Properties {
                 return ResourceManager.GetString("SearchWindow_DecompiledCode_ToolTip", resourceCulture);
             }
         }
+        /// <summary>
+        ///   Looks up a localized string similar to Go to _Original Source.
+        /// </summary>
+        public static string SourceLinkCommand {
+            get {
+                return ResourceManager.GetString("SourceLinkCommand", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to The original source of {0} isn't available: {1}.
+        /// </summary>
+        public static string SourceLink_NotFound {
+            get {
+                return ResourceManager.GetString("SourceLink_NotFound", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to the file has no debug information (no PDB was built for it)..
+        /// </summary>
+        public static string SourceLink_NoDebugInfo {
+            get {
+                return ResourceManager.GetString("SourceLink_NoDebugInfo", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to it has a Windows PDB; only portable PDBs can be read..
+        /// </summary>
+        public static string SourceLink_WindowsPdb {
+            get {
+                return ResourceManager.GetString("SourceLink_WindowsPdb", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to {0} wasn't found next to the file, in the cache or on the Microsoft and NuGet symbol servers..
+        /// </summary>
+        public static string SourceLink_NoPdb {
+            get {
+                return ResourceManager.GetString("SourceLink_NoPdb", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to embedded in the file.
+        /// </summary>
+        public static string SourceLink_PdbEmbedded {
+            get {
+                return ResourceManager.GetString("SourceLink_PdbEmbedded", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to the PDB has no source file for it (eg. it's compiler-generated)..
+        /// </summary>
+        public static string SourceLink_NoDocument {
+            get {
+                return ResourceManager.GetString("SourceLink_NoDocument", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to the PDB has no Source Link information or embedded source for its file..
+        /// </summary>
+        public static string SourceLink_NoSourceLink {
+            get {
+                return ResourceManager.GetString("SourceLink_NoSourceLink", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to downloading {0} failed ({1})..
+        /// </summary>
+        public static string SourceLink_DownloadFailed {
+            get {
+                return ResourceManager.GetString("SourceLink_DownloadFailed", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Original source: {0}.
+        /// </summary>
+        public static string SourceLink_Header_File {
+            get {
+                return ResourceManager.GetString("SourceLink_Header_File", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Downloaded with Source Link from {0}.
+        /// </summary>
+        public static string SourceLink_Header_Url {
+            get {
+                return ResourceManager.GetString("SourceLink_Header_Url", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Embedded in the PDB.
+        /// </summary>
+        public static string SourceLink_Header_Embedded {
+            get {
+                return ResourceManager.GetString("SourceLink_Header_Embedded", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to PDB: {0}.
+        /// </summary>
+        public static string SourceLink_Header_Pdb {
+            get {
+                return ResourceManager.GetString("SourceLink_Header_Pdb", resourceCulture);
+            }
+        }
+        
     }
 }

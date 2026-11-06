@@ -34,7 +34,8 @@ namespace dnSpy.Debugger.DotNet.CorDebug.Impl {
 			if (!IsPaused || maxCount <= 0)
 				return null;
 			var process = dnDebugger.Processes.FirstOrDefault()?.CorProcess;
-			var objects = process?.EnumerateHeap();
+			var errorHr = new System.Runtime.CompilerServices.StrongBox<int>();
+			var objects = process?.EnumerateHeap(errorHr);
 			if (process is null || objects is null)
 				return null;
 
@@ -68,6 +69,9 @@ namespace dnSpy.Debugger.DotNet.CorDebug.Impl {
 				if (result.Count >= maxCount)
 					break;
 			}
+			// Eg. .NET Framework: the heap walk stops with CORDBG_E_READVIRTUAL_FAILURE and handles can't be created
+			if (result.Count == 0 && errorHr.Value < 0)
+				return null;
 			return result.ToArray();
 		}
 	}

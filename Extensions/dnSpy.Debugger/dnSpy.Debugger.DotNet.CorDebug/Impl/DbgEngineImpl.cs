@@ -1,5 +1,6 @@
 /*
     Copyright (C) 2014-2019 de4dot@gmail.com
+    Copyright (C) 2026- marinusmaurice@outlook.com
 
     This file is part of dnSpy
 
@@ -312,6 +313,14 @@ namespace dnSpy.Debugger.DotNet.CorDebug.Impl {
 			lock (lockObj) {
 				if (toEngineModule.TryGetValue(corModule, out var engineModule))
 					return engineModule.Module;
+				// A different COM object for a loaded module, eg. a domain-neutral module (mscorlib in .NET
+				// Framework) from ICorDebugProcess5.GetTypeForTypeID: same base address and name
+				if (corModule.Address != 0) {
+					foreach (var kv in toEngineModule) {
+						if (kv.Key.Address == corModule.Address && StringComparer.OrdinalIgnoreCase.Equals(kv.Key.Name, corModule.Name))
+							return kv.Value.Module;
+					}
+				}
 			}
 			return null;
 		}

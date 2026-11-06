@@ -393,7 +393,7 @@ namespace dnSpy.Debugger.DotNet.Properties {
         }
         
         /// <summary>
-        ///   Looks up a localized string similar to The heap can't be read right now. Step or break again, then click Refresh..
+        ///   Looks up a localized string similar to The heap can't be read right now. Step or break again, then click Refresh. (For .NET Framework programs the runtime's heap walk often fails; .NET programs are supported.).
         /// </summary>
         public static string AsyncTasks_Status_HeapNotAvailable {
             get {
@@ -443,6 +443,24 @@ namespace dnSpy.Debugger.DotNet.Properties {
         public static string AsyncTasks_Column_CallStack {
             get {
                 return ResourceManager.GetString("AsyncTasks_Column_CallStack", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to _Copy.
+        /// </summary>
+        public static string AsyncTasks_Copy {
+            get {
+                return ResourceManager.GetString("AsyncTasks_Copy", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Copy _All.
+        /// </summary>
+        public static string AsyncTasks_CopyAll {
+            get {
+                return ResourceManager.GetString("AsyncTasks_CopyAll", resourceCulture);
             }
         }
         

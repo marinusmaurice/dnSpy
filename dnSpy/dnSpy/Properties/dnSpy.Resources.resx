@@ -2241,4 +2241,43 @@ Filter can be changed in Assembly Explorer options.</value>
   <data name="SearchWindow_DecompiledCode_ToolTip" xml:space="preserve">
     <value>Searches each line of the decompiled code (current language). Use /regex/ for a regular expression.</value>
   </data>
+  <data name="SourceLinkCommand" xml:space="preserve">
+    <value>Go to _Original Source</value>
+  </data>
+  <data name="SourceLink_NotFound" xml:space="preserve">
+    <value>The original source of {0} isn't available: {1}</value>
+  </data>
+  <data name="SourceLink_NoDebugInfo" xml:space="preserve">
+    <value>the file has no debug information (no PDB was built for it).</value>
+  </data>
+  <data name="SourceLink_WindowsPdb" xml:space="preserve">
+    <value>it has a Windows PDB; only portable PDBs can be read.</value>
+  </data>
+  <data name="SourceLink_NoPdb" xml:space="preserve">
+    <value>{0} wasn't found next to the file, in the cache or on the Microsoft and NuGet symbol servers.</value>
+  </data>
+  <data name="SourceLink_PdbEmbedded" xml:space="preserve">
+    <value>embedded in the file</value>
+  </data>
+  <data name="SourceLink_NoDocument" xml:space="preserve">
+    <value>the PDB has no source file for it (eg. it's compiler-generated).</value>
+  </data>
+  <data name="SourceLink_NoSourceLink" xml:space="preserve">
+    <value>the PDB has no Source Link information or embedded source for its file.</value>
+  </data>
+  <data name="SourceLink_DownloadFailed" xml:space="preserve">
+    <value>downloading {0} failed ({1}).</value>
+  </data>
+  <data name="SourceLink_Header_File" xml:space="preserve">
+    <value>Original source: {0}</value>
+  </data>
+  <data name="SourceLink_Header_Url" xml:space="preserve">
+    <value>Downloaded with Source Link from {0}</value>
+  </data>
+  <data name="SourceLink_Header_Embedded" xml:space="preserve">
+    <value>Embedded in the PDB</value>
+  </data>
+  <data name="SourceLink_Header_Pdb" xml:space="preserve">
+    <value>PDB: {0}</value>
+  </data>
 </root>

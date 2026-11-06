@@ -26,7 +26,16 @@
             <CheckBox DockPanel.Dock="Left" Margin="0 0 8 0" VerticalAlignment="Center" IsChecked="{Binding ShowCompleted}" Content="{x:Static p:dnSpy_Debugger_DotNet_Resources.AsyncTasks_ShowCompleted}" />
             <TextBlock VerticalAlignment="Center" Foreground="{DynamicResource SystemColorsControlText}" TextTrimming="CharacterEllipsis" Text="{Binding StatusText}" />
         </DockPanel>
-        <ListView Name="listView" ItemsSource="{Binding Tasks}" SelectedItem="{Binding SelectedTask}" SelectionMode="Single" MouseDoubleClick="ListView_MouseDoubleClick">
+        <ListView Name="listView" ItemsSource="{Binding Tasks}" SelectedItem="{Binding SelectedTask}" SelectionMode="Extended" MouseDoubleClick="ListView_MouseDoubleClick">
+            <ListView.CommandBindings>
+                <CommandBinding Command="ApplicationCommands.Copy" Executed="Copy_Executed" CanExecute="Copy_CanExecute" />
+            </ListView.CommandBindings>
+            <ListView.ContextMenu>
+                <ContextMenu>
+                    <MenuItem Header="{x:Static p:dnSpy_Debugger_DotNet_Resources.AsyncTasks_Copy}" InputGestureText="Ctrl+C" Click="Copy_Click" />
+                    <MenuItem Header="{x:Static p:dnSpy_Debugger_DotNet_Resources.AsyncTasks_CopyAll}" Click="CopyAll_Click" />
+                </ContextMenu>
+            </ListView.ContextMenu>
             <ListView.InputBindings>
                 <KeyBinding Key="Enter" Command="{Binding GoToCommand}" />
             </ListView.InputBindings>

@@ -229,7 +229,7 @@
     <value>The tasks of this program can't be read (only .NET Framework and .NET programs are supported).</value>
   </data>
   <data name="AsyncTasks_Status_HeapNotAvailable" xml:space="preserve">
-    <value>The heap can't be read right now. Step or break again, then click Refresh.</value>
+    <value>The heap can't be read right now. Step or break again, then click Refresh. (For .NET Framework programs the runtime's heap walk often fails; .NET programs are supported.)</value>
   </data>
   <data name="AsyncTasks_Status_Reading" xml:space="preserve">
     <value>Reading the tasks...</value>
@@ -245,5 +245,11 @@
   </data>
   <data name="AsyncTasks_Column_CallStack" xml:space="preserve">
     <value>Async Call Stack</value>
+  </data>
+  <data name="AsyncTasks_Copy" xml:space="preserve">
+    <value>_Copy</value>
+  </data>
+  <data name="AsyncTasks_CopyAll" xml:space="preserve">
+    <value>Copy _All</value>
   </data>
 </root>

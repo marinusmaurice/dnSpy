@@ -7,6 +7,20 @@ What changed in each release of this fork, newest first. The release workflow pu
 
 Each section starts with a short summary, then **New Features** (new things you can do), **Enhancements** (existing things that work better) and **Bug Fixes**, with a link to the commit for each item. Technical details are in [All changes in detail](docs/CHANGES.md#all-changes-in-detail) and in [docs/MODERNIZATION_PLAN.md](docs/MODERNIZATION_PLAN.md).
 
+## 7.26.0.0
+
+Open a member's real source code with Source Link and the symbol servers, copy from the Async Tasks window, and install dnSpy with Scoop or winget. Also has everything in 7.25.0.0 and earlier.
+
+### New Features
+
+- **Go to Original Source**: right-click a type or member in the assembly explorer or in the code and choose **Go to Original Source** to see the source file it was compiled from, in a tab at the member's line, with C# colors. dnSpy finds the portable PDB (embedded in the DLL, next to it, in its cache, or downloaded from the Microsoft and NuGet symbol servers) and takes the source embedded in the PDB, or downloads the file from its Source Link URL (eg. GitHub, at the exact commit). Works for .NET's own assemblies (eg. `System.Linq`) and most NuGet packages. If there's no original source, dnSpy says why and you keep the decompiled code. Downloads are cached in the local data folder (`SourceLinkCache`).
+- **Copy in the Async Tasks window**: select rows and press Ctrl+C, or right-click → Copy / Copy All. Tab-separated, so it pastes into a spreadsheet.
+- **Scoop and winget**: every release now has a Scoop manifest (`dnspy.json`; `scoop install https://github.com/marinusmaurice/dnSpy/releases/latest/download/dnspy.json`) and a winget manifest (`winget-manifest.zip`, for submitting to winget-pkgs). Both install the self-contained .NET build in portable mode.
+
+### Bug Fixes
+
+- Debugger (.NET Framework): a module object the debugger didn't know (eg. mscorlib, which is shared between AppDomains) couldn't be turned into a type, so the Async Tasks heap walk found no tasks. The Async Tasks window still can't list .NET Framework tasks (the runtime's heap walk fails with CORDBG_E_READVIRTUAL_FAILURE there); it now says the heap can't be read instead of showing 0 tasks.
+
 ## 7.25.0.0
 
 A C# version picker in the toolbar, whole namespaces decompiled in one view, async call stacks in the Async Tasks window, exporting analyzer results, and dnSpy as the just-in-time debugger for `Debugger.Launch()`. Also has everything in 7.24.0.0 and earlier.

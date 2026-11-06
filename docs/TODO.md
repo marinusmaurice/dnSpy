@@ -67,7 +67,7 @@ Suggested first, in this order:
 - [x] **S** C# language version picker in the toolbar. (7.25.0.0)
 - [x] **M** Decompile a whole namespace (7.25.0.0: all its types in one view, both C# languages).
 - [x] **S** `using` aliases in C# (ILSpy 11)'s debugger info (the old language's `ImportInfo` aliases), for Watch expressions that use an alias. Not needed (checked 2026-10-31): neither language writes `using X = Y;`. ICSharpCode.Decompiler 11.2's `IntroduceUsingDeclarations` only adds `UsingDeclaration`s (its `UseAliases = true` is `TypeSystemAstBuilder`'s `int`-for-`System.Int32` keywords), and the old language also records namespaces only (`TextTokenWriter.EndNode`). Aliases from a real PDB's import scopes don't go through the decompiler.
-- [ ] **M** Source Link and symbol servers: fetch real source and PDBs (Microsoft/NuGet symbol servers), fall back to decompiling. (Picked for 7.25.0.0, moved to the next release for budget.)
+- [x] **M** Source Link and symbol servers: fetch real source and PDBs (Microsoft/NuGet symbol servers), fall back to decompiling. (7.26.0.0: Go to Original Source. Still open: Windows PDBs, a setting for other symbol servers, using the PDB for the debugger.)
 - [ ] **M** Remove the old ILSpy 2.3 decompiler and its submodules (ICSharpCode.Decompiler 2.3, NRefactory) after a release or two with both. Note it in the release: extensions that use the old `ICSharpCode.Decompiler` stop working.
 
 ### Debugger
@@ -75,7 +75,7 @@ Suggested first, in this order:
 - [ ] **L** Edit and Continue: edit a method while paused and keep running.
 - [ ] **M–L** Heap and memory analysis with ClrMD: objects by type/count/size, "who references this", open `.dmp` files offline.
 - [ ] **L** Remote debugging: another machine, Docker containers, WSL.
-- [x] **L** Async Tasks window (7.24.0.0: tasks from a heap walk, async method and await, double-click opens the method). Logical call stacks: 7.25.0.0. Still open: async method names for .NET Framework.
+- [x] **L** Async Tasks window (7.24.0.0: tasks from a heap walk, async method and await, double-click opens the method). Logical call stacks: 7.25.0.0. Copy: 7.26.0.0. Still open: .NET Framework programs (the heap walk fails there with CORDBG_E_READVIRTUAL_FAILURE; it would need another way to find the tasks, eg. the runtime's task tracking).
 - [x] **S** Exception helper popup: inner exceptions, "break when thrown" toggle, copy details. (7.23.0.0, click-tested: type, message, inner exceptions and call stack read from the fields, no code runs; the inner exceptions' stack traces aren't shown.)
 - [x] **S** Offer to attach automatically when an app calls `Debugger.Launch()` (7.25.0.0: Debug → Use dnSpy as the Just-In-Time Debugger; the attach handshake was tested with a launcher, the registration itself still needs a test by the owner, see above).
 - [ ] **M** Update the Unity/Mono debugger against current Unity and upstream mono/debugger-libs.
@@ -131,7 +131,7 @@ Suggested first, in this order:
 
 ## No release needed (docs, CI, outside the repo)
 
-- [ ] ★ **S** winget, Scoop and Chocolatey manifests.
+- [x] ★ **S** winget and Scoop manifests (7.26.0.0, attached to each release). Still to do: submit the winget manifest to microsoft/winget-pkgs (owner), Chocolatey.
 - [x] **S** Report the `let` + switch expression bug upstream to ILSpy (submitted 2026-10-29: [icsharpcode/ILSpy#4300](https://github.com/icsharpcode/ILSpy/issues/4300), text in [upstream/ILSpy-let-switch-expression.md](upstream/ILSpy-let-switch-expression.md)).
 - [ ] **S** When a fixed ICSharpCode.Decompiler ships (icsharpcode/ILSpy#4300), update the package and drop dnSpy's `let` workaround if `check.ps1` still passes without it. (7.4.0.0 updated to 11.2: the issue is still open and 11.2 still needs the workaround.)
 - [ ] ⏸ ★ **S** Dependabot or Renovate for NuGet packages and GitHub Actions.

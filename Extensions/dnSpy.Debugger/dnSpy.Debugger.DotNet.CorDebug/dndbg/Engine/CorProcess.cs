@@ -195,7 +195,8 @@ namespace dndbg.Engine {
 		/// Enumerates the objects on the GC heap, or returns null if it's not possible now
 		/// (no ICorDebugProcess5 or the GC structures aren't valid, eg. during a GC)
 		/// </summary>
-		public IEnumerable<COR_HEAPOBJECT>? EnumerateHeap() {
+		/// <param name="errorHr">Set to the error if the enumeration stops with an error (eg. CORDBG_E_READVIRTUAL_FAILURE)</param>
+		public IEnumerable<COR_HEAPOBJECT>? EnumerateHeap(System.Runtime.CompilerServices.StrongBox<int> errorHr) {
 			if (obj is not ICorDebugProcess5 p5)
 				return null;
 			try {
@@ -203,17 +204,19 @@ namespace dndbg.Engine {
 				if (info.areGCStructuresValid == 0)
 					return null;
 				p5.EnumerateHeap(out var heapEnum);
-				return heapEnum is null ? null : EnumerateHeap(heapEnum);
+				return heapEnum is null ? null : EnumerateHeap(heapEnum, errorHr);
 			}
 			catch {
 				return null;
 			}
 		}
 
-		static IEnumerable<COR_HEAPOBJECT> EnumerateHeap(ICorDebugHeapEnum heapEnum) {
+		static IEnumerable<COR_HEAPOBJECT> EnumerateHeap(ICorDebugHeapEnum heapEnum, System.Runtime.CompilerServices.StrongBox<int> errorHr) {
 			var objects = new COR_HEAPOBJECT[256];
 			for (;;) {
 				int hr = heapEnum.Next((uint)objects.Length, objects, out uint fetched);
+				if (hr < 0)
+					errorHr.Value = hr;
 				if (hr < 0 || fetched == 0)
 					yield break;
 				for (int i = 0; i < (int)fetched && i < objects.Length; i++)
@@ -234,7 +237,7 @@ namespace dndbg.Engine {
 		}
 
 		/// <summary>
-		/// Gets the type of a heap object (see <see cref="EnumerateHeap()"/>)
+		/// Gets the type of a heap object (see <see cref="EnumerateHeap"/>)
 		/// </summary>
 		public CorType? GetTypeForTypeID(COR_TYPEID id) {
 			if (obj is not ICorDebugProcess5 p5)

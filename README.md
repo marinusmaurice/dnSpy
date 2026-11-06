@@ -25,6 +25,8 @@ The goal of this work is to make dnSpy useful for current .NET again without bre
 3. **Select "C# (ILSpy 11)" in the language drop-down in the toolbar** (next to the Start button). That's the new decompiler, and it's what gives you modern C# (`async`/`await`, records, switch expressions, ...), the choice of C# version and everything else listed below. New installs use it by default; if you've used an older dnSpy, check that it's selected. The other languages in the list ("C#", "Visual Basic", "IL") are the old ones.
 4. Its options are in **View → Options → Decompiler → C# (ILSpy 11)**, for example the C# version to decompile to (C# 1 to 14, or "Latest").
 
+You can also install it with Scoop: `scoop install https://github.com/marinusmaurice/dnSpy/releases/latest/download/dnspy.json`.
+
 dnSpy checks for new versions once a day and can update itself (**Help → Check for Updates**).
 
 ## Most important changes so far
@@ -35,6 +37,7 @@ dnSpy checks for new versions once a day and can update itself (**Help → Check
 - **Export to Project that builds**: export an assembly as a Visual Studio 2022/2026 project (SDK-style for .NET Core/.NET 5+) that compiles again; WPF apps, in C# and VB, keep their XAML event handlers.
 - **Open single-file apps, NuGet and Android packages**: browse the assemblies inside a .NET single-file app (`PublishSingleFile`), a `.nupkg` file or an Android `.apk`/`.aab` (Xamarin and .NET 6–10 MAUI apps, decompressed), or search nuget.org and your own NuGet feeds and open a package directly (**File → Open from NuGet**).
 - **Debug History (time-travel debugging)**: record every stop of a debugged program, then step back through earlier call stacks and locals, see what changed at each stop and a variable's value history (Options → Debugger → Debug History).
+- **Original source with Source Link**: right-click a member → **Go to Original Source** to see the real source file from its PDB (embedded, or downloaded from GitHub and the Microsoft/NuGet symbol servers).
 - **Find and compare faster**: a command palette (**F1**) runs any menu command or jumps to a type or member (`#name`); **Window → Compare Side by Side** shows the same code in two languages, eg. the new and the old C#, or C# and IL; the Search window searches the decompiled code too (plain text or `/regex/`), and the Analyzer groups usages by assembly.
 - **Debugging help**: an exception helper with the inner exceptions and call stack, an **Async Tasks** window (each async method's task, the `await` it's waiting at and which async method awaits it), dnSpy as the just-in-time debugger for `Debugger.Launch()`, and **Generate PDB...** to debug a third-party DLL in Visual Studio with its decompiled code.
 - **Editing**: Edit Method/Class can **Test Compile** (Shift+F6) without changing the assembly; **Export Patch / Apply Patch** keeps your edits in a file and applies them to a newer version of the assembly.
