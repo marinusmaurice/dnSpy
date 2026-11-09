@@ -351,6 +351,9 @@
   <data name="HttpTraffic_BodyTruncated" xml:space="preserve">
     <value>(only the first 1 MB was captured)</value>
   </data>
+  <data name="HttpTraffic_BodyPartial" xml:space="preserve">
+    <value>(the program didn't read all of the body: only the part it read was captured)</value>
+  </data>
   <data name="HttpTraffic_BodyNotAvailable" xml:space="preserve">
     <value>(bodies of .NET Framework requests are not captured)</value>
   </data>

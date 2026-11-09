@@ -71,6 +71,8 @@ namespace dnSpy.Debugger.DotNet.HttpTraffic {
 		public bool IsResponse { get; set; }
 		public byte[]? Body { get; set; }
 		public bool Truncated { get; set; }
+		/// <summary>The program didn't read all of the body (only what it read was captured)</summary>
+		public bool Partial { get; set; }
 		public byte Note { get; set; }
 		// Exception
 		public string ExceptionType { get; set; } = string.Empty;
@@ -151,6 +153,7 @@ namespace dnSpy.Debugger.DotNet.HttpTraffic {
 					int length = r.ReadInt32();
 					e.Body = r.ReadBytes(length);
 					e.Truncated = r.ReadBoolean();
+					e.Partial = r.ReadBoolean();
 					return e;
 				}
 

@@ -753,6 +753,15 @@ namespace dnSpy.Debugger.DotNet.Properties {
         }
         
         /// <summary>
+        ///   Looks up a localized string similar to (the program didn&apos;t read all of the body: only the part it read was captured).
+        /// </summary>
+        public static string HttpTraffic_BodyPartial {
+            get {
+                return ResourceManager.GetString("HttpTraffic_BodyPartial", resourceCulture);
+            }
+        }
+
+        /// <summary>
         ///   Looks up a localized string similar to (only the first 1 MB was captured).
         /// </summary>
         public static string HttpTraffic_BodyTruncated {

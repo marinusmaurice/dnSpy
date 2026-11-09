@@ -37,24 +37,31 @@ using System.Threading;
 // (incoming requests). Nothing here may throw into the program: every callback catches everything.
 namespace dnSpy.HttpAgent {
 	public static class Agent {
-		static int started;
-		static PipeConnection connection;
+		static readonly object startLock = new object();
+		static bool starting, subscribed;
+		static volatile PipeConnection connection;
 		internal static string AgentDirectory;
 
 		/// <summary>
 		/// Called by dnSpy (a function evaluation) once the program has started. Returns at once: the work is
 		/// done on a background thread when the program runs again (a function evaluation has a time limit, and
-		/// the other threads, eg. the ones the pipe needs, don't run during it).
+		/// the other threads, eg. the ones the pipe needs, don't run during it). Can be called again with a new
+		/// pipe once dnSpy has disconnected (detach, then attach and Start Capture again).
 		/// </summary>
 		public static string Start(string pipeName) {
-			if (Interlocked.Exchange(ref started, 1) != 0)
-				return "already started";
+			lock (startLock) {
+				if (starting || connection?.IsConnected == true)
+					return "already started";
+				starting = true;
+			}
 			try {
 				AgentDirectory = Path.GetDirectoryName(typeof(Agent).Assembly.Location);
 				new Thread(() => StartCore(pipeName)) { IsBackground = true, Name = "dnSpy HTTP agent" }.Start();
 				return "ok";
 			}
 			catch (Exception ex) {
+				lock (startLock)
+					starting = false;
 				return ex.ToString();
 			}
 		}
@@ -65,14 +72,22 @@ namespace dnSpy.HttpAgent {
 				if (!c.Connect())
 					return;
 				connection = c;
-				var listenerType = FindDiagnosticListenerType();
-				if (listenerType is null)
-					return;
-				var allListeners = (IObservable<object>)listenerType.GetProperty("AllListeners", BindingFlags.Public | BindingFlags.Static).GetValue(null, null);
-				allListeners.Subscribe(new AllListenersObserver());
+				// The listeners are subscribed once: they use the current connection
+				if (!subscribed) {
+					var listenerType = FindDiagnosticListenerType();
+					if (listenerType is null)
+						return;
+					var allListeners = (IObservable<object>)listenerType.GetProperty("AllListeners", BindingFlags.Public | BindingFlags.Static).GetValue(null, null);
+					allListeners.Subscribe(new AllListenersObserver());
+					subscribed = true;
+				}
 				c.SendHello(Environment.Version.ToString(), Process.GetCurrentProcess().Id);
 			}
 			catch {
+			}
+			finally {
+				lock (startLock)
+					starting = false;
 			}
 		}
 
@@ -175,7 +190,10 @@ namespace dnSpy.HttpAgent {
 		public readonly long Id = Interlocked.Increment(ref nextId);
 		public readonly Stopwatch Stopwatch = Stopwatch.StartNew();
 		public string Url = string.Empty;
-		public bool Stopped;
+		int stopped;
+		public bool Stopped => stopped != 0;
+		/// <summary>Returns true the first time: the response is reported once (events and the .NET Framework poll can race)</summary>
+		public bool TryStop() => Interlocked.Exchange(ref stopped, 1) == 0;
 		static readonly ConditionalWeakTable<object, RequestState> states = new ConditionalWeakTable<object, RequestState>();
 		public static RequestState Create(object key) {
 			var state = new RequestState();

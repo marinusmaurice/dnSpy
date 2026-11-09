@@ -316,11 +316,11 @@ try {
 	Invoke-Checked "build HttpAgentCheck" { dotnet build $agentCheckProject -c Release -v:q -nologo } > $null
 	$agentCheckDir = Join-Path $PSScriptRoot '..\HttpAgentCheck\bin\Release'
 	$agentOk = $true
-	foreach ($pair in @(@('net10.0', 'net6.0'), @('net48', 'net462'))) {
+	foreach ($pair in @(@('net10.0', 'net6.0'), @('net7.0', 'net6.0'), @('net6.0', 'net6.0'), @('net48', 'net462'))) {
 		$agentCheck = & (Join-Path $agentCheckDir "$($pair[0])\HttpAgentCheck.exe") (Join-Path $agentDir "$($pair[1])\dnSpy.HttpAgent.dll") 2>&1
 		if ($LASTEXITCODE -or -not ($agentCheck -contains 'All HTTP agent checks passed')) { $agentOk = $false; Fail "HTTP agent ($($pair[0])): checks failed"; $agentCheck | ForEach-Object { Write-Host "  $_" } }
 	}
-	if ($agentOk) { Write-Host '  OK: .NET (bodies, sync and async HttpClient, WebClient, caller frame) and .NET Framework (HttpClient, WebClient), statuses incl. 500' }
+	if ($agentOk) { Write-Host '  OK: .NET 10, 7 and 6 (bodies, partly read body, sync and async HttpClient, SocketsHttpHandler, WebClient, caller frame) and .NET Framework (HttpClient, WebClient), statuses incl. 500, refused connection, Start again after a disconnect' }
 
 	# Patch export/import: a patch made from PatchCases v1 and edited v1, applied to v2 (more members, other tokens), must
 	# give the same method bodies as edited v2 and print the same

@@ -6,12 +6,14 @@
   <!--
     HTTP agent test (dnSpy.HttpAgent, the HTTP Traffic window): plays dnSpy's side of the named pipe, loads the
     agent like dnSpy does (Assembly.LoadFrom + Agent.Start) and checks what it reports for requests to a local
-    HttpListener: HttpClient (async and sync), WebClient, bodies, statuses, the caller frame. net10.0 runs the
-    net6.0 agent, net48 the net462 agent. check.ps1 runs both, see ../DecompilerStress/README.md.
+    HttpListener: HttpClient (async and sync), WebClient, bodies, statuses, the caller frame. net10.0, net7.0 and
+    net6.0 run the net6.0 agent (also HttpClient with a SocketsHttpHandler), net48 the net462
+    agent. Also: Start again after dnSpy disconnected, a refused connection, a body not read to the end. check.ps1 runs all, see ../DecompilerStress/README.md.
   -->
   <PropertyGroup>
     <OutputType>Exe</OutputType>
-    <TargetFrameworks>net10.0;net48</TargetFrameworks>
+    <TargetFrameworks>net10.0;net7.0;net6.0;net48</TargetFrameworks>
+    <CheckEolTargetFramework>false</CheckEolTargetFramework>
     <Nullable>disable</Nullable>
     <LangVersion>latest</LangVersion>
   </PropertyGroup>

@@ -36,6 +36,7 @@ static class Check {
 		public int Status = -1;
 		public string RequestBody, ResponseBody;
 		public byte RequestNote, ResponseNote;
+		public bool ResponsePartial;
 	}
 
 	static readonly Dictionary<long, Request> requests = new Dictionary<long, Request>();
@@ -44,14 +45,9 @@ static class Check {
 	const int Port = 5797;
 
 	static int Main(string[] args) {
-		var pipeName = "dnSpy-http-check-" + Guid.NewGuid().ToString("N");
-		var server = new NamedPipeServerStream(pipeName, PipeDirection.InOut, 1, PipeTransmissionMode.Byte, PipeOptions.Asynchronous, 65536, 65536);
-		new Thread(() => Reader(server)) { IsBackground = true }.Start();
 		StartServer();
-
-		var result = Assembly.LoadFrom(args[0]).GetType("dnSpy.HttpAgent.Agent").GetMethod("Start").Invoke(null, new object[] { pipeName }) as string;
-		Expect(result == "ok", "Agent.Start returned " + result);
-		Expect(hello.Wait(10000), "no hello from the agent");
+		var start = Assembly.LoadFrom(args[0]).GetType("dnSpy.HttpAgent.Agent").GetMethod("Start");
+		var server = Connect(start, "first");
 
 		var client = new HttpClient();
 		var post = client.PostAsync($"http://localhost:{Port}/api/orders?x=1", new StringContent("{\"item\":\"book\"}", Encoding.UTF8, "application/json")).Result;
@@ -59,9 +55,22 @@ static class Check {
 		Expect(client.GetStringAsync($"http://localhost:{Port}/api/streamed").Result.Contains("echo"), "the program didn't get the streamed response");
 		Expect((int)client.GetAsync($"http://localhost:{Port}/api/fail").Result.StatusCode == 500, "the program didn't get the 500");
 		Expect(new WebClient().DownloadString($"http://localhost:{Port}/api/webclient").Contains("echo"), "WebClient failed");
-		Thread.Sleep(1500);
-
+		// Nothing listens on this port: a failure without a response
+		try {
+			client.GetStringAsync("http://localhost:5798/api/refused").Wait();
+			Expect(false, "refused: no exception");
+		}
+		catch (Exception) {
+		}
 		bool isCore = Environment.Version.Major >= 5;
+		if (isCore) {
+			// Response not read to the end: only headers, then disposed
+			using (var partial = client.GetAsync($"http://localhost:{Port}/api/partial", HttpCompletionOption.ResponseHeadersRead).Result) {
+			}
+			SocketsHandlerRequest();
+		}
+		Thread.Sleep(2000);
+
 		lock (requests) {
 			var p = Find("POST", "/api/orders?x=1");
 			var s = Find("GET", "/api/streamed");
@@ -79,12 +88,29 @@ static class Check {
 				Expect(p?.ResponseBody?.Contains("book") == true, "POST: response body " + p?.ResponseBody);
 				Expect(s?.ResponseBody?.Contains("echo") == true, "streamed: response body " + s?.ResponseBody);
 				Expect(w?.ResponseBody?.Contains("echo") == true, "WebClient: response body " + w?.ResponseBody);
+				var pa = Find("GET", "/api/partial");
+				Expect(pa?.ResponsePartial == true, "partial: not marked partial (body " + pa?.ResponseBody + ")");
+				// HttpClient with a SocketsHttpHandler (not an HttpClientHandler): reported once
+				var so = requests.Values.Where(a => a.Url.EndsWith("/api/sockets", StringComparison.Ordinal)).ToArray();
+				Expect(so.Length == 1, "SocketsHttpHandler: " + so.Length + " requests");
+				Expect(so.Length == 1 && so[0].Status == 200, "SocketsHttpHandler: status " + (so.Length == 1 ? so[0].Status : 0));
 			}
 			else {
 				// .NET Framework: no bodies, a note instead
 				Expect(p?.RequestNote == 1 && p?.ResponseNote == 1, "POST: body notes " + p?.RequestNote + "/" + p?.ResponseNote);
 			}
+			var re = requests.Values.FirstOrDefault(a => a.Url.EndsWith("/api/refused", StringComparison.Ordinal));
+			Expect(re?.Status == 0, "refused: status " + re?.Status);
 		}
+
+		// dnSpy disconnects (detach), then attach again and Start Capture: a new pipe, the agent reconnects
+		server.Dispose();
+		Thread.Sleep(1000);
+		Connect(start, "second");
+		Expect(client.GetStringAsync($"http://localhost:{Port}/api/again").Result.Contains("echo"), "the program didn't get the response after reconnecting");
+		Thread.Sleep(1000);
+		lock (requests)
+			Expect(Find("GET", "/api/again")?.Status == 200, "after reconnecting: status " + Find("GET", "/api/again")?.Status);
 
 		if (failures.Count == 0) {
 			Console.WriteLine("All HTTP agent checks passed");
@@ -94,6 +120,24 @@ static class Check {
 		foreach (var f in failures)
 			Console.WriteLine("FAIL: " + f);
 		return 1;
+	}
+
+	static NamedPipeServerStream Connect(MethodInfo start, string what) {
+		var pipeName = "dnSpy-http-check-" + Guid.NewGuid().ToString("N");
+		var server = new NamedPipeServerStream(pipeName, PipeDirection.InOut, 1, PipeTransmissionMode.Byte, PipeOptions.Asynchronous, 65536, 65536);
+		hello.Reset();
+		new Thread(() => Reader(server)) { IsBackground = true }.Start();
+		var result = start.Invoke(null, new object[] { pipeName }) as string;
+		Expect(result == "ok", what + " Agent.Start returned " + result);
+		Expect(hello.Wait(10000), "no hello from the agent (" + what + ")");
+		return server;
+	}
+
+	static void SocketsHandlerRequest() {
+#if NET
+		using var c = new HttpClient(new SocketsHttpHandler());
+		Expect(c.GetStringAsync($"http://localhost:{Port}/api/sockets").Result.Contains("echo"), "SocketsHttpHandler request failed");
+#endif
 	}
 
 	static Request Find(string method, string pathAndQuery) =>
@@ -167,9 +211,13 @@ static class Check {
 						long id = m.ReadInt64();
 						bool isResponse = m.ReadBoolean();
 						var text = Encoding.UTF8.GetString(m.ReadBytes(m.ReadInt32()));
+						m.ReadBoolean();
+						bool partial = m.ReadBoolean();
 						if (requests.TryGetValue(id, out var req)) {
-							if (isResponse)
+							if (isResponse) {
 								req.ResponseBody = text;
+								req.ResponsePartial = partial;
+							}
 							else
 								req.RequestBody = text;
 						}

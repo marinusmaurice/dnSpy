@@ -34,7 +34,7 @@ namespace dnSpy.HttpAgent {
 		const byte MsgHello = 1;			// string runtimeVersion, int pid
 		const byte MsgRequest = 2;			// long id, bool outgoing, string method, string url, long utcTicks, int threadId, string headers, int frameCount, frames (string name, string module, int token, int ilOffset)
 		const byte MsgResponse = 3;			// long id, int status, string reason, double ms, string headers, bool hasHandler, [frame]
-		const byte MsgBody = 4;				// long id, bool isResponse, int length, bytes, bool truncated
+		const byte MsgBody = 4;				// long id, bool isResponse, int length, bytes, bool truncated (over MaxBodySize), bool partial (not read to the end)
 		const byte MsgBodyNote = 5;			// long id, bool isResponse, byte note
 		const byte MsgException = 6;		// long id, string type, string message, string toString
 		// dnSpy -> agent
@@ -167,13 +167,14 @@ namespace dnSpy.HttpAgent {
 				WriteFrame(w, h);
 		});
 
-		public void SendBody(long id, bool isResponse, byte[] bytes, bool truncated) => Send(w => {
+		public void SendBody(long id, bool isResponse, byte[] bytes, bool truncated, bool partial) => Send(w => {
 			w.Write(MsgBody);
 			w.Write(id);
 			w.Write(isResponse);
 			w.Write(bytes.Length);
 			w.Write(bytes);
 			w.Write(truncated);
+			w.Write(partial);
 		});
 
 		public void SendBodyNote(long id, bool isResponse, byte note) => Send(w => {

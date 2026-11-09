@@ -74,16 +74,18 @@ namespace dnSpy.Debugger.DotNet.HttpTraffic {
 		public HttpFrame? Handler { get; private set; }
 		public byte[]? RequestBody { get; private set; }
 		public bool RequestBodyTruncated { get; private set; }
+		public bool RequestBodyPartial { get; private set; }
 		public byte RequestBodyNote { get; private set; }
 		public byte[]? ResponseBody { get; private set; }
 		public bool ResponseBodyTruncated { get; private set; }
+		public bool ResponseBodyPartial { get; private set; }
 		public byte ResponseBodyNote { get; private set; }
 		public string ExceptionText { get; private set; } = string.Empty;
 		public string ExceptionSummary { get; private set; } = string.Empty;
 
 		public string StatusText => !HasResponse ? (ExceptionSummary.Length != 0 ? "!" : "...") : Status == 0 ? (Reason.Length == 0 ? "-" : Reason) : Status.ToString(CultureInfo.InvariantCulture);
 		public string DurationText => HasResponse ? Milliseconds.ToString("N0", CultureInfo.CurrentCulture) : string.Empty;
-		public string SizeText => ResponseBody is null ? string.Empty : ResponseBody.Length.ToString("N0", CultureInfo.CurrentCulture) + (ResponseBodyTruncated ? "+" : string.Empty);
+		public string SizeText => ResponseBody is null ? string.Empty : ResponseBody.Length.ToString("N0", CultureInfo.CurrentCulture) + (ResponseBodyTruncated || ResponseBodyPartial ? "+" : string.Empty);
 		public string HandlerText => Handler?.Name ?? (Outgoing ? CallerName : string.Empty);
 
 		/// <summary>The frames in the program's own code (.NET's own frames left out), or all of them if there are none</summary>
@@ -131,10 +133,12 @@ namespace dnSpy.Debugger.DotNet.HttpTraffic {
 				if (e.IsResponse) {
 					ResponseBody = e.Body;
 					ResponseBodyTruncated = e.Truncated;
+					ResponseBodyPartial = e.Partial;
 				}
 				else {
 					RequestBody = e.Body;
 					RequestBodyTruncated = e.Truncated;
+					RequestBodyPartial = e.Partial;
 				}
 				break;
 			case HttpTrafficEventKind.BodyNote:
@@ -152,19 +156,19 @@ namespace dnSpy.Debugger.DotNet.HttpTraffic {
 			OnPropertyChanged(nameof(StatusText));
 		}
 
-		public string RequestText => FormatMessage(Method + " " + Url, RequestHeaders, RequestBody, RequestBodyTruncated, RequestBodyNote, isResponse: false);
+		public string RequestText => FormatMessage(Method + " " + Url, RequestHeaders, RequestBody, RequestBodyTruncated, RequestBodyPartial, RequestBodyNote, isResponse: false);
 
 		public string ResponseText {
 			get {
 				if (!HasResponse)
 					return ExceptionSummary.Length != 0 ? ExceptionSummary : dnSpy_Debugger_DotNet_Resources.HttpTraffic_NoResponseYet;
 				var statusLine = Status == 0 ? Reason : Status.ToString(CultureInfo.InvariantCulture) + " " + Reason;
-				var text = FormatMessage(statusLine, ResponseHeaders, ResponseBody, ResponseBodyTruncated, ResponseBodyNote, isResponse: true);
+				var text = FormatMessage(statusLine, ResponseHeaders, ResponseBody, ResponseBodyTruncated, ResponseBodyPartial, ResponseBodyNote, isResponse: true);
 				return text + string.Format(CultureInfo.CurrentCulture, "\n\n(" + dnSpy_Debugger_DotNet_Resources.HttpTraffic_Duration + ")", Milliseconds);
 			}
 		}
 
-		string FormatMessage(string firstLine, string headers, byte[]? body, bool truncated, byte note, bool isResponse) {
+		string FormatMessage(string firstLine, string headers, byte[]? body, bool truncated, bool partial, byte note, bool isResponse) {
 			var sb = new StringBuilder();
 			sb.Append(firstLine).Append('\n');
 			sb.Append(headers);
@@ -174,6 +178,8 @@ namespace dnSpy.Debugger.DotNet.HttpTraffic {
 					sb.Append(HttpBodyFormatter.Format(body, GetHeader(headers, "Content-Type")));
 				if (truncated)
 					sb.Append("\n\n").Append(dnSpy_Debugger_DotNet_Resources.HttpTraffic_BodyTruncated);
+				else if (partial)
+					sb.Append("\n\n").Append(dnSpy_Debugger_DotNet_Resources.HttpTraffic_BodyPartial);
 			}
 			else if (note == HttpTrafficProtocol.NoteNotAvailable)
 				sb.Append(dnSpy_Debugger_DotNet_Resources.HttpTraffic_BodyNotAvailable);

@@ -231,6 +231,7 @@ namespace dnSpy.Debugger.DotNet.HttpTraffic {
 			service.ClearBacklog();
 			Entries.Clear();
 			entries.Clear();
+			number = 0;
 			SelectedEntry = null;
 		}
 

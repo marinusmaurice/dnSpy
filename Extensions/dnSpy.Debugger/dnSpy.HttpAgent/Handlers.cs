@@ -87,9 +87,8 @@ namespace dnSpy.HttpAgent {
 
 		public static void Stop(PipeConnection c, object requestObj, object responseObj, string taskStatus) {
 			var state = RequestState.Get(requestObj);
-			if (state is null || state.Stopped)
+			if (state is null || !state.TryStop())
 				return;
-			state.Stopped = true;
 			if (responseObj is not HttpResponseMessage response) {
 				c.SendResponse(state.Id, 0, taskStatus == "Canceled" ? "Canceled" : "Failed", state.Stopwatch.Elapsed.TotalMilliseconds, string.Empty, null);
 				return;
@@ -124,14 +123,71 @@ namespace dnSpy.HttpAgent {
 			state.Url = request.RequestUri?.ToString() ?? string.Empty;
 			c.SendRequest(state.Id, outgoing: true, request.Method ?? "GET", state.Url, Headers.Format(request.Headers), Frames.Capture());
 			c.SendBodyNote(state.Id, isResponse: false, PipeConnection.NoteNotAvailable);
+			Track(request, state);
 			c.BreakIfRequested(state.Url);
+		}
+
+		// A request that fails without a response (connection refused, DNS, timeout) has no Stop event. HttpWebRequest
+		// keeps the exception in _CoreResponse (GetResponse) or in _ReadAResult's Result (BeginGetResponse, used by
+		// HttpClient): the pending requests are checked twice a second.
+		static readonly List<KeyValuePair<WeakReference, RequestState>> pending = new List<KeyValuePair<WeakReference, RequestState>>();
+		static Timer pollTimer;
+		static readonly FieldInfo coreResponseField = typeof(HttpWebRequest).GetField("_CoreResponse", BindingFlags.NonPublic | BindingFlags.Instance);
+		static readonly FieldInfo readAResultField = typeof(HttpWebRequest).GetField("_ReadAResult", BindingFlags.NonPublic | BindingFlags.Instance);
+
+		static Exception GetFailure(object request) {
+			if (coreResponseField.GetValue(request) is Exception ex)
+				return ex;
+			var asyncResult = readAResultField?.GetValue(request);
+			return asyncResult is null ? null : Reflect.Get(asyncResult, "Result") as Exception;
+		}
+
+		static void Track(HttpWebRequest request, RequestState state) {
+			if (coreResponseField is null)
+				return;
+			lock (pending) {
+				pending.Add(new KeyValuePair<WeakReference, RequestState>(new WeakReference(request), state));
+				if (pollTimer is null)
+					pollTimer = new Timer(_ => Poll(), null, 500, 500);
+			}
+		}
+
+		static void Poll() {
+			try {
+				KeyValuePair<WeakReference, RequestState>[] items;
+				lock (pending)
+					items = pending.ToArray();
+				foreach (var kv in items) {
+					var state = kv.Value;
+					bool done = state.Stopped;
+					if (!done) {
+						var request = kv.Key.Target;
+						if (request is null)
+							done = true;
+						// A WebException with a response (eg. 404) gets a Stop event with the status
+						else if (GetFailure(request) is Exception ex && !(ex is WebException we && we.Response is not null)) {
+							done = true;
+							var c = Agent.Connection;
+							if (state.TryStop() && c is not null && c.IsConnected) {
+								c.SendResponse(state.Id, 0, "Failed", state.Stopwatch.Elapsed.TotalMilliseconds, string.Empty, null);
+								c.SendException(state.Id, ex);
+							}
+						}
+					}
+					if (done) {
+						lock (pending)
+							pending.Remove(kv);
+					}
+				}
+			}
+			catch {
+			}
 		}
 
 		public static void Stop(PipeConnection c, object requestObj, object responseObj, object statusCode, object headersObj) {
 			var state = RequestState.Get(requestObj);
-			if (state is null || state.Stopped)
+			if (state is null || !state.TryStop())
 				return;
-			state.Stopped = true;
 			var response = responseObj as HttpWebResponse;
 			int status = response is not null ? (int)response.StatusCode : statusCode is HttpStatusCode sc ? (int)sc : statusCode is int i ? i : 0;
 			var headers = response is not null ? Headers.Format(response.Headers) : headersObj is WebHeaderCollection whc ? Headers.Format(whc) : string.Empty;
@@ -160,9 +216,8 @@ namespace dnSpy.HttpAgent {
 
 		public static void Stop(PipeConnection c, object httpContext) {
 			var state = RequestState.Get(httpContext);
-			if (state is null || state.Stopped)
+			if (state is null || !state.TryStop())
 				return;
-			state.Stopped = true;
 			var response = Reflect.Get(httpContext, "Response");
 			int status = Reflect.Get(response, "StatusCode") is int s ? s : 0;
 			var handler = GetEndpoint(httpContext);
@@ -257,6 +312,8 @@ namespace dnSpy.HttpAgent {
 		readonly bool isResponse;
 		readonly MemoryStream recorded = new MemoryStream();
 		bool truncated;
+		// Read (or sent) to the end. Else the body is partial: the program didn't read all of it.
+		volatile bool complete;
 		int sent;
 
 		public TeeContent(HttpContent inner, PipeConnection connection, long id, bool isResponse) {
@@ -285,18 +342,21 @@ namespace dnSpy.HttpAgent {
 			}
 		}
 
+		internal void Complete() => complete = true;
+
 		internal void Finish() {
 			if (Interlocked.Exchange(ref sent, 1) != 0)
 				return;
 			byte[] bytes;
 			lock (recorded)
 				bytes = recorded.ToArray();
-			connection.SendBody(id, isResponse, bytes, truncated);
+			connection.SendBody(id, isResponse, bytes, truncated, partial: !complete);
 		}
 
 		protected override async Task SerializeToStreamAsync(Stream stream, TransportContext context) {
 			var tee = new TeeStream(stream, this, write: true);
 			await inner.CopyToAsync(tee).ConfigureAwait(false);
+			Complete();
 			Finish();
 		}
 
@@ -310,6 +370,7 @@ namespace dnSpy.HttpAgent {
 		protected override void SerializeToStream(Stream stream, TransportContext context, CancellationToken cancellationToken) {
 			var tee = new TeeStream(stream, this, write: true);
 			inner.CopyTo(tee, context, cancellationToken);
+			Complete();
 			Finish();
 		}
 
@@ -387,8 +448,10 @@ namespace dnSpy.HttpAgent {
 		void Recorded(byte[] buffer, int offset, int n) {
 			if (n > 0)
 				owner.Record(buffer, offset, n);
-			else
+			else {
+				owner.Complete();
 				owner.Finish();
+			}
 		}
 
 		public override void Write(byte[] buffer, int offset, int count) {
