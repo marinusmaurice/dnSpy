@@ -7,6 +7,15 @@ What changed in each release of this fork, newest first. The release workflow pu
 
 Each section starts with a short summary, then **New Features** (new things you can do), **Enhancements** (existing things that work better) and **Bug Fixes**, with a link to the commit for each item. Technical details are in [All changes in detail](docs/CHANGES.md#all-changes-in-detail) and in [docs/MODERNIZATION_PLAN.md](docs/MODERNIZATION_PLAN.md).
 
+## 7.29.1.0
+
+Two fixes for the HTTP Traffic window. Also has everything in 7.29.0.0 and earlier.
+
+### Bug Fixes
+
+- With **Capture HTTP traffic** on, dnSpy no longer skips your stop at the start of the program: **Break at: Entry point**, **Step Into** to start debugging, or a breakpoint on the first line of `Main` now stop there as they should (the capture is still loaded). Before, the program ran on.
+- A status in **Filter** (eg. `500`) now shows new requests as their responses arrive. Before, requests that came in after the filter was typed never appeared.
+
 ## 7.29.0.0
 
 Watch the HTTP calls of the program you debug, live in dnSpy, without Fiddler: outgoing and incoming, HTTPS included, with the bodies and the code that made them. Also has everything in 7.28.0.0 and earlier.

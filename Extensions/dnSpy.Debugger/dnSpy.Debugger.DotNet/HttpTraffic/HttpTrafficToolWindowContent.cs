@@ -178,6 +178,11 @@ namespace dnSpy.Debugger.DotNet.HttpTraffic {
 			this.messageBoxService = messageBoxService;
 			EntriesView = CollectionViewSource.GetDefaultView(Entries);
 			EntriesView.Filter = o => filter.Length == 0 || (o is HttpEntryVM e && (e.Url.IndexOf(filter, StringComparison.OrdinalIgnoreCase) >= 0 || e.Method.IndexOf(filter, StringComparison.OrdinalIgnoreCase) >= 0 || e.StatusText == filter));
+			// The status is only known when the response arrives: filter again then (else a status filter hides new requests)
+			if (EntriesView is ICollectionViewLiveShaping live && live.CanChangeLiveFiltering) {
+				live.LiveFilteringProperties.Add(nameof(HttpEntryVM.StatusText));
+				live.IsLiveFiltering = true;
+			}
 			ClearCommand = new RelayCommand(a => Clear(), a => Entries.Count > 0);
 			StartCaptureCommand = new RelayCommand(a => service.StartCaptureNow());
 			CopyUrlCommand = new RelayCommand(a => Copy(GetEntry(a)?.Url), a => GetEntry(a) is not null);

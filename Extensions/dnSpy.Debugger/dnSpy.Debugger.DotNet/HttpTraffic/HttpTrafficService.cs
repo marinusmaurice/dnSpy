@@ -81,9 +81,14 @@ namespace dnSpy.Debugger.DotNet.HttpTraffic {
 		void DbgManager_IsRunningChanged(object? sender, EventArgs e) {
 			if (dbgManager?.IsRunning != false)
 				return;
+			InjectPending();
+		}
+
+		// Loads the agent into the processes that hit the hidden breakpoint and are paused. Called on the debugger thread.
+		void InjectPending() {
 			CaptureSession[] pending;
 			lock (lockObj)
-				pending = sessions.Values.Where(a => a.PendingThread is not null && !a.Injected).ToArray();
+				pending = sessions.Values.Where(a => a.PendingThread is not null && !a.Injected && a.PendingThread.Process.State == DbgProcessState.Paused).ToArray();
 			foreach (var session in pending) {
 				var thread = session.PendingThread!;
 				session.PendingThread = null;
@@ -94,14 +99,34 @@ namespace dnSpy.Debugger.DotNet.HttpTraffic {
 				if (thread.Runtime.InternalRuntime is not IDbgDotNetRuntime dnRuntime)
 					continue;
 				var process = thread.Process;
+				// Continue only if nothing else wants the program paused here: Step Into to start debugging, "Break at:
+				// Entry point" and a breakpoint on Main's first line stop at the same place as the hidden breakpoint
+				// (If it was already paused when the hidden breakpoint was hit, its break info only has the last message.)
+				bool onlyOurBreak = !session.WasPausedAtHit && IsOnlyBreak(thread.Runtime, bp);
 				dnRuntime.Dispatcher.TryBeginInvoke(() => {
 					Inject(session, thread);
+					if (!onlyOurBreak)
+						return;
 					process.DbgManager.Dispatcher.BeginInvoke(() => {
 						if (process.State == DbgProcessState.Paused)
 							process.Run();
 					});
 				});
 			}
+		}
+
+		// True if the runtime is paused only because of the hidden entry point breakpoint
+		static bool IsOnlyBreak(DbgRuntime runtime, DbgCodeBreakpoint? bp) {
+			if (bp is null)
+				return false;
+			var infos = runtime.BreakInfos;
+			if (infos.Count == 0)
+				return false;
+			foreach (var info in infos) {
+				if (info.Kind != DbgBreakInfoKind.Message || info.Data is not DbgMessageBoundBreakpointEventArgs e || e.BoundBreakpoint.Breakpoint != bp)
+					return false;
+			}
+			return true;
 		}
 
 		void DbgManager_ProcessesChanged(object? sender, DbgCollectionChangedEventArgs<DbgProcess> e) {
@@ -159,7 +184,11 @@ namespace dnSpy.Debugger.DotNet.HttpTraffic {
 						e2.Pause = false;
 						return;
 					}
+					session.WasPausedAtHit = e2.Thread.Process.State == DbgProcessState.Paused;
 					session.PendingThread = e2.Thread;
+					// The program can already be paused at the same place (eg. "Break at: Entry point" is reported
+					// first), then there's no new pause: load the agent once this check is done
+					runtime.Process.DbgManager.Dispatcher.BeginInvoke(InjectPending);
 				};
 				return;
 			}
@@ -333,6 +362,8 @@ namespace dnSpy.Debugger.DotNet.HttpTraffic {
 			public Timer? ErrorTimer { get; set; }
 			/// <summary>The thread that hit the entry point breakpoint, until the agent is loaded</summary>
 			public DbgThread? PendingThread { get; set; }
+			/// <summary>The program was already paused (for another reason) when the hidden breakpoint was hit</summary>
+			public bool WasPausedAtHit { get; set; }
 			bool disposed;
 
 			public CaptureSession(HttpTrafficService owner, DbgProcess process, string agentFile) {

@@ -149,6 +149,7 @@ namespace dnSpy.Debugger.DotNet.HttpTraffic {
 				break;
 			}
 			OnPropertyChanged(string.Empty);
+			OnPropertyChanged(nameof(StatusText));
 		}
 
 		public string RequestText => FormatMessage(Method + " " + Url, RequestHeaders, RequestBody, RequestBodyTruncated, RequestBodyNote, isResponse: false);
