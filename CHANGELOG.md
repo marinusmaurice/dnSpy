@@ -7,6 +7,20 @@ What changed in each release of this fork, newest first. The release workflow pu
 
 Each section starts with a short summary, then **New Features** (new things you can do), **Enhancements** (existing things that work better) and **Bug Fixes**, with a link to the commit for each item. Technical details are in [All changes in detail](docs/CHANGES.md#all-changes-in-detail) and in [docs/MODERNIZATION_PLAN.md](docs/MODERNIZATION_PLAN.md).
 
+## 7.29.3.0
+
+The last fixes from a review of the HTTP Traffic window, and a C# decompiler fix for .NET 7+ `System.Private.CoreLib`. Also has everything in 7.29.2.0 and earlier.
+
+### Bug Fixes
+
+- **C# (ILSpy 11)**: types with `extern` local functions, eg. `System.Threading.Thread` and `Monitor` in .NET 7 and later (the `[LibraryImport]` stubs), showed "An error occurred ... NullReferenceException" instead of the code. You saw it eg. when the debugger stopped in `Thread.Sleep`. The bug was in one of dnSpy's own additions to the decompiler, not in ILSpy.
+- **Start Capture** after attaching and **Break All**: when the program is stopped where no code can run (eg. in `Thread.Sleep`), the capture is now loaded automatically the next time it pauses (a breakpoint or a step, eg. Step Out). Before, it failed with an error.
+
+- Memory: the HTTP Traffic window keeps up to 512 MB of bodies (the oldest requests are removed after that), dnSpy no longer keeps a second copy of every request once the window is open, and the debugged program never holds more than 64 MB of messages waiting for dnSpy.
+- If the HTTP capture can't start in the program (an error in the program, or it doesn't connect to dnSpy), the window now says so. Before, nothing was shown.
+- When you debug several programs at once and one of them pauses for a moment to load the capture, the others now continue too. Before, they stayed paused.
+- **Save as HAR...** writes binary bodies (images, files) as base64, so they're no longer corrupted.
+
 ## 7.29.2.0
 
 More fixes for the HTTP Traffic window. Also has everything in 7.29.1.0 and earlier.

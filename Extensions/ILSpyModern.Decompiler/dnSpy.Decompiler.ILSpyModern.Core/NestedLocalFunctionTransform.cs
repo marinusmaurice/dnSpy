@@ -1,4 +1,6 @@
 /*
+    Copyright (C) 2026- marinusmaurice@outlook.com
+
     This file is part of dnSpy
 
     dnSpy is free software: you can redistribute it and/or modify
@@ -43,8 +45,12 @@ namespace dnSpy.Decompiler.ILSpyModern.Core {
 		static void TryMove(LocalFunctionDeclarationStatement f) {
 			if (!(f.Annotation<ILFunction>() is ILFunction fFunc) || !(f.Parent is BlockStatement) || !(f.Ancestors.OfType<EntityDeclaration>().FirstOrDefault() is EntityDeclaration member))
 				return;
+			// An extern local function has no body (eg. the [DllImport] __PInvoke functions that [LibraryImport] generates,
+			// all over .NET 7+ System.Private.CoreLib: Thread, Monitor)
+			if (f.Declaration?.Body is not BlockStatement fBody)
+				return;
 			var closureReads = new List<(MemberReferenceExpression read, IdentifierExpression closure, IField field)>();
-			foreach (var id in f.Declaration.Body.Descendants.OfType<IdentifierExpression>()) {
+			foreach (var id in fBody.Descendants.OfType<IdentifierExpression>()) {
 				if (!(id.GetILVariable() is ILVariable v) || v.Kind != VariableKind.Parameter || v.Function != fFunc || !IsDisplayStructRef(v.Type))
 					continue;
 				if (!(id.Parent is MemberReferenceExpression read) || read.Target != id || !(read.GetSymbol() is IField field))
@@ -62,6 +68,8 @@ namespace dnSpy.Decompiler.ILSpyModern.Core {
 				if (!calls.All(a => a.Ancestors.Contains(g)))
 					continue;
 				if (!g.Ancestors.Contains(f.Parent) || !(g.Annotation<ILFunction>() is ILFunction gFunc))
+					continue;
+				if (g.Declaration?.Body is not BlockStatement gBody)
 					continue;
 				var parameters = new Dictionary<IField, ILVariable>();
 				foreach (var (_, _, field) in closureReads) {
@@ -84,7 +92,7 @@ namespace dnSpy.Decompiler.ILSpyModern.Core {
 					read.ReplaceWith(id);
 				}
 				f.Remove();
-				g.Declaration.Body.Statements.Add(f);
+				gBody.Statements.Add(f);
 				return;
 			}
 		}
@@ -130,7 +138,7 @@ namespace dnSpy.Decompiler.ILSpyModern.Core {
 				return true;
 			var declaredInG = new HashSet<string>(DeclaredNames(g));
 			declaredInG.Remove(g.Declaration.Name);
-			var usedInF = f.Declaration.Body.Descendants.OfType<IdentifierExpression>().Select(a => a.Identifier).Where(a => !declaredInF.Contains(a));
+			var usedInF = f.Declaration.Body!.Descendants.OfType<IdentifierExpression>().Select(a => a.Identifier).Where(a => !declaredInF.Contains(a));
 			return usedInF.Any(a => declaredInG.Contains(a) && !parameters.Any(p => p.Name == a));
 		}
 

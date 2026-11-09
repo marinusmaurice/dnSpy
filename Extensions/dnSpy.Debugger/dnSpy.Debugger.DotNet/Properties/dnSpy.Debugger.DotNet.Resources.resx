@@ -372,6 +372,12 @@
   <data name="HttpTraffic_Status_AgentException" xml:space="preserve">
     <value>Loading the HTTP agent threw an exception.</value>
   </data>
+  <data name="HttpTraffic_Status_RetryAtNextPause" xml:space="preserve">
+    <value>The HTTP agent can't be loaded here ({0}). It's loaded the next time the program pauses, eg. at a breakpoint or after a step.</value>
+  </data>
+  <data name="HttpTraffic_Status_NotConnected" xml:space="preserve">
+    <value>the agent was loaded but didn't connect to dnSpy</value>
+  </data>
   <data name="HttpTraffic_Status_InjectFailed" xml:space="preserve">
     <value>The HTTP agent could not be loaded: {0}</value>
   </data>

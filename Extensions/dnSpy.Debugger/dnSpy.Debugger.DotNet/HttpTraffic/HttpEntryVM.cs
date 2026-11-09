@@ -241,7 +241,7 @@ namespace dnSpy.Debugger.DotNet.HttpTraffic {
 			return Hex(body);
 		}
 
-		static bool IsText(byte[] body, string contentType) {
+		public static bool IsText(byte[] body, string contentType) {
 			var ct = contentType.ToLowerInvariant();
 			if (ct.StartsWith("text/", StringComparison.Ordinal) || ct.Contains("json") || ct.Contains("xml") || ct.Contains("javascript") || ct.Contains("x-www-form-urlencoded"))
 				return true;

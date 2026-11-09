@@ -82,6 +82,23 @@ namespace dnSpy.Debugger.DotNet.HttpTraffic {
 			if (dbgManager?.IsRunning != false)
 				return;
 			InjectPending();
+			RetryStartCapture();
+		}
+
+		// Start Capture couldn't load the agent (eg. after Break All the thread is in Thread.Sleep, where code can't run):
+		// it's loaded the next time the program pauses, eg. at a breakpoint or after a step
+		void RetryStartCapture() {
+			var thread = dbgManager?.CurrentThread.Current;
+			if (thread is null || thread.Runtime.InternalRuntime is not IDbgDotNetRuntime dnRuntime)
+				return;
+			CaptureSession? session;
+			lock (lockObj)
+				sessions.TryGetValue(thread.Process, out session);
+			if (session is null || !session.RetryAtNextPause || session.Injected || session.Connected)
+				return;
+			session.RetryAtNextPause = false;
+			session.Injected = true;
+			dnRuntime.Dispatcher.TryBeginInvoke(() => Inject(session, thread));
 		}
 
 		// Loads the agent into the processes that hit the hidden breakpoint and are paused. Called on the debugger thread.
@@ -107,11 +124,22 @@ namespace dnSpy.Debugger.DotNet.HttpTraffic {
 					Inject(session, thread);
 					if (!onlyOurBreak)
 						return;
-					process.DbgManager.Dispatcher.BeginInvoke(() => {
-						if (process.State == DbgProcessState.Paused)
-							process.Run();
-					});
+					process.DbgManager.Dispatcher.BeginInvoke(() => RunAgain(process));
 				});
+			}
+		}
+
+		// Lets the program run again after loading the agent, and the other processes that were only paused because this
+		// one was (Break all processes when one process breaks): those have just a Break message
+		static void RunAgain(DbgProcess process) {
+			if (process.State == DbgProcessState.Paused)
+				process.Run();
+			foreach (var other in process.DbgManager.Processes) {
+				if (other == process || other.State != DbgProcessState.Paused)
+					continue;
+				bool onlyBreakAll = other.Runtimes.Length != 0 && other.Runtimes.All(r => r.BreakInfos.Count != 0 && r.BreakInfos.All(a => a.Kind == DbgBreakInfoKind.Message && a.Data is DbgMessageEventArgs m && m.Kind == DbgMessageKind.Break));
+				if (onlyBreakAll)
+					other.Run();
 			}
 		}
 
@@ -265,21 +293,33 @@ namespace dnSpy.Debugger.DotNet.HttpTraffic {
 			DbgEvaluationContext? context = null;
 			string? error = null;
 			try {
-				frames = thread.GetFrames(1);
+				frames = thread.GetFrames(MaxFrames);
 				if (frames.Length == 0) {
 					error = dnSpy_Debugger_DotNet_Resources.AsyncTasks_Status_NotPaused;
 					return;
 				}
+				// The first managed frame: after Break All the thread is often in native code (eg. Thread.Sleep), and an
+				// expression can't be evaluated in a native frame
+				var frame = frames.FirstOrDefault(a => a.Module is not null) ?? frames[0];
 				var languages = dbgLanguageService.Value.GetLanguages(thread.Runtime.RuntimeKindGuid);
 				var language = languages.FirstOrDefault(a => a.Name == "C#") ?? dbgLanguageService.Value.GetCurrentLanguage(thread.Runtime.RuntimeKindGuid);
-				context = language.CreateContext(frames[0], cancellationToken: CancellationToken.None);
-				var evalInfo = new DbgEvaluationInfo(context, frames[0], CancellationToken.None);
+				context = language.CreateContext(frame, cancellationToken: CancellationToken.None);
+				var evalInfo = new DbgEvaluationInfo(context, frame, CancellationToken.None);
 				var expr = "System.Reflection.Assembly.LoadFrom(" + CSharpString(session.AgentFile) + ").GetType(\"dnSpy.HttpAgent.Agent\").GetMethod(\"Start\").Invoke(null, new object[] { " + CSharpString(session.PipeName) + " })";
 				var res = language.ExpressionEvaluator.Evaluate(evalInfo, expr, DbgEvaluationOptions.Expression, null);
-				if (res.Error is not null)
-					error = res.Error;
+				if (res.Error is not null) {
+					// The expression couldn't run here (eg. "the thread is at an unsafe point"): try again at the next pause
+					session.Injected = false;
+					session.RetryAtNextPause = true;
+					StatusChanged?.Invoke(this, string.Format(dnSpy_Debugger_DotNet_Resources.HttpTraffic_Status_RetryAtNextPause, res.Error));
+					res.Value?.Close();
+					return;
+				}
 				else if (res.IsThrownException)
 					error = dnSpy_Debugger_DotNet_Resources.HttpTraffic_Status_AgentException;
+				// Agent.Start returns "ok", "already started" or the exception it caught
+				else if (res.Value is DbgValue value && value.HasRawValue && value.RawValue is string startResult && startResult != "ok" && startResult != "already started")
+					error = startResult;
 				res.Value?.Close();
 			}
 			catch (Exception ex) {
@@ -289,21 +329,28 @@ namespace dnSpy.Debugger.DotNet.HttpTraffic {
 				context?.Close();
 				if (frames is not null && frames.Length > 0)
 					thread.Process.DbgManager.Close(frames);
-				if (error is not null) {
-					// The evaluation can report an error although the agent started (eg. "Internal debugger error"
-					// in .NET Framework after Start() returned): only report it if the agent doesn't connect
-					var errorText = error;
-					var timer = new Timer(_ => {
-						if (!session.Connected) {
-							session.Injected = false;
-							StatusChanged?.Invoke(this, string.Format(dnSpy_Debugger_DotNet_Resources.HttpTraffic_Status_InjectFailed, errorText));
-						}
-					});
-					timer.Change(5000, Timeout.Infinite);
-					session.ErrorTimer = timer;
-				}
+				// The evaluation can report an error although the agent started (eg. "Internal debugger error" in .NET
+				// Framework after Start() returned), and it can succeed but the agent doesn't connect: report a problem
+				// only if the agent hasn't connected after it had a few seconds to run (it doesn't run while paused)
+				var errorText = error ?? dnSpy_Debugger_DotNet_Resources.HttpTraffic_Status_NotConnected;
+				int runningChecks = 0;
+				var timer = new Timer(_ => {
+					if (session.Connected || session.RetryAtNextPause || session.Process.State == DbgProcessState.Terminated)
+						return;
+					if (session.Process.State != DbgProcessState.Running || ++runningChecks < 5) {
+						session.ErrorTimer?.Change(1000, Timeout.Infinite);
+						return;
+					}
+					session.Injected = false;
+					StatusChanged?.Invoke(this, string.Format(dnSpy_Debugger_DotNet_Resources.HttpTraffic_Status_InjectFailed, errorText));
+				});
+				session.ErrorTimer?.Dispose();
+				session.ErrorTimer = timer;
+				timer.Change(1000, Timeout.Infinite);
 			}
 		}
+
+		const int MaxFrames = 50;
 
 		static string CSharpString(string s) => "\"" + s.Replace("\\", "\\\\").Replace("\"", "\\\"") + "\"";
 
@@ -319,13 +366,25 @@ namespace dnSpy.Debugger.DotNet.HttpTraffic {
 		readonly List<HttpTrafficEventArgs> backlog = new List<HttpTrafficEventArgs>();
 		const int MaxBacklog = 50000;
 
+		const long MaxBacklogBytes = 256 * 1024 * 1024;
+		long backlogBytes;
+
 		internal void RaiseChanged(HttpTrafficEventArgs e) {
 			EventHandler<HttpTrafficEventArgs>? handler;
 			lock (lockObj) {
-				backlog.Add(e);
-				if (backlog.Count > MaxBacklog)
-					backlog.RemoveRange(0, backlog.Count - MaxBacklog);
 				handler = Changed;
+				// Kept only until the window subscribes (it keeps its own list)
+				if (handler is null) {
+					backlog.Add(e);
+					backlogBytes += e.Body?.Length ?? 0;
+					int remove = 0;
+					while (remove < backlog.Count - 1 && (backlog.Count - remove > MaxBacklog || backlogBytes > MaxBacklogBytes)) {
+						backlogBytes -= backlog[remove].Body?.Length ?? 0;
+						remove++;
+					}
+					if (remove > 0)
+						backlog.RemoveRange(0, remove);
+				}
 			}
 			handler?.Invoke(this, e);
 		}
@@ -336,13 +395,18 @@ namespace dnSpy.Debugger.DotNet.HttpTraffic {
 		public HttpTrafficEventArgs[] Subscribe(EventHandler<HttpTrafficEventArgs> handler) {
 			lock (lockObj) {
 				Changed += handler;
-				return backlog.ToArray();
+				var result = backlog.ToArray();
+				backlog.Clear();
+				backlogBytes = 0;
+				return result;
 			}
 		}
 
 		public void ClearBacklog() {
-			lock (lockObj)
+			lock (lockObj) {
 				backlog.Clear();
+				backlogBytes = 0;
+			}
 		}
 		internal void RaiseStatus(string status) => StatusChanged?.Invoke(this, status);
 
@@ -364,6 +428,8 @@ namespace dnSpy.Debugger.DotNet.HttpTraffic {
 			public DbgThread? PendingThread { get; set; }
 			/// <summary>The program was already paused (for another reason) when the hidden breakpoint was hit</summary>
 			public bool WasPausedAtHit { get; set; }
+			/// <summary>Start Capture couldn't run code in the program: load the agent at the next pause</summary>
+			public bool RetryAtNextPause { get; set; }
 			bool disposed;
 
 			public CaptureSession(HttpTrafficService owner, DbgProcess process, string agentFile) {

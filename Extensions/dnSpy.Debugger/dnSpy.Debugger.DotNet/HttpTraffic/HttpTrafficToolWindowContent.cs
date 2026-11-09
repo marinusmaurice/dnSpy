@@ -85,6 +85,9 @@ namespace dnSpy.Debugger.DotNet.HttpTraffic {
 	[Export(typeof(HttpTrafficVM))]
 	sealed class HttpTrafficVM : ViewModelBase {
 		const int MaxEntries = 10000;
+		// The bodies in the list may use this much memory, then the oldest requests are removed
+		const long MaxBodyBytes = 512L * 1024 * 1024;
+		long bodyBytes;
 
 		readonly HttpTrafficService service;
 		readonly UIDispatcher uiDispatcher;
@@ -216,15 +219,25 @@ namespace dnSpy.Debugger.DotNet.HttpTraffic {
 				var vm = new HttpEntryVM(++number, e);
 				entries[key] = vm;
 				Entries.Add(vm);
-				if (Entries.Count > MaxEntries) {
-					var old = Entries[0];
-					Entries.RemoveAt(0);
-					entries.Remove((old.ProcessId, old.Id));
-				}
+				RemoveOld();
 				return;
 			}
-			if (entries.TryGetValue(key, out var entry))
+			if (entries.TryGetValue(key, out var entry)) {
 				entry.Update(e);
+				if (e.Kind == HttpTrafficEventKind.Body && e.Body is not null) {
+					bodyBytes += e.Body.Length;
+					RemoveOld();
+				}
+			}
+		}
+
+		void RemoveOld() {
+			while (Entries.Count > 1 && (Entries.Count > MaxEntries || bodyBytes > MaxBodyBytes)) {
+				var old = Entries[0];
+				Entries.RemoveAt(0);
+				entries.Remove((old.ProcessId, old.Id));
+				bodyBytes -= (old.RequestBody?.Length ?? 0) + (old.ResponseBody?.Length ?? 0);
+			}
 		}
 
 		void Clear() {
@@ -232,6 +245,7 @@ namespace dnSpy.Debugger.DotNet.HttpTraffic {
 			Entries.Clear();
 			entries.Clear();
 			number = 0;
+			bodyBytes = 0;
 			SelectedEntry = null;
 		}
 
@@ -284,13 +298,25 @@ namespace dnSpy.Debugger.DotNet.HttpTraffic {
 				sb.Append(",\"request\":{\"method\":").Append(Str(e.Method)).Append(",\"url\":").Append(Str(e.Url)).Append(",\"httpVersion\":\"HTTP/1.1\",\"cookies\":[],\"headers\":");
 				Headers(sb, e.RequestHeaders);
 				sb.Append(",\"queryString\":[],\"headersSize\":-1,\"bodySize\":").Append(e.RequestBody?.Length ?? -1);
-				if (e.RequestBody is { Length: > 0 })
-					sb.Append(",\"postData\":{\"mimeType\":").Append(Str(HttpEntryVM.GetHeader(e.RequestHeaders, "Content-Type"))).Append(",\"text\":").Append(Str(Encoding.UTF8.GetString(e.RequestBody))).Append('}');
+				if (e.RequestBody is { Length: > 0 }) {
+					var requestType = HttpEntryVM.GetHeader(e.RequestHeaders, "Content-Type");
+					sb.Append(",\"postData\":{\"mimeType\":").Append(Str(requestType));
+					// HAR 1.2 has no encoding for postData: binary data as base64 with a custom "_encoding"
+					if (HttpBodyFormatter.IsText(e.RequestBody, requestType))
+						sb.Append(",\"text\":").Append(Str(Encoding.UTF8.GetString(e.RequestBody)));
+					else
+						sb.Append(",\"text\":").Append(Str(Convert.ToBase64String(e.RequestBody))).Append(",\"_encoding\":\"base64\"");
+					sb.Append('}');
+				}
 				sb.Append("},\"response\":{\"status\":").Append(e.Status).Append(",\"statusText\":").Append(Str(e.Reason)).Append(",\"httpVersion\":\"HTTP/1.1\",\"cookies\":[],\"headers\":");
 				Headers(sb, e.ResponseHeaders);
 				sb.Append(",\"content\":{\"size\":").Append(e.ResponseBody?.Length ?? 0).Append(",\"mimeType\":").Append(Str(HttpEntryVM.GetHeader(e.ResponseHeaders, "Content-Type")));
-				if (e.ResponseBody is { Length: > 0 })
-					sb.Append(",\"text\":").Append(Str(Encoding.UTF8.GetString(e.ResponseBody)));
+				if (e.ResponseBody is { Length: > 0 }) {
+					if (HttpBodyFormatter.IsText(e.ResponseBody, HttpEntryVM.GetHeader(e.ResponseHeaders, "Content-Type")))
+						sb.Append(",\"text\":").Append(Str(Encoding.UTF8.GetString(e.ResponseBody)));
+					else
+						sb.Append(",\"text\":").Append(Str(Convert.ToBase64String(e.ResponseBody))).Append(",\"encoding\":\"base64\"");
+				}
 				sb.Append("},\"redirectURL\":\"\",\"headersSize\":-1,\"bodySize\":").Append(e.ResponseBody?.Length ?? -1).Append('}');
 				sb.Append(",\"cache\":{},\"timings\":{\"send\":0,\"wait\":").Append(e.Milliseconds.ToString("0.###", CultureInfo.InvariantCulture)).Append(",\"receive\":0}}");
 			}

@@ -825,6 +825,24 @@ namespace dnSpy.Debugger.DotNet.Properties {
         }
         
         /// <summary>
+        ///   Looks up a localized string similar to The HTTP agent can&apos;t be loaded here ({0}). It&apos;s loaded the next time the program pauses, eg. at a breakpoint or after a step..
+        /// </summary>
+        public static string HttpTraffic_Status_RetryAtNextPause {
+            get {
+                return ResourceManager.GetString("HttpTraffic_Status_RetryAtNextPause", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to the agent was loaded but didn&apos;t connect to dnSpy.
+        /// </summary>
+        public static string HttpTraffic_Status_NotConnected {
+            get {
+                return ResourceManager.GetString("HttpTraffic_Status_NotConnected", resourceCulture);
+            }
+        }
+
+        /// <summary>
         ///   Looks up a localized string similar to The HTTP agent could not be loaded: {0}.
         /// </summary>
         public static string HttpTraffic_Status_InjectFailed {

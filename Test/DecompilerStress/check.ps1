@@ -301,6 +301,28 @@ try {
 	if (-not ($portableCheck -contains 'All portable mode checks passed')) { Fail 'Portable mode: checks failed'; $portableCheck | ForEach-Object { Write-Host "  $_" } }
 	else { Write-Host '  OK: dnSpy.xml next to dnSpy.exe or in bin keeps settings and data in the dnSpy folder, otherwise %APPDATA%' }
 
+	# .NET 7+ System.Private.CoreLib: the [LibraryImport] stubs are extern local functions (no body). dnSpy's own C#
+	# transforms must handle them (NestedLocalFunctionTransform threw a NullReferenceException on Thread and Monitor).
+	Write-Host '== Extern local functions (System.Private.CoreLib)'
+	$runtimeDirs = Get-ChildItem (Join-Path $env:ProgramFiles 'dotnet\shared\Microsoft.NETCore.App') -Directory -ErrorAction SilentlyContinue |
+		Where-Object { $_.Name -match '^(\d+)\.\d+\.\d+$' -and [int]$Matches[1] -ge 7 } | Sort-Object { [version]$_.Name }
+	$coreLibDir = $runtimeDirs | Select-Object -Last 1
+	if ($null -eq $coreLibDir) { Write-Host '  (skipped: no .NET 7 or later runtime)' }
+	else {
+		$coreLibFile = Join-Path $coreLibDir.FullName 'System.Private.CoreLib.dll'
+		$externOk = $true
+		foreach ($typeName in 'System.Threading.Thread', 'System.Threading.Monitor') {
+			$code = & $Console --no-color --no-tokens -t $typeName $coreLibFile 2>&1 | Out-String
+			# dnSpy.Console prints "ERROR: <exception>" at the start of a line (case-sensitive: Thread has throwOnError:)
+			if ($LASTEXITCODE -or $code -cmatch '(?m)^ERROR: ' -or $code -notmatch 'static extern [^\r\n]*__PInvoke\(') {
+				$externOk = $false
+				Fail "$typeName (.NET $($coreLibDir.Name)) didn't decompile with its extern local functions"
+				$code -split "`n" | Select-Object -First 15 | ForEach-Object { Write-Host "  $_" }
+			}
+		}
+		if ($externOk) { Write-Host "  OK: Thread and Monitor of .NET $($coreLibDir.Name) with their [LibraryImport] extern local functions" }
+	}
+
 	# Android packages: the reader compiled on its own, test .apk/.aab files written in memory
 	Write-Host '== Android packages (.apk, .aab)'
 	$androidCheck = Invoke-Checked "run AndroidPackageCheck" { dotnet run --project (Join-Path $PSScriptRoot '..\AndroidPackageCheck\AndroidPackageCheck.csproj') -c Release -v:q -nologo }

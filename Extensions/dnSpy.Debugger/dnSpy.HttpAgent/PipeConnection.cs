@@ -43,6 +43,9 @@ namespace dnSpy.HttpAgent {
 		public const byte NoteNotAvailable = 1;
 		public const byte NoteIncoming = 2;
 		public const int MaxBodySize = 1024 * 1024;
+		// The messages waiting to be sent (eg. dnSpy reads slowly) may use this much memory in the program, then new ones are dropped
+		const long MaxQueuedBytes = 64 * 1024 * 1024;
+		long queuedBytes;
 
 		readonly string pipeName;
 		NamedPipeClientStream pipe;
@@ -82,6 +85,7 @@ namespace dnSpy.HttpAgent {
 					pipe.Write(lengthBytes, 0, 4);
 					pipe.Write(msg, 0, msg.Length);
 					pipe.Flush();
+					Interlocked.Add(ref queuedBytes, -msg.Length);
 				}
 			}
 			catch {
@@ -121,8 +125,10 @@ namespace dnSpy.HttpAgent {
 				var w = new BinaryWriter(ms, Encoding.UTF8);
 				write(w);
 				w.Flush();
-				// Drop it rather than block the program if dnSpy doesn't read
-				queue.TryAdd(ms.ToArray());
+				// Drop it rather than block the program or use too much of its memory if dnSpy doesn't read
+				var bytes = ms.ToArray();
+				if (Interlocked.Add(ref queuedBytes, bytes.Length) > MaxQueuedBytes || !queue.TryAdd(bytes))
+					Interlocked.Add(ref queuedBytes, -bytes.Length);
 			}
 			catch {
 			}
