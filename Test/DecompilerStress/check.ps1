@@ -338,11 +338,23 @@ try {
 	Invoke-Checked "build HttpAgentCheck" { dotnet build $agentCheckProject -c Release -v:q -nologo } > $null
 	$agentCheckDir = Join-Path $PSScriptRoot '..\HttpAgentCheck\bin\Release'
 	$agentOk = $true
+	$runtimes = @(& dotnet --list-runtimes 2>$null)
+	$skippedAgent = @()
 	foreach ($pair in @(@('net10.0', 'net6.0'), @('net7.0', 'net6.0'), @('net6.0', 'net6.0'), @('net48', 'net462'))) {
+		# .NET 6 and 7 (and their ASP.NET Core) are out of support and often not installed; CI installs them, so there it's a failure
+		if ($pair[0] -match '^net(\d+)\.0$' -and $Matches[1] -ne '10') {
+			$major = $Matches[1]
+			if (-not ($runtimes -match "^Microsoft\.NETCore\.App $major\.") -or -not ($runtimes -match "^Microsoft\.AspNetCore\.App $major\.")) {
+				if ($env:CI) { $agentOk = $false; Fail "HTTP agent ($($pair[0])): .NET $major / ASP.NET Core $major runtime not installed" }
+				else { $skippedAgent += ".NET $major" }
+				continue
+			}
+		}
 		$agentCheck = & (Join-Path $agentCheckDir "$($pair[0])\HttpAgentCheck.exe") (Join-Path $agentDir "$($pair[1])\dnSpy.HttpAgent.dll") 2>&1
 		if ($LASTEXITCODE -or -not ($agentCheck -contains 'All HTTP agent checks passed')) { $agentOk = $false; Fail "HTTP agent ($($pair[0])): checks failed"; $agentCheck | ForEach-Object { Write-Host "  $_" } }
 	}
 	if ($agentOk) { Write-Host '  OK: .NET 10, 7 and 6 (bodies, partly read body, incoming ASP.NET Core bodies, sync and async HttpClient, SocketsHttpHandler, WebClient, caller frame) and .NET Framework (HttpClient, WebClient), statuses incl. 500, refused connection, Start again after a disconnect' }
+	if ($skippedAgent) { Write-Host "  (skipped $($skippedAgent -join ' and '): runtime not installed)" }
 
 	# Patch export/import: a patch made from PatchCases v1 and edited v1, applied to v2 (more members, other tokens), must
 	# give the same method bodies as edited v2 and print the same

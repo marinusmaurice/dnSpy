@@ -7,6 +7,10 @@ What changed in each release of this fork, newest first. The release workflow pu
 
 Each section starts with a short summary, then **New Features** (new things you can do), **Enhancements** (existing things that work better) and **Bug Fixes**, with a link to the commit for each item. Technical details are in [All changes in detail](docs/CHANGES.md#all-changes-in-detail) and in [docs/MODERNIZATION_PLAN.md](docs/MODERNIZATION_PLAN.md).
 
+## 7.30.0.1
+
+A rebuild of 7.30.0.0 with no code change: its build (and those of 7.29.2.0 and 7.29.3.0) failed on GitHub because the build machine didn't have .NET 6 and 7 to run a test on, so they never got a release page or downloads. This release has everything in 7.30.0.0, 7.29.3.0 and 7.29.2.0.
+
 ## 7.30.0.0
 
 The HTTP Traffic window now shows the bodies of the requests your ASP.NET Core program receives, and its responses. Also has everything in 7.29.3.0 and earlier.
