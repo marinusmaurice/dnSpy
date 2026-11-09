@@ -1,0 +1,23 @@
+<!--
+    Copyright (C) 2026- marinusmaurice@outlook.com
+-->
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <!--
+    HTTP agent test (dnSpy.HttpAgent, the HTTP Traffic window): plays dnSpy's side of the named pipe, loads the
+    agent like dnSpy does (Assembly.LoadFrom + Agent.Start) and checks what it reports for requests to a local
+    HttpListener: HttpClient (async and sync), WebClient, bodies, statuses, the caller frame. net10.0 runs the
+    net6.0 agent, net48 the net462 agent. check.ps1 runs both, see ../DecompilerStress/README.md.
+  -->
+  <PropertyGroup>
+    <OutputType>Exe</OutputType>
+    <TargetFrameworks>net10.0;net48</TargetFrameworks>
+    <Nullable>disable</Nullable>
+    <LangVersion>latest</LangVersion>
+  </PropertyGroup>
+
+  <ItemGroup Condition=" '$(TargetFramework)' == 'net48' ">
+    <Reference Include="System.Net.Http" />
+  </ItemGroup>
+
+</Project>

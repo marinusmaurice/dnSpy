@@ -51,4 +51,17 @@
     <PackageReference Include="Microsoft.VisualStudio.Text.UI.Wpf" Version="$(MSVSTextVersion)" />
   </ItemGroup>
 
+  <!-- HttpTraffic: the agent's files as resources "HttpAgent/{tfm}/{file}" (added after the agent was built) -->
+  <Target Name="EmbedHttpAgent" AfterTargets="ResolveProjectReferences" BeforeTargets="AssignTargetPaths">
+    <!-- Built here, not with a ProjectReference: dnSpy's builds pass TargetFramework and RuntimeIdentifier to every project -->
+    <MSBuild Projects="..\dnSpy.HttpAgent\dnSpy.HttpAgent.csproj" Targets="Restore" Properties="Configuration=$(Configuration);DnSpyHttpAgentRestore=1" RemoveProperties="TargetFramework;RuntimeIdentifier;SelfContained;DnSpySelfContained" />
+    <MSBuild Projects="..\dnSpy.HttpAgent\dnSpy.HttpAgent.csproj" Targets="Build" Properties="Configuration=$(Configuration)" RemoveProperties="TargetFramework;RuntimeIdentifier;SelfContained;DnSpySelfContained" />
+    <ItemGroup>
+      <_HttpAgentFile Include="..\dnSpy.HttpAgent\bin\$(Configuration)\net462\*.dll" Tfm="net462" />
+      <_HttpAgentFile Include="..\dnSpy.HttpAgent\bin\$(Configuration)\netstandard2.0\*.dll" Tfm="netstandard2.0" />
+      <_HttpAgentFile Include="..\dnSpy.HttpAgent\bin\$(Configuration)\net6.0\*.dll" Tfm="net6.0" />
+      <EmbeddedResource Include="@(_HttpAgentFile)" LogicalName="HttpAgent/%(_HttpAgentFile.Tfm)/%(_HttpAgentFile.Filename)%(_HttpAgentFile.Extension)" WithCulture="false" Type="Non-Resx" />
+    </ItemGroup>
+    <Error Condition=" '@(_HttpAgentFile)' == '' " Text="The HTTP agent (dnSpy.HttpAgent) wasn't built" />
+  </Target>
 </Project>

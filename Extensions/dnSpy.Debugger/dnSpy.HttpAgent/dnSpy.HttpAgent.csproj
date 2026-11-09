@@ -1,0 +1,30 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <!--
+    Copyright (C) 2026- marinusmaurice@outlook.com
+
+    The HTTP agent: loaded into a program debugged by dnSpy (see HttpTraffic in dnSpy.Debugger.DotNet) to
+    report its HTTP requests over a named pipe. net462: .NET Framework programs (with the DiagnosticSource
+    package, which has the HttpWebRequest listener); net6.0: .NET 6 and later; netstandard2.0: .NET Core 3.1 and .NET 5.
+    Not referenced by dnSpy: the outputs are embedded in dnSpy.Debugger.DotNet and written to disk when needed.
+  -->
+  <PropertyGroup>
+    <TargetFrameworks>net462;netstandard2.0;net6.0</TargetFrameworks>
+    <!-- net6.0: .NET 6 and later (synchronous HttpContent overrides); netstandard2.0: .NET Core 3.1 and .NET 5 -->
+    <CheckEolTargetFramework>false</CheckEolTargetFramework>
+    <AssemblyName>dnSpy.HttpAgent</AssemblyName>
+    <RootNamespace>dnSpy.HttpAgent</RootNamespace>
+    <LangVersion>latest</LangVersion>
+    <Nullable>disable</Nullable>
+    <Version>1.0.0.0</Version>
+    <GenerateDocumentationFile>false</GenerateDocumentationFile>
+    <OutputPath>bin\$(Configuration)\</OutputPath>
+  </PropertyGroup>
+  <ItemGroup Condition=" '$(TargetFramework)' == 'net462' ">
+    <PackageReference Include="System.Diagnostics.DiagnosticSource" Version="9.0.0" />
+    <Reference Include="System.Net.Http" />
+  </ItemGroup>
+  <PropertyGroup Condition=" '$(TargetFramework)' == 'net462' ">
+    <!-- DiagnosticSource and its dependencies next to the agent: the program may not have them -->
+    <CopyLocalLockFileAssemblies>true</CopyLocalLockFileAssemblies>
+  </PropertyGroup>
+</Project>

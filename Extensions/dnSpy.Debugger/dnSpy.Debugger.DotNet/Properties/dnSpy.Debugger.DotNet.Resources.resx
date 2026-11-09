@@ -330,4 +330,139 @@
   <data name="Heap_RootPath_Title" xml:space="preserve">
     <value>Why {0} is alive: {1} references from a GC root (first row) to the object (last row).</value>
   </data>
+  <data name="Window_HttpTraffic" xml:space="preserve">
+    <value>HTTP Traffic</value>
+  </data>
+  <data name="HttpTrafficCommand" xml:space="preserve">
+    <value>_HTTP Traffic</value>
+  </data>
+  <data name="HttpTraffic_Outgoing" xml:space="preserve">
+    <value>Sent by the program (outgoing)</value>
+  </data>
+  <data name="HttpTraffic_Incoming" xml:space="preserve">
+    <value>Received by the program (incoming, ASP.NET Core)</value>
+  </data>
+  <data name="HttpTraffic_NoResponseYet" xml:space="preserve">
+    <value>No response yet.</value>
+  </data>
+  <data name="HttpTraffic_Duration" xml:space="preserve">
+    <value>{0:N0} ms</value>
+  </data>
+  <data name="HttpTraffic_BodyTruncated" xml:space="preserve">
+    <value>(only the first 1 MB was captured)</value>
+  </data>
+  <data name="HttpTraffic_BodyNotAvailable" xml:space="preserve">
+    <value>(bodies of .NET Framework requests are not captured)</value>
+  </data>
+  <data name="HttpTraffic_BodyIncoming" xml:space="preserve">
+    <value>(bodies of incoming requests are not captured)</value>
+  </data>
+  <data name="HttpTraffic_BodyNotRead" xml:space="preserve">
+    <value>(no body, or it has not been sent or read yet)</value>
+  </data>
+  <data name="HttpTraffic_Status_NoAgent" xml:space="preserve">
+    <value>The HTTP agent could not be written to dnSpy's local data folder.</value>
+  </data>
+  <data name="HttpTraffic_Status_AlreadyCapturing" xml:space="preserve">
+    <value>This program's HTTP traffic is already being captured.</value>
+  </data>
+  <data name="HttpTraffic_Status_AgentException" xml:space="preserve">
+    <value>Loading the HTTP agent threw an exception.</value>
+  </data>
+  <data name="HttpTraffic_Status_InjectFailed" xml:space="preserve">
+    <value>The HTTP agent could not be loaded: {0}</value>
+  </data>
+  <data name="HttpTraffic_Status_Capturing" xml:space="preserve">
+    <value>Capturing the HTTP traffic of {0} (process {1}).</value>
+  </data>
+  <data name="HttpTraffic_Status_Idle" xml:space="preserve">
+    <value>Tick "Capture in programs started by dnSpy" and start debugging, or click Start Capture while the program is paused.</value>
+  </data>
+  <data name="HttpTraffic_HarFilter" xml:space="preserve">
+    <value>HAR files (*.har)|*.har</value>
+  </data>
+  <data name="HttpTraffic_Clear" xml:space="preserve">
+    <value>Clear</value>
+  </data>
+  <data name="HttpTraffic_StartCapture" xml:space="preserve">
+    <value>Start Capture</value>
+  </data>
+  <data name="HttpTraffic_StartCapture_ToolTip" xml:space="preserve">
+    <value>Loads the HTTP agent into the paused program now (eg. after attaching to it)</value>
+  </data>
+  <data name="HttpTraffic_ExportHar" xml:space="preserve">
+    <value>Save as HAR...</value>
+  </data>
+  <data name="HttpTraffic_Enabled" xml:space="preserve">
+    <value>Capture in programs started by dnSpy</value>
+  </data>
+  <data name="HttpTraffic_Enabled_ToolTip" xml:space="preserve">
+    <value>Loads a small agent into each .NET program that dnSpy starts, at its entry point, to report its HTTP requests (HTTPS too)</value>
+  </data>
+  <data name="HttpTraffic_CaptureBodies" xml:space="preserve">
+    <value>Capture bodies</value>
+  </data>
+  <data name="HttpTraffic_BreakWhenUrl" xml:space="preserve">
+    <value>Break rules for URLs containing:</value>
+  </data>
+  <data name="HttpTraffic_BreakWhenUrl_ToolTip" xml:space="preserve">
+    <value>The break rules apply to requests whose URL contains this text (empty: all requests)</value>
+  </data>
+  <data name="HttpTraffic_BreakOnSend" xml:space="preserve">
+    <value>Break when sent</value>
+  </data>
+  <data name="HttpTraffic_BreakOnStatus" xml:space="preserve">
+    <value>Break on status from</value>
+  </data>
+  <data name="HttpTraffic_BreakOnStatus_ToolTip" xml:space="preserve">
+    <value>Break when a response has this status code or higher (eg. 500), or when the request fails</value>
+  </data>
+  <data name="HttpTraffic_BreakOnException" xml:space="preserve">
+    <value>Break on exception</value>
+  </data>
+  <data name="HttpTraffic_GoToCode" xml:space="preserve">
+    <value>Go to Code</value>
+  </data>
+  <data name="HttpTraffic_CopyUrl" xml:space="preserve">
+    <value>Copy URL</value>
+  </data>
+  <data name="HttpTraffic_CopyCurl" xml:space="preserve">
+    <value>Copy as cURL</value>
+  </data>
+  <data name="HttpTraffic_Column_Time" xml:space="preserve">
+    <value>Time</value>
+  </data>
+  <data name="HttpTraffic_Column_Method" xml:space="preserve">
+    <value>Method</value>
+  </data>
+  <data name="HttpTraffic_Column_Host" xml:space="preserve">
+    <value>Host</value>
+  </data>
+  <data name="HttpTraffic_Column_Path" xml:space="preserve">
+    <value>Path</value>
+  </data>
+  <data name="HttpTraffic_Column_Ms" xml:space="preserve">
+    <value>ms</value>
+  </data>
+  <data name="HttpTraffic_Column_Size" xml:space="preserve">
+    <value>Size</value>
+  </data>
+  <data name="HttpTraffic_Column_Code" xml:space="preserve">
+    <value>Code</value>
+  </data>
+  <data name="HttpTraffic_Tab_Request" xml:space="preserve">
+    <value>Request</value>
+  </data>
+  <data name="HttpTraffic_Tab_Response" xml:space="preserve">
+    <value>Response</value>
+  </data>
+  <data name="HttpTraffic_Tab_CallStack" xml:space="preserve">
+    <value>Call Stack</value>
+  </data>
+  <data name="HttpTraffic_Tab_Exception" xml:space="preserve">
+    <value>Exception</value>
+  </data>
+  <data name="HttpTraffic_CallStack_Help" xml:space="preserve">
+    <value>Where the request was sent, in the program's code (double-click a frame to go to it)</value>
+  </data>
 </root>

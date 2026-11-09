@@ -7,6 +7,21 @@ What changed in each release of this fork, newest first. The release workflow pu
 
 Each section starts with a short summary, then **New Features** (new things you can do), **Enhancements** (existing things that work better) and **Bug Fixes**, with a link to the commit for each item. Technical details are in [All changes in detail](docs/CHANGES.md#all-changes-in-detail) and in [docs/MODERNIZATION_PLAN.md](docs/MODERNIZATION_PLAN.md).
 
+## 7.29.0.0
+
+Watch the HTTP calls of the program you debug, live in dnSpy, without Fiddler: outgoing and incoming, HTTPS included, with the bodies and the code that made them. Also has everything in 7.28.0.0 and earlier.
+
+### New Features
+
+- **HTTP Traffic window** (**Debug → Windows → HTTP Traffic**): tick **Capture HTTP traffic**, start debugging, and every request the program sends (`HttpClient`, `HttpWebRequest`, `WebClient`) and, for ASP.NET Core programs, every request it receives is listed as it happens: time, direction, method, status, host, path, duration, size, and the code that sent it (or the controller action that handled it). Failed requests and status 400 and up are red.
+- **HTTPS too**: dnSpy sees the requests inside the program, before they're encrypted and after they're decrypted, so there's no certificate to install and no proxy to set up.
+- **Request and Response tabs** with the headers and bodies (JSON is indented, binary shown as hex), a **Call Stack** tab (double-click a frame to go to it) and an **Exception** tab for requests that failed.
+- **Go to Code**: double-click a request to open the line that sent it.
+- **Break on HTTP**: break when a request whose URL contains some text is sent, when a response has a status from a given number (eg. 500), or when a request fails. The program stops with the request on the stack, so you can look at it in the Locals window.
+- **Copy URL**, **Copy as cURL** and **Save as HAR...** (opens in Fiddler, browsers' developer tools and Postman).
+- Works for .NET (Core) and .NET Framework programs. **Start Capture** loads the capture into a program you attached to (break first).
+- Notes: capture is off until you tick it. When on, the program stops for a moment at its entry point while the capture is loaded. .NET Framework programs: no bodies, and the sending code is shown for `HttpWebRequest`/`WebClient` only. Incoming requests: no bodies yet.
+
 ## 7.28.0.0
 
 Find out why an object is still alive, export the heap table, and add notes to bookmarks. Also has everything in 7.27.0.0 and earlier.

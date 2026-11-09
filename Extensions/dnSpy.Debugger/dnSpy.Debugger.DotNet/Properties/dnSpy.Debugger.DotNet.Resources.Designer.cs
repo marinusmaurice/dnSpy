@@ -698,5 +698,410 @@ namespace dnSpy.Debugger.DotNet.Properties {
             }
         }
         
+        /// <summary>
+        ///   Looks up a localized string similar to HTTP Traffic.
+        /// </summary>
+        public static string Window_HttpTraffic {
+            get {
+                return ResourceManager.GetString("Window_HttpTraffic", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to _HTTP Traffic.
+        /// </summary>
+        public static string HttpTrafficCommand {
+            get {
+                return ResourceManager.GetString("HttpTrafficCommand", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Sent by the program (outgoing).
+        /// </summary>
+        public static string HttpTraffic_Outgoing {
+            get {
+                return ResourceManager.GetString("HttpTraffic_Outgoing", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Received by the program (incoming, ASP.NET Core).
+        /// </summary>
+        public static string HttpTraffic_Incoming {
+            get {
+                return ResourceManager.GetString("HttpTraffic_Incoming", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to No response yet..
+        /// </summary>
+        public static string HttpTraffic_NoResponseYet {
+            get {
+                return ResourceManager.GetString("HttpTraffic_NoResponseYet", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to {0:N0} ms.
+        /// </summary>
+        public static string HttpTraffic_Duration {
+            get {
+                return ResourceManager.GetString("HttpTraffic_Duration", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to (only the first 1 MB was captured).
+        /// </summary>
+        public static string HttpTraffic_BodyTruncated {
+            get {
+                return ResourceManager.GetString("HttpTraffic_BodyTruncated", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to (bodies of .NET Framework requests are not captured).
+        /// </summary>
+        public static string HttpTraffic_BodyNotAvailable {
+            get {
+                return ResourceManager.GetString("HttpTraffic_BodyNotAvailable", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to (bodies of incoming requests are not captured).
+        /// </summary>
+        public static string HttpTraffic_BodyIncoming {
+            get {
+                return ResourceManager.GetString("HttpTraffic_BodyIncoming", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to (no body, or it has not been sent or read yet).
+        /// </summary>
+        public static string HttpTraffic_BodyNotRead {
+            get {
+                return ResourceManager.GetString("HttpTraffic_BodyNotRead", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to The HTTP agent could not be written to dnSpy's local data folder..
+        /// </summary>
+        public static string HttpTraffic_Status_NoAgent {
+            get {
+                return ResourceManager.GetString("HttpTraffic_Status_NoAgent", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to This program's HTTP traffic is already being captured..
+        /// </summary>
+        public static string HttpTraffic_Status_AlreadyCapturing {
+            get {
+                return ResourceManager.GetString("HttpTraffic_Status_AlreadyCapturing", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Loading the HTTP agent threw an exception..
+        /// </summary>
+        public static string HttpTraffic_Status_AgentException {
+            get {
+                return ResourceManager.GetString("HttpTraffic_Status_AgentException", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to The HTTP agent could not be loaded: {0}.
+        /// </summary>
+        public static string HttpTraffic_Status_InjectFailed {
+            get {
+                return ResourceManager.GetString("HttpTraffic_Status_InjectFailed", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Capturing the HTTP traffic of {0} (process {1})..
+        /// </summary>
+        public static string HttpTraffic_Status_Capturing {
+            get {
+                return ResourceManager.GetString("HttpTraffic_Status_Capturing", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Tick "Capture in programs started by dnSpy" and start debugging, or click Start Capture while the program is paused..
+        /// </summary>
+        public static string HttpTraffic_Status_Idle {
+            get {
+                return ResourceManager.GetString("HttpTraffic_Status_Idle", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to HAR files (*.har)|*.har.
+        /// </summary>
+        public static string HttpTraffic_HarFilter {
+            get {
+                return ResourceManager.GetString("HttpTraffic_HarFilter", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Clear.
+        /// </summary>
+        public static string HttpTraffic_Clear {
+            get {
+                return ResourceManager.GetString("HttpTraffic_Clear", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Start Capture.
+        /// </summary>
+        public static string HttpTraffic_StartCapture {
+            get {
+                return ResourceManager.GetString("HttpTraffic_StartCapture", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Loads the HTTP agent into the paused program now (eg. after attaching to it).
+        /// </summary>
+        public static string HttpTraffic_StartCapture_ToolTip {
+            get {
+                return ResourceManager.GetString("HttpTraffic_StartCapture_ToolTip", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Save as HAR....
+        /// </summary>
+        public static string HttpTraffic_ExportHar {
+            get {
+                return ResourceManager.GetString("HttpTraffic_ExportHar", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Capture in programs started by dnSpy.
+        /// </summary>
+        public static string HttpTraffic_Enabled {
+            get {
+                return ResourceManager.GetString("HttpTraffic_Enabled", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Loads a small agent into each .NET program that dnSpy starts, at its entry point, to report its HTTP requests (HTTPS too).
+        /// </summary>
+        public static string HttpTraffic_Enabled_ToolTip {
+            get {
+                return ResourceManager.GetString("HttpTraffic_Enabled_ToolTip", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Capture bodies.
+        /// </summary>
+        public static string HttpTraffic_CaptureBodies {
+            get {
+                return ResourceManager.GetString("HttpTraffic_CaptureBodies", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Break rules for URLs containing:.
+        /// </summary>
+        public static string HttpTraffic_BreakWhenUrl {
+            get {
+                return ResourceManager.GetString("HttpTraffic_BreakWhenUrl", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to The break rules apply to requests whose URL contains this text (empty: all requests).
+        /// </summary>
+        public static string HttpTraffic_BreakWhenUrl_ToolTip {
+            get {
+                return ResourceManager.GetString("HttpTraffic_BreakWhenUrl_ToolTip", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Break when sent.
+        /// </summary>
+        public static string HttpTraffic_BreakOnSend {
+            get {
+                return ResourceManager.GetString("HttpTraffic_BreakOnSend", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Break on status from.
+        /// </summary>
+        public static string HttpTraffic_BreakOnStatus {
+            get {
+                return ResourceManager.GetString("HttpTraffic_BreakOnStatus", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Break when a response has this status code or higher (eg. 500), or when the request fails.
+        /// </summary>
+        public static string HttpTraffic_BreakOnStatus_ToolTip {
+            get {
+                return ResourceManager.GetString("HttpTraffic_BreakOnStatus_ToolTip", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Break on exception.
+        /// </summary>
+        public static string HttpTraffic_BreakOnException {
+            get {
+                return ResourceManager.GetString("HttpTraffic_BreakOnException", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Go to Code.
+        /// </summary>
+        public static string HttpTraffic_GoToCode {
+            get {
+                return ResourceManager.GetString("HttpTraffic_GoToCode", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Copy URL.
+        /// </summary>
+        public static string HttpTraffic_CopyUrl {
+            get {
+                return ResourceManager.GetString("HttpTraffic_CopyUrl", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Copy as cURL.
+        /// </summary>
+        public static string HttpTraffic_CopyCurl {
+            get {
+                return ResourceManager.GetString("HttpTraffic_CopyCurl", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Time.
+        /// </summary>
+        public static string HttpTraffic_Column_Time {
+            get {
+                return ResourceManager.GetString("HttpTraffic_Column_Time", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Method.
+        /// </summary>
+        public static string HttpTraffic_Column_Method {
+            get {
+                return ResourceManager.GetString("HttpTraffic_Column_Method", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Host.
+        /// </summary>
+        public static string HttpTraffic_Column_Host {
+            get {
+                return ResourceManager.GetString("HttpTraffic_Column_Host", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Path.
+        /// </summary>
+        public static string HttpTraffic_Column_Path {
+            get {
+                return ResourceManager.GetString("HttpTraffic_Column_Path", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to ms.
+        /// </summary>
+        public static string HttpTraffic_Column_Ms {
+            get {
+                return ResourceManager.GetString("HttpTraffic_Column_Ms", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Size.
+        /// </summary>
+        public static string HttpTraffic_Column_Size {
+            get {
+                return ResourceManager.GetString("HttpTraffic_Column_Size", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Code.
+        /// </summary>
+        public static string HttpTraffic_Column_Code {
+            get {
+                return ResourceManager.GetString("HttpTraffic_Column_Code", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Request.
+        /// </summary>
+        public static string HttpTraffic_Tab_Request {
+            get {
+                return ResourceManager.GetString("HttpTraffic_Tab_Request", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Response.
+        /// </summary>
+        public static string HttpTraffic_Tab_Response {
+            get {
+                return ResourceManager.GetString("HttpTraffic_Tab_Response", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Call Stack.
+        /// </summary>
+        public static string HttpTraffic_Tab_CallStack {
+            get {
+                return ResourceManager.GetString("HttpTraffic_Tab_CallStack", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Exception.
+        /// </summary>
+        public static string HttpTraffic_Tab_Exception {
+            get {
+                return ResourceManager.GetString("HttpTraffic_Tab_Exception", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Where the request was sent, in the program's code (double-click a frame to go to it).
+        /// </summary>
+        public static string HttpTraffic_CallStack_Help {
+            get {
+                return ResourceManager.GetString("HttpTraffic_CallStack_Help", resourceCulture);
+            }
+        }
+        
     }
 }
