@@ -8,7 +8,7 @@
     agent like dnSpy does (Assembly.LoadFrom + Agent.Start) and checks what it reports for requests to a local
     HttpListener: HttpClient (async and sync), WebClient, bodies, statuses, the caller frame. net10.0, net7.0 and
     net6.0 run the net6.0 agent (also HttpClient with a SocketsHttpHandler), net48 the net462
-    agent. Also: Start again after dnSpy disconnected, a refused connection, a body not read to the end. check.ps1 runs all, see ../DecompilerStress/README.md.
+    agent. On .NET also incoming ASP.NET Core requests with their bodies. Also: Start again after dnSpy disconnected, a refused connection, a body not read to the end. check.ps1 runs all, see ../DecompilerStress/README.md.
   -->
   <PropertyGroup>
     <OutputType>Exe</OutputType>
@@ -17,6 +17,11 @@
     <Nullable>disable</Nullable>
     <LangVersion>latest</LangVersion>
   </PropertyGroup>
+
+  <!-- ASP.NET Core (Kestrel) for the incoming requests -->
+  <ItemGroup Condition=" '$(TargetFramework)' != 'net48' ">
+    <FrameworkReference Include="Microsoft.AspNetCore.App" />
+  </ItemGroup>
 
   <ItemGroup Condition=" '$(TargetFramework)' == 'net48' ">
     <Reference Include="System.Net.Http" />

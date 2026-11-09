@@ -190,6 +190,10 @@ namespace dnSpy.HttpAgent {
 		public readonly long Id = Interlocked.Increment(ref nextId);
 		public readonly Stopwatch Stopwatch = Stopwatch.StartNew();
 		public string Url = string.Empty;
+		// ASP.NET Core: the wrapped body streams
+		public bool HasRequestBody;
+		public System.IO.Stream OriginalRequestBody, OriginalResponseBody;
+		public BodyRecorder RequestRecorder, ResponseRecorder;
 		int stopped;
 		public bool Stopped => stopped != 0;
 		/// <summary>Returns true the first time: the response is reported once (events and the .NET Framework poll can race)</summary>
@@ -232,6 +236,19 @@ namespace dnSpy.HttpAgent {
 		}
 
 		public static string Str(object obj, string name) => Get(obj, name)?.ToString() ?? string.Empty;
+
+		public static bool Set(object obj, string name, object value) {
+			if (obj is null)
+				return false;
+			for (var t = obj.GetType(); t is not null; t = t.BaseType) {
+				var prop = t.GetProperty(name, Flags | BindingFlags.DeclaredOnly);
+				if (prop is not null && prop.CanWrite && prop.GetIndexParameters().Length == 0) {
+					prop.SetValue(obj, value, null);
+					return true;
+				}
+			}
+			return false;
+		}
 	}
 
 	/// <summary>

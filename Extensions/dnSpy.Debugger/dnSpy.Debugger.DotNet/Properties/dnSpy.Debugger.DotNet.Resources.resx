@@ -358,7 +358,10 @@
     <value>(bodies of .NET Framework requests are not captured)</value>
   </data>
   <data name="HttpTraffic_BodyIncoming" xml:space="preserve">
-    <value>(bodies of incoming requests are not captured)</value>
+    <value>(the body of this incoming request couldn't be captured)</value>
+  </data>
+  <data name="HttpTraffic_BodyDecoded" xml:space="preserve">
+    <value>(Content-Encoding: {0}, shown decoded: {1:N0} bytes → {2:N0} bytes)</value>
   </data>
   <data name="HttpTraffic_BodyNotRead" xml:space="preserve">
     <value>(no body, or it has not been sent or read yet)</value>

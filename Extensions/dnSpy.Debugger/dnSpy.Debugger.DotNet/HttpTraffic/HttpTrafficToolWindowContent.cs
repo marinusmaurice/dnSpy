@@ -310,12 +310,17 @@ namespace dnSpy.Debugger.DotNet.HttpTraffic {
 				}
 				sb.Append("},\"response\":{\"status\":").Append(e.Status).Append(",\"statusText\":").Append(Str(e.Reason)).Append(",\"httpVersion\":\"HTTP/1.1\",\"cookies\":[],\"headers\":");
 				Headers(sb, e.ResponseHeaders);
-				sb.Append(",\"content\":{\"size\":").Append(e.ResponseBody?.Length ?? 0).Append(",\"mimeType\":").Append(Str(HttpEntryVM.GetHeader(e.ResponseHeaders, "Content-Type")));
-				if (e.ResponseBody is { Length: > 0 }) {
-					if (HttpBodyFormatter.IsText(e.ResponseBody, HttpEntryVM.GetHeader(e.ResponseHeaders, "Content-Type")))
-						sb.Append(",\"text\":").Append(Str(Encoding.UTF8.GetString(e.ResponseBody)));
+				// HAR has the decoded content (and the bytes saved by the compression)
+				var responseBody = e.ResponseBody is null ? null : HttpBodyFormatter.Decode(e.ResponseBody, HttpEntryVM.GetHeader(e.ResponseHeaders, "Content-Encoding"), out _);
+				sb.Append(",\"content\":{\"size\":").Append(responseBody?.Length ?? 0);
+				if (responseBody is not null && e.ResponseBody is not null && responseBody.Length != e.ResponseBody.Length)
+					sb.Append(",\"compression\":").Append(responseBody.Length - e.ResponseBody.Length);
+				sb.Append(",\"mimeType\":").Append(Str(HttpEntryVM.GetHeader(e.ResponseHeaders, "Content-Type")));
+				if (responseBody is { Length: > 0 }) {
+					if (HttpBodyFormatter.IsText(responseBody, HttpEntryVM.GetHeader(e.ResponseHeaders, "Content-Type")))
+						sb.Append(",\"text\":").Append(Str(Encoding.UTF8.GetString(responseBody)));
 					else
-						sb.Append(",\"text\":").Append(Str(Convert.ToBase64String(e.ResponseBody))).Append(",\"encoding\":\"base64\"");
+						sb.Append(",\"text\":").Append(Str(Convert.ToBase64String(responseBody))).Append(",\"encoding\":\"base64\"");
 				}
 				sb.Append("},\"redirectURL\":\"\",\"headersSize\":-1,\"bodySize\":").Append(e.ResponseBody?.Length ?? -1).Append('}');
 				sb.Append(",\"cache\":{},\"timings\":{\"send\":0,\"wait\":").Append(e.Milliseconds.ToString("0.###", CultureInfo.InvariantCulture)).Append(",\"receive\":0}}");

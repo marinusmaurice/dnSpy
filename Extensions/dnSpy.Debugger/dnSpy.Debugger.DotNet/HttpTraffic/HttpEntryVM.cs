@@ -20,6 +20,8 @@
 using System;
 using System.Collections.Generic;
 using System.Globalization;
+using System.IO;
+using System.IO.Compression;
 using System.Linq;
 using System.Text;
 using dnSpy.Contracts.MVVM;
@@ -174,8 +176,13 @@ namespace dnSpy.Debugger.DotNet.HttpTraffic {
 			sb.Append(headers);
 			sb.Append('\n');
 			if (body is not null) {
-				if (body.Length != 0)
-					sb.Append(HttpBodyFormatter.Format(body, GetHeader(headers, "Content-Type")));
+				if (body.Length != 0) {
+					// A compressed body (eg. ASP.NET Core's response compression) is shown decoded
+					var shown = HttpBodyFormatter.Decode(body, GetHeader(headers, "Content-Encoding"), out var encoding);
+					sb.Append(HttpBodyFormatter.Format(shown, GetHeader(headers, "Content-Type")));
+					if (encoding is not null)
+						sb.Append("\n\n").Append(string.Format(dnSpy_Debugger_DotNet_Resources.HttpTraffic_BodyDecoded, encoding, body.Length, shown.Length));
+				}
 				if (truncated)
 					sb.Append("\n\n").Append(dnSpy_Debugger_DotNet_Resources.HttpTraffic_BodyTruncated);
 				else if (partial)
@@ -230,6 +237,51 @@ namespace dnSpy.Debugger.DotNet.HttpTraffic {
 
 	static class HttpBodyFormatter {
 		const int MaxHexBytes = 4096;
+		const int MaxDecodedBytes = 16 * 1024 * 1024;
+
+		/// <summary>
+		/// The body decoded if its Content-Encoding is gzip, deflate or br (.NET only), else the body itself
+		/// </summary>
+		public static byte[] Decode(byte[] body, string contentEncoding, out string? encoding) {
+			encoding = null;
+			var name = contentEncoding.Trim().ToLowerInvariant();
+			if (body.Length == 0 || name.Length == 0 || name == "identity")
+				return body;
+			try {
+				Stream? decoder = name switch {
+					"gzip" or "x-gzip" => new GZipStream(new MemoryStream(body), CompressionMode.Decompress),
+#if NET
+					"deflate" => new ZLibStream(new MemoryStream(body), CompressionMode.Decompress),
+					"br" => new BrotliStream(new MemoryStream(body), CompressionMode.Decompress),
+#else
+					// zlib: a 2 byte header, then raw deflate
+					"deflate" when body.Length > 2 => new DeflateStream(new MemoryStream(body, 2, body.Length - 2), CompressionMode.Decompress),
+#endif
+					_ => null,
+				};
+				if (decoder is null)
+					return body;
+				using (decoder) {
+					var result = new MemoryStream();
+					var buffer = new byte[81920];
+					int n;
+					// A body that was cut (over 1 MB, or partly read) decodes up to where it was cut, then throws
+					try {
+						while (result.Length < MaxDecodedBytes && (n = decoder.Read(buffer, 0, buffer.Length)) > 0)
+							result.Write(buffer, 0, n);
+					}
+					catch (Exception ex) when (ex is InvalidDataException || ex is IOException) {
+						if (result.Length == 0)
+							return body;
+					}
+					encoding = name;
+					return result.ToArray();
+				}
+			}
+			catch (Exception ex) when (ex is InvalidDataException || ex is IOException || ex is ArgumentException) {
+				return body;
+			}
+		}
 
 		public static string Format(byte[] body, string contentType) {
 			if (IsText(body, contentType)) {

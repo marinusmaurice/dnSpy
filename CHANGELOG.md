@@ -7,6 +7,15 @@ What changed in each release of this fork, newest first. The release workflow pu
 
 Each section starts with a short summary, then **New Features** (new things you can do), **Enhancements** (existing things that work better) and **Bug Fixes**, with a link to the commit for each item. Technical details are in [All changes in detail](docs/CHANGES.md#all-changes-in-detail) and in [docs/MODERNIZATION_PLAN.md](docs/MODERNIZATION_PLAN.md).
 
+## 7.30.0.0
+
+The HTTP Traffic window now shows the bodies of the requests your ASP.NET Core program receives, and its responses. Also has everything in 7.29.3.0 and earlier.
+
+### New Features
+
+- **Incoming request and response bodies**: for an ASP.NET Core program, the **Request** and **Response** tabs of an incoming request (←) now show the body the client sent and the body your program answered with, eg. the JSON posted to a controller and the JSON it returned. Like outgoing bodies they're captured as your program reads and writes them, up to 1 MB each; a request body your program didn't read is marked as partial.
+- **Compressed bodies are shown decoded**: a body with `Content-Encoding: gzip`, `deflate` or `br` (eg. from ASP.NET Core's response compression) is shown as the text it contains, with a note of both sizes. **Save as HAR...** writes the decoded content too. (`br` needs the .NET build of dnSpy.)
+
 ## 7.29.3.0
 
 The last fixes from a review of the HTTP Traffic window, and a C# decompiler fix for .NET 7+ `System.Private.CoreLib`. Also has everything in 7.29.2.0 and earlier.

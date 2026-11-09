@@ -27,6 +27,9 @@ using System.Net.Http;
 using System.Reflection;
 using System.Text;
 using System.Threading;
+#if NET
+using Microsoft.Extensions.Logging;
+#endif
 
 // Usage: HttpAgentCheck <agent dll>. Prints "All HTTP agent checks passed" or the failures.
 static class Check {
@@ -36,13 +39,15 @@ static class Check {
 		public int Status = -1;
 		public string RequestBody, ResponseBody;
 		public byte RequestNote, ResponseNote;
-		public bool ResponsePartial;
+		public bool ResponsePartial, RequestPartial;
+		public bool Outgoing;
 	}
 
 	static readonly Dictionary<long, Request> requests = new Dictionary<long, Request>();
 	static readonly ManualResetEventSlim hello = new ManualResetEventSlim();
 	static readonly List<string> failures = new List<string>();
 	const int Port = 5797;
+	const int AspNetPort = 5799;
 
 	static int Main(string[] args) {
 		StartServer();
@@ -68,6 +73,7 @@ static class Check {
 			using (var partial = client.GetAsync($"http://localhost:{Port}/api/partial", HttpCompletionOption.ResponseHeadersRead).Result) {
 			}
 			SocketsHandlerRequest();
+			IncomingRequests();
 		}
 		Thread.Sleep(2000);
 
@@ -93,6 +99,7 @@ static class Check {
 				// HttpClient with a SocketsHttpHandler (not an HttpClientHandler): reported once
 				var so = requests.Values.Where(a => a.Url.EndsWith("/api/sockets", StringComparison.Ordinal)).ToArray();
 				Expect(so.Length == 1, "SocketsHttpHandler: " + so.Length + " requests");
+				CheckIncoming();
 				Expect(so.Length == 1 && so[0].Status == 200, "SocketsHttpHandler: status " + (so.Length == 1 ? so[0].Status : 0));
 			}
 			else {
@@ -140,8 +147,49 @@ static class Check {
 #endif
 	}
 
+	// ASP.NET Core (Kestrel) in this process: the agent sees the requests it receives
+	static void IncomingRequests() {
+#if NET
+		var builder = Microsoft.AspNetCore.Builder.WebApplication.CreateBuilder();
+		builder.Logging.ClearProviders();
+		var app = builder.Build();
+		app.Urls.Add($"http://localhost:{AspNetPort}");
+		// Reads the request body, writes with HttpResponse.WriteAsync (BodyWriter)
+		Microsoft.AspNetCore.Builder.EndpointRouteBuilderExtensions.MapPost(app, "/in/echo", async (Microsoft.AspNetCore.Http.HttpContext ctx) => {
+			var body = await new StreamReader(ctx.Request.Body).ReadToEndAsync();
+			await Microsoft.AspNetCore.Http.HttpResponseWritingExtensions.WriteAsync(ctx.Response, "{\"got\":\"" + body.Replace("\"", "'") + "\"}");
+		});
+		// Doesn't read the request body
+		Microsoft.AspNetCore.Builder.EndpointRouteBuilderExtensions.MapPost(app, "/in/ignore", () => "ignored");
+		// A GET (no request body), the result serialized as JSON
+		Microsoft.AspNetCore.Builder.EndpointRouteBuilderExtensions.MapGet(app, "/in/json", () => new { answer = 42 });
+		app.StartAsync().Wait();
+		using var c = new HttpClient();
+		Expect(c.PostAsync($"http://localhost:{AspNetPort}/in/echo", new StringContent("{\"item\":\"pen\"}", Encoding.UTF8, "application/json")).Result.Content.ReadAsStringAsync().Result.Contains("got"), "incoming echo failed");
+		Expect(c.PostAsync($"http://localhost:{AspNetPort}/in/ignore", new StringContent("not read", Encoding.UTF8, "text/plain")).Result.Content.ReadAsStringAsync().Result.Contains("ignored"), "incoming ignore failed");
+		Expect(c.GetStringAsync($"http://localhost:{AspNetPort}/in/json").Result.Contains("42"), "incoming json failed");
+		Thread.Sleep(500);
+		app.StopAsync().Wait();
+#endif
+	}
+
+	static Request FindIncoming(string path) => requests.Values.FirstOrDefault(a => !a.Outgoing && a.Url.EndsWith(path, StringComparison.Ordinal));
+
+	static void CheckIncoming() {
+		var echo = FindIncoming("/in/echo");
+		Expect(echo?.Status == 200, "incoming echo: status " + echo?.Status);
+		Expect(echo?.RequestBody == "{\"item\":\"pen\"}" && echo?.RequestPartial == false, "incoming echo: request body " + echo?.RequestBody + " partial " + echo?.RequestPartial);
+		Expect(echo?.ResponseBody?.Contains("got") == true && echo?.ResponsePartial == false, "incoming echo: response body " + echo?.ResponseBody);
+		var ignore = FindIncoming("/in/ignore");
+		Expect(ignore?.RequestPartial == true, "incoming ignore: request body not marked partial (" + ignore?.RequestBody + ")");
+		Expect(ignore?.ResponseBody == "ignored", "incoming ignore: response body " + ignore?.ResponseBody);
+		var json = FindIncoming("/in/json");
+		Expect(json?.RequestPartial == false && string.IsNullOrEmpty(json?.RequestBody), "incoming GET: request body " + json?.RequestBody + " partial " + json?.RequestPartial);
+		Expect(json?.ResponseBody?.Contains("\"answer\":42") == true, "incoming GET: response body " + json?.ResponseBody);
+	}
+
 	static Request Find(string method, string pathAndQuery) =>
-		requests.Values.FirstOrDefault(a => a.Method == method && a.Url.EndsWith(pathAndQuery, StringComparison.Ordinal));
+		requests.Values.FirstOrDefault(a => a.Outgoing && a.Method == method && a.Url.EndsWith(pathAndQuery, StringComparison.Ordinal));
 
 	static void Expect(bool ok, string message) {
 		if (!ok)
@@ -188,7 +236,7 @@ static class Check {
 						break;
 					case 2: {
 						var req = new Request { Id = m.ReadInt64() };
-						m.ReadBoolean();
+						req.Outgoing = m.ReadBoolean();
 						req.Method = m.ReadString();
 						req.Url = m.ReadString();
 						m.ReadInt64(); m.ReadInt32(); m.ReadString();
@@ -218,8 +266,10 @@ static class Check {
 								req.ResponseBody = text;
 								req.ResponsePartial = partial;
 							}
-							else
+							else {
 								req.RequestBody = text;
+								req.RequestPartial = partial;
+							}
 						}
 						break;
 					}

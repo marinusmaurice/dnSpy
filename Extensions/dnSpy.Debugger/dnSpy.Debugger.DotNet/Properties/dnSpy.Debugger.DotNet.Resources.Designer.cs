@@ -780,11 +780,20 @@ namespace dnSpy.Debugger.DotNet.Properties {
         }
         
         /// <summary>
-        ///   Looks up a localized string similar to (bodies of incoming requests are not captured).
+        ///   Looks up a localized string similar to (the body of this incoming request couldn&apos;t be captured).
         /// </summary>
         public static string HttpTraffic_BodyIncoming {
             get {
                 return ResourceManager.GetString("HttpTraffic_BodyIncoming", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   Looks up a localized string similar to (Content-Encoding: {0}, shown decoded: {1:N0} bytes → {2:N0} bytes).
+        /// </summary>
+        public static string HttpTraffic_BodyDecoded {
+            get {
+                return ResourceManager.GetString("HttpTraffic_BodyDecoded", resourceCulture);
             }
         }
         
