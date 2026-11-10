@@ -1,5 +1,6 @@
 /*
     Copyright (C) 2014-2019 de4dot@gmail.com
+    Copyright (C) 2026- marinusmaurice@outlook.com
 
     This file is part of dnSpy
 
@@ -400,7 +401,8 @@ namespace dnSpy.AsmEditor.Field {
 		readonly bool nameChanged;
 		readonly MemberRefInfo[]? memberRefInfos;
 
-		FieldDefSettingsCommand(FieldNode fieldNode, FieldDefOptions options) {
+		// Also used by Rename... (RenameCommands.cs)
+		internal FieldDefSettingsCommand(FieldNode fieldNode, FieldDefOptions options) {
 			this.fieldNode = fieldNode;
 			newOptions = options;
 			origOptions = new FieldDefOptions(fieldNode.FieldDef);

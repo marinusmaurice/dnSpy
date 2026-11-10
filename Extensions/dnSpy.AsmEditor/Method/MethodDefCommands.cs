@@ -1,5 +1,6 @@
 /*
     Copyright (C) 2014-2019 de4dot@gmail.com
+    Copyright (C) 2026- marinusmaurice@outlook.com
 
     This file is part of dnSpy
 
@@ -488,7 +489,8 @@ namespace dnSpy.AsmEditor.Method {
 		readonly bool nameChanged;
 		readonly Field.MemberRefInfo[]? memberRefInfos;
 
-		MethodDefSettingsCommand(MethodNode methodNode, MethodDefOptions options) {
+		// Also used by Rename... (RenameCommands.cs)
+		internal MethodDefSettingsCommand(MethodNode methodNode, MethodDefOptions options) {
 			this.methodNode = methodNode;
 			newOptions = options;
 			origOptions = new MethodDefOptions(methodNode.MethodDef);

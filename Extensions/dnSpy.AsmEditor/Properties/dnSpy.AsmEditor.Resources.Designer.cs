@@ -6762,5 +6762,149 @@ namespace dnSpy.AsmEditor.Properties {
                 return ResourceManager.GetString("Patch_NotApplied", resourceCulture);
             }
         }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Re_name....
+        /// </summary>
+        public static string Rename_Command {
+            get {
+                return ResourceManager.GetString("Rename_Command", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Rename.
+        /// </summary>
+        public static string Rename_Title {
+            get {
+                return ResourceManager.GetString("Rename_Title", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to New name (for a type: Namespace.Name):.
+        /// </summary>
+        public static string Rename_NewName {
+            get {
+                return ResourceManager.GetString("Rename_NewName", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to The name can&apos;t be empty.
+        /// </summary>
+        public static string Rename_NameEmpty {
+            get {
+                return ResourceManager.GetString("Rename_NameEmpty", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to _Export Rename Map....
+        /// </summary>
+        public static string RenameMap_ExportCommand {
+            get {
+                return ResourceManager.GetString("RenameMap_ExportCommand", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Apply Rename M_ap....
+        /// </summary>
+        public static string RenameMap_ApplyCommand {
+            get {
+                return ResourceManager.GetString("RenameMap_ApplyCommand", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to dnSpy rename maps.
+        /// </summary>
+        public static string RenameMap_Files {
+            get {
+                return ResourceManager.GetString("RenameMap_Files", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to No type, member or parameter of {0} has another name than in its file ({1}), so there is nothing to export. Rename something first (Rename... (F2), or Edit Type, Edit Method, ...)..
+        /// </summary>
+        public static string RenameMap_NoChanges {
+            get {
+                return ResourceManager.GetString("RenameMap_NoChanges", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to {0} rename(s) saved to {1}..
+        /// </summary>
+        public static string RenameMap_Exported {
+            get {
+                return ResourceManager.GetString("RenameMap_Exported", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Renames:.
+        /// </summary>
+        public static string RenameMap_Renames {
+            get {
+                return ResourceManager.GetString("RenameMap_Renames", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Not found in the file, so not in the map:.
+        /// </summary>
+        public static string RenameMap_NotPaired {
+            get {
+                return ResourceManager.GetString("RenameMap_NotPaired", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to The rename map was made from {0}, the selected assembly is {1}. Apply it anyway?.
+        /// </summary>
+        public static string RenameMap_OtherAssembly {
+            get {
+                return ResourceManager.GetString("RenameMap_OtherAssembly", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to {0} of {1} rename(s) applied to {2} ({3} already applied). Use File &gt; Save Module to save it; Edit &gt; Undo removes the renames..
+        /// </summary>
+        public static string RenameMap_Applied {
+            get {
+                return ResourceManager.GetString("RenameMap_Applied", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Renamed (and how each one was found):.
+        /// </summary>
+        public static string RenameMap_Renamed {
+            get {
+                return ResourceManager.GetString("RenameMap_Renamed", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Not applied:.
+        /// </summary>
+        public static string RenameMap_NotApplied {
+            get {
+                return ResourceManager.GetString("RenameMap_NotApplied", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Apply Rename Map.
+        /// </summary>
+        public static string RenameMap_UndoDescription {
+            get {
+                return ResourceManager.GetString("RenameMap_UndoDescription", resourceCulture);
+            }
+        }
     }
 }

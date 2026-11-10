@@ -1,5 +1,6 @@
 /*
     Copyright (C) 2014-2019 de4dot@gmail.com
+    Copyright (C) 2026- marinusmaurice@outlook.com
 
     This file is part of dnSpy
 
@@ -389,7 +390,8 @@ namespace dnSpy.AsmEditor.Property {
 		readonly int origParentChildIndex;
 		readonly bool nameChanged;
 
-		PropertyDefSettingsCommand(PropertyNode propNode, PropertyDefOptions options) {
+		// Also used by Rename... (RenameCommands.cs)
+		internal PropertyDefSettingsCommand(PropertyNode propNode, PropertyDefOptions options) {
 			this.propNode = propNode;
 			newOptions = options;
 			origOptions = new PropertyDefOptions(propNode.PropertyDef);

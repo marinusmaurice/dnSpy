@@ -38,6 +38,7 @@ using dnSpy.Decompiler.Diff;
 using dnSpy.Decompiler.Listing;
 using dnSpy.Decompiler.Protection;
 using dnSpy.Decompiler.Patch;
+using dnSpy.Decompiler.Rename;
 using dnSpy.Decompiler.MSBuild;
 
 namespace dnSpy_Console {
@@ -192,6 +193,8 @@ namespace dnSpy_Console {
 		bool pdb;
 		string? patchCreateFile;
 		string? patchApplyFile;
+		string? renameCreateFile;
+		string? renameApplyFile;
 		Guid projectGuid = Guid.NewGuid();
 		int numThreads;
 		int mdToken;
@@ -381,6 +384,8 @@ namespace dnSpy_Console {
 			new UsageInfo("--json", null, dnSpy_Console_Resources.CmdLineDescription_Json),
 			new UsageInfo("--patch-create", dnSpy_Console_Resources.CmdLinePatchFile, dnSpy_Console_Resources.CmdLineDescription_PatchCreate),
 			new UsageInfo("--patch-apply", dnSpy_Console_Resources.CmdLinePatchFile, dnSpy_Console_Resources.CmdLineDescription_PatchApply),
+			new UsageInfo("--rename-create", dnSpy_Console_Resources.CmdLineRenameMapFile, dnSpy_Console_Resources.CmdLineDescription_RenameCreate),
+			new UsageInfo("--rename-apply", dnSpy_Console_Resources.CmdLineRenameMapFile, dnSpy_Console_Resources.CmdLineDescription_RenameApply),
 			new UsageInfo("--batch", dnSpy_Console_Resources.CmdLineFile, dnSpy_Console_Resources.CmdLineDescription_Batch),
 			new UsageInfo("@" + dnSpy_Console_Resources.CmdLineFile, null, dnSpy_Console_Resources.CmdLineDescription_ResponseFile),
 			new UsageInfo("-r", null, dnSpy_Console_Resources.CmdLineDescription_RecursiveSearch),
@@ -487,6 +492,8 @@ namespace dnSpy_Console {
 			"pdb",
 			"patch-create",
 			"patch-apply",
+			"rename-create",
+			"rename-apply",
 			"batch",
 		};
 
@@ -695,6 +702,17 @@ namespace dnSpy_Console {
 							patchApplyFile = Path.GetFullPath(next);
 						break;
 
+					case "--rename-create":
+					case "--rename-apply":
+						if (next is null)
+							throw new ErrorException(dnSpy_Console_Resources.MissingRenameMapFile);
+						i++;
+						if (arg == "--rename-create")
+							renameCreateFile = Path.GetFullPath(next);
+						else
+							renameApplyFile = Path.GetFullPath(next);
+						break;
+
 					case "--project-guid":
 						if (next is null || !Guid.TryParse(next, out projectGuid))
 							throw new ErrorException(dnSpy_Console_Resources.InvalidGuid);
@@ -788,6 +806,18 @@ namespace dnSpy_Console {
 				if (string2.IsNullOrEmpty(outputDir))
 					throw new ErrorException(dnSpy_Console_Resources.PatchApplyNeedsOutputFile);
 				ApplyPatch(patchApplyFile, files[0].Module, outputDir);
+			}
+			else if (renameCreateFile is not null) {
+				if (files.Count != 2)
+					throw new ErrorException(dnSpy_Console_Resources.RenameCreateNeedsTwoFiles);
+				CreateRenameMap(renameCreateFile, files[0].Module, files[1].Module);
+			}
+			else if (renameApplyFile is not null) {
+				if (files.Count != 1)
+					throw new ErrorException(dnSpy_Console_Resources.RenameApplyNeedsOneFile);
+				if (string2.IsNullOrEmpty(outputDir))
+					throw new ErrorException(dnSpy_Console_Resources.RenameApplyNeedsOutputFile);
+				ApplyRenameMap(renameApplyFile, files[0].Module, outputDir);
 			}
 			else if (diff) {
 				if (files.Count != 2)
@@ -944,6 +974,41 @@ namespace dnSpy_Console {
 			else
 				module.Write(outputFile);
 			Console.WriteLine(dnSpy_Console_Resources.PatchApplied, result.Applied.Count, patch.Methods.Count, outputFile);
+		}
+
+		void CreateRenameMap(string mapFile, ModuleDef original, ModuleDef renamed) {
+			// Two files: the renamed one was saved, so a token is only trusted if the type or member is the same
+			var map = RenameMap.Create(original, renamed, sameTokens: false, out var notPaired);
+			using (var stream = File.Create(mapFile))
+				map.Save(stream);
+			foreach (var line in map.Describe())
+				Console.WriteLine("+ {0}", line);
+			foreach (var what in notPaired)
+				Console.WriteLine("! {0}: {1}", what, dnSpy_Console_Resources.RenameNotPaired);
+			Console.WriteLine(dnSpy_Console_Resources.RenameCreated, map.Count, mapFile);
+		}
+
+		void ApplyRenameMap(string mapFile, ModuleDef module, string outputFile) {
+			RenameMap map;
+			try {
+				using (var stream = File.OpenRead(mapFile))
+					map = RenameMap.Load(stream);
+			}
+			catch (Exception ex) when (ex is RenameMapException || ex is IOException || ex is UnauthorizedAccessException) {
+				throw new ErrorException(ex.Message);
+			}
+			var result = map.Apply(module);
+			foreach (var line in result.Renamed)
+				Console.WriteLine("+ {0}", line);
+			foreach (var line in result.NotApplied) {
+				Console.WriteLine("! {0}", line);
+				errors++;
+			}
+			if (module is ModuleDefMD md && !md.IsILOnly)
+				md.NativeWrite(outputFile);
+			else
+				module.Write(outputFile);
+			Console.WriteLine(dnSpy_Console_Resources.RenameApplied, result.Renamed.Count, result.Total, result.AlreadyApplied, outputFile);
 		}
 
 		Indenter GetIndenter() {

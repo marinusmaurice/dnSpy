@@ -51,6 +51,8 @@ And it builds `Test/ExportCases` (`net8.0`, Debug and Release: span collection e
 
 And it builds `Test/PatchCases` four times (v1, v1 edited, v2 with more members, v2 edited), runs `Test/PatchCheck` to make a patch from v1 and edited v1 and apply it to v2, and fails unless the patched v2 has the same method bodies and assembly references as edited v2 and prints the same (also: applying twice, missing members reported, array initializer data added, invalid files). See [docs/PATCH_EXPORT_IMPORT.md](../../docs/PATCH_EXPORT_IMPORT.md).
 
+It builds `Test/RenameCases` twice (v1, and v2 with more members, a changed method and a new type) and runs `Test/RenameCheck`: it "obfuscates" both with other random names (some that XML can't hold, some not valid UTF-8), renames 14 types and members and a parameter of obfuscated v1 back, makes a rename map (also from a saved file), saves and loads it, and applies it to obfuscated v2. Every rename must be found (by the same code, by similar members, by the same signature) except Twin1, whose twin Twin2 has the same code; applying twice changes nothing, undo and redo put all names back, references and custom attribute named arguments are renamed, and the renamed v2 must print what v2 prints. Then the same with `dnSpy.Console --rename-create` / `--rename-apply`. See [docs/RENAME_MAP.md](../../docs/RENAME_MAP.md).
+
 By hand: `dotnet build Test/DebugInfoCheck -p:DnSpyBin=<dnSpy DLL folder>`, then `DebugInfoCheck <dnSpy DLL folder> <assembly>...`.
 
 Debug builds matter: the compiler adds temporaries and unreachable `if (1 == 0)` branches around switch expressions there, which is where ILSpy leaves `<>h__TransparentIdentifier` chains.

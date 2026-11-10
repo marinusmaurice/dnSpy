@@ -7,6 +7,17 @@ What changed in each release of this fork, newest first. The release workflow pu
 
 Each section starts with a short summary, then **New Features** (new things you can do), **Enhancements** (existing things that work better) and **Bug Fixes**, with a link to the commit for each item. Technical details are in [All changes in detail](docs/CHANGES.md#all-changes-in-detail) and in [docs/MODERNIZATION_PLAN.md](docs/MODERNIZATION_PLAN.md).
 
+## 7.31.0.0
+
+Rename maps: give an obfuscated assembly's types and members real names once, and apply them again to its next version. Also has everything in 7.30.0.1 and earlier.
+
+### New Features
+
+- **Rename... (F2)**: select a type, method, field, property or event in the assembly explorer and press F2 (or right-click it, also in the code view) to give it a new name. For a type, `Namespace.Name` also moves it to that namespace. References in the assembly are renamed too, and Edit > Undo undoes it.
+- **Export Rename Map...**: right-click a renamed assembly (or File menu) to save the names you gave its types, members and parameters to a `.dnspyrenames` file.
+- **Apply Rename Map...**: apply that file to another version of the assembly, eg. the next release, where the obfuscator gave everything other names. Each type and member is found again by its code and signature (whatever its name), by its old name, or by having mostly the same members, and the message lists how each one was found and which ones couldn't be found. One edit for Edit > Undo; File > Save Module saves the renamed assembly, which still runs.
+- `dnSpy.Console --rename-create names.dnspyrenames original.dll renamed.dll` and `--rename-apply names.dnspyrenames -o renamed.dll new.dll` do the same from the command line.
+
 ## 7.30.0.1
 
 A rebuild of 7.30.0.0 with no code change: its build (and those of 7.29.2.0 and 7.29.3.0) failed on GitHub because the build machine didn't have .NET 6 and 7 to run a test on, so they never got a release page or downloads. This release has everything in 7.30.0.0, 7.29.3.0 and 7.29.2.0.

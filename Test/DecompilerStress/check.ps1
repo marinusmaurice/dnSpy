@@ -13,6 +13,7 @@
 	  - the command palette's fuzzy matching (../CommandPaletteCheck)
 	  - the side-by-side view's language choice and tab sync (../SideBySideCheck)
 	  - patch export/import: a patch made from ../PatchCases and its edited version, applied to a newer version (../PatchCheck)
+	  - rename maps: renames made in obfuscated ../RenameCases, applied to a newer version obfuscated with other names (../RenameCheck)
 	  - the tracepoint message keywords ($HITCOUNT, $TICK, $TIME, ...) (../TracepointCheck)
 	  - pinned and recent files in File -> Recent Files (../RecentFilesCheck)
 	  - which release the update check offers, with and without beta versions (../UpdateCheck)
@@ -394,6 +395,47 @@ try {
 		}
 		elseif (Compare-Object $expectedRun $consoleRun) { Fail 'Patch export/import: v2 patched by dnSpy.Console prints something different'; $consoleRun | ForEach-Object { Write-Host "  $_" } }
 		else { Write-Host '  OK: dnSpy.Console --patch-create / --patch-apply, same output' }
+	}
+
+	# Rename maps: renames made in "obfuscated" ../RenameCases v1, applied to v2 obfuscated with other names (../RenameCheck),
+	# and the same with dnSpy.Console --rename-create / --rename-apply; both renamed programs must print what v2 prints
+	Write-Host '== Rename maps'
+	$renameProject = Join-Path $PSScriptRoot '..\RenameCases\RenameCases.csproj'
+	$renameV1 = Join-Path $work 'rename-v1'
+	$renameV2 = Join-Path $work 'rename-v2'
+	Invoke-Checked "build RenameCases v1" { dotnet build $renameProject -c Release -o $renameV1 -v:q -nologo } > $null
+	Invoke-Checked "build RenameCases v2" { dotnet build $renameProject -c Release -p:RenameVersion=2 -o $renameV2 -v:q -nologo } > $null
+	$renameCheckDir = Join-Path $work 'RenameCheck'
+	Invoke-Checked "build RenameCheck" { dotnet build (Join-Path $PSScriptRoot '..\RenameCheck\RenameCheck.csproj') -c Release -o $renameCheckDir -v:q -nologo } > $null
+	$renameOut = Join-Path $work 'rename-applied'
+	$renameFiles = Join-Path $work 'rename-files'
+	Copy-Item $renameV2 $renameOut -Recurse
+	New-Item -ItemType Directory $renameFiles > $null
+	$renameCheck = & (Join-Path $renameCheckDir 'RenameCheck.exe') (Join-Path $renameV1 'RenameCases.dll') (Join-Path $renameV2 'RenameCases.dll') (Join-Path $renameOut 'RenameCases.dll') $renameFiles 2>&1
+	if ($LASTEXITCODE -or -not ($renameCheck -contains 'All rename checks passed')) { Fail 'Rename maps: checks failed'; $renameCheck | ForEach-Object { Write-Host "  $_" } }
+	else {
+		$expectedRun = Invoke-Checked "run RenameCases v2" { dotnet (Join-Path $renameV2 'RenameCases.dll') }
+		$renamedRun = Invoke-Checked "run renamed obfuscated RenameCases v2" { dotnet (Join-Path $renameOut 'RenameCases.dll') }
+		if (Compare-Object $expectedRun $renamedRun) { Fail 'Rename maps: renamed v2 prints something different'; $renamedRun | ForEach-Object { Write-Host "  $_" } }
+		else { Write-Host "  OK: $($renameCheck[-2]), found by code, similar members and signature; references and named arguments renamed, same output ($($expectedRun.Count) lines)" }
+
+		$consoleMap = Join-Path $work 'console.dnspyrenames'
+		$consoleRenamed = Join-Path $work 'rename-console'
+		Copy-Item $renameV2 $consoleRenamed -Recurse
+		$created = @(Invoke-Checked "dnSpy.Console --rename-create" { & $Console --rename-create $consoleMap (Join-Path $renameFiles 'obfuscated-v1.dll') (Join-Path $renameFiles 'renamed-v1.dll') })
+		# Twin1 can't be found in v2 (Twin2 has the same code), so --rename-apply reports it and exits with 1
+		$applied = @(& $Console --rename-apply $consoleMap -o (Join-Path $consoleRenamed 'RenameCases.dll') (Join-Path $renameFiles 'obfuscated-v2.dll'))
+		$applyExit = $LASTEXITCODE
+		$consoleRun = Invoke-Checked "run console-renamed RenameCases v2" { dotnet (Join-Path $consoleRenamed 'RenameCases.dll') }
+		$createdRenames = @($created | Where-Object { $_.StartsWith('+ ') }).Count
+		$appliedRenames = @($applied | Where-Object { $_.StartsWith('+ ') }).Count
+		$notApplied = @($applied | Where-Object { $_.StartsWith('! ') })
+		if ($createdRenames -ne 15 -or $appliedRenames -ne 14 -or $notApplied.Count -ne 1 -or -not $notApplied[0].Contains('Twin1') -or $applyExit -ne 1) {
+			Fail "Rename maps: dnSpy.Console made $createdRenames and applied $appliedRenames renames, $($notApplied.Count) not applied, exit code $applyExit (expected 15, 14, 1 (Twin1), 1)"
+			$created + $applied | ForEach-Object { Write-Host "  $_" }
+		}
+		elseif (Compare-Object $expectedRun $consoleRun) { Fail 'Rename maps: v2 renamed by dnSpy.Console prints something different'; $consoleRun | ForEach-Object { Write-Host "  $_" } }
+		else { Write-Host '  OK: dnSpy.Console --rename-create / --rename-apply, same output' }
 	}
 
 	# Assembly diff: the two versions of Test/DiffCases differ exactly in the members marked V2; a lambda, an iterator

@@ -75,7 +75,7 @@ Suggested first, in this order:
 - [ ] **L** Edit and Continue: edit a method while paused and keep running.
 - [x] **M–L** Heap and memory analysis with ClrMD: objects by type/count/size and the change since the previous break, Find All Instances, fields (7.27.0.0). "Who references this": Why Alive? (7.28.0.0). Still open: open `.dmp` files offline.
 - [ ] ★ **M** Compare heap snapshots and retained size (owner: "completes the leak story"): save the heap at two breaks and list the objects that are new in the second, grouped by type, each with Why Alive?; and the retained size of an object or type (the memory only it keeps alive, eg. "this Dictionary holds 80 MB"), via the dominator tree from ClrMD's heap walk. Builds on the Heap window (7.27.0.0) and Why Alive? (7.28.0.0).
-- [x] **L** Watch the program's HTTP calls without Fiddler (7.29.0.0: HTTP Traffic window, outgoing and incoming, HTTPS, bodies, Go to Code, break on URL/status/failure, cURL, HAR; .NET and .NET Framework). Fixes from a review in 7.29.1.0 to 7.29.3.0 (the `traceparent`/`Request-Id` header the capture adds is left as is). Incoming request/response bodies: 7.30.0.0. Still open: bodies on .NET Framework, ASP.NET (classic, System.Web) incoming requests, gRPC and WebSockets, replaying a request.
+- [x] **L** Watch the program's HTTP calls without Fiddler (7.29.0.0: HTTP Traffic window, outgoing and incoming, HTTPS, bodies, Go to Code, break on URL/status/failure, cURL, HAR; .NET and .NET Framework). Fixes from a review in 7.29.1.0 to 7.29.3.0 (the `traceparent`/`Request-Id` header the capture adds is left as is). Incoming request/response bodies: 7.30.0.0. Still open: bodies on .NET Framework, ASP.NET (classic, System.Web) incoming requests, gRPC and WebSockets. Not wanted (owner, 2026-11-10): replaying / editing and resending a request.
 - [ ] **L** Remote debugging: another machine, Docker containers, WSL.
 - [x] **L** Async Tasks window (7.24.0.0: tasks from a heap walk, async method and await, double-click opens the method). Logical call stacks: 7.25.0.0. Copy: 7.26.0.0. 7.27.0.0: .NET Framework tasks listed (status and type). Still open: async method names for .NET Framework.
 - [x] **S** Exception helper popup: inner exceptions, "break when thrown" toggle, copy details. (7.23.0.0, click-tested: type, message, inner exceptions and call stack read from the fields, no code runs; the inner exceptions' stack traces aren't shown.)
@@ -87,7 +87,7 @@ Suggested first, in this order:
 - [ ] **S–M** Undo history panel: list of edits, jump to and revert each one.
 - [ ] **M** IL editor: syntax highlighting, branch arrows, stack validation before saving.
 - [x] **S** Edit Method "test compile only" (compile without applying): Test Compile button / Shift+F6 / context menu in the code editing dialog boxes (7.19.0.0; not click-tested).
-- [ ] **M** Rename refactoring for obfuscated members, with a saved rename map that can be re-applied.
+- [x] **M** Rename refactoring for obfuscated members, with a saved rename map that can be re-applied (7.31.0.0: Rename... (F2), Export/Apply Rename Map..., `dnSpy.Console --rename-create`/`--rename-apply`, [RENAME_MAP.md](RENAME_MAP.md). Later: generic parameter names, resources named after renamed types, renaming a virtual method together with its overrides).
 
 ### Obfuscated code and reverse engineering
 

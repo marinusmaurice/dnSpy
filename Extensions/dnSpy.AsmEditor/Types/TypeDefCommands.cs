@@ -1,5 +1,6 @@
 /*
     Copyright (C) 2014-2019 de4dot@gmail.com
+    Copyright (C) 2026- marinusmaurice@outlook.com
 
     This file is part of dnSpy
 
@@ -499,7 +500,8 @@ namespace dnSpy.AsmEditor.Types {
 			}
 		}
 
-		TypeDefSettingsCommand(ModuleDef module, TypeNode typeNode, TypeDefOptions options) {
+		// Also used by Rename... (RenameCommands.cs)
+		internal TypeDefSettingsCommand(ModuleDef module, TypeNode typeNode, TypeDefOptions options) {
 			this.module = module;
 			this.typeNode = typeNode;
 			newOptions = options;

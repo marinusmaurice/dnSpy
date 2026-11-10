@@ -1,0 +1,19 @@
+<!--
+    Copyright (C) 2026- marinusmaurice@outlook.com
+-->
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <!--
+    Rename map test app (see ../DecompilerStress/check.ps1 and ../RenameCheck): built twice, v1 and v2 (RenameVersion=2:
+    a newer version with more members, a changed method and a new type).
+  -->
+  <PropertyGroup>
+    <OutputType>Exe</OutputType>
+    <TargetFramework>net10.0</TargetFramework>
+    <LangVersion>latest</LangVersion>
+    <Nullable>disable</Nullable>
+    <Deterministic>true</Deterministic>
+    <DefineConstants Condition=" '$(RenameVersion)' == '2' ">$(DefineConstants);V2</DefineConstants>
+  </PropertyGroup>
+
+</Project>

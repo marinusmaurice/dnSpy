@@ -420,4 +420,34 @@
   <data name="BatchSummary" xml:space="preserve">
     <value>// batch: {0} command line(s), {1} failed</value>
   </data>
+  <data name="CmdLineRenameMapFile" xml:space="preserve">
+    <value>map</value>
+  </data>
+  <data name="CmdLineDescription_RenameCreate" xml:space="preserve">
+    <value>save the names that differ between an assembly and its renamed version (eg. obfuscated names you renamed) to a rename map: dnSpy.Console --rename-create names.dnspyrenames original.dll renamed.dll</value>
+  </data>
+  <data name="CmdLineDescription_RenameApply" xml:space="preserve">
+    <value>apply a rename map to another version of the assembly and save the result: dnSpy.Console --rename-apply names.dnspyrenames -o renamed.dll new.dll</value>
+  </data>
+  <data name="MissingRenameMapFile" xml:space="preserve">
+    <value>Missing rename map file name</value>
+  </data>
+  <data name="RenameCreateNeedsTwoFiles" xml:space="preserve">
+    <value>--rename-create needs two files: the original and the renamed assembly</value>
+  </data>
+  <data name="RenameApplyNeedsOneFile" xml:space="preserve">
+    <value>--rename-apply needs one assembly</value>
+  </data>
+  <data name="RenameApplyNeedsOutputFile" xml:space="preserve">
+    <value>--rename-apply needs the output file name (-o)</value>
+  </data>
+  <data name="RenameNotPaired" xml:space="preserve">
+    <value>not found in the renamed assembly</value>
+  </data>
+  <data name="RenameCreated" xml:space="preserve">
+    <value>Rename map with {0} rename(s) saved to {1}</value>
+  </data>
+  <data name="RenameApplied" xml:space="preserve">
+    <value>{0} of {1} rename(s) applied ({2} already applied), saved to {3}</value>
+  </data>
 </root>

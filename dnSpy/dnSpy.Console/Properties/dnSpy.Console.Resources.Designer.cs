@@ -967,5 +967,95 @@ namespace dnSpy.Console.Properties {
             }
         }
         
+        
+        /// <summary>
+        ///   Looks up a localized string similar to map.
+        /// </summary>
+        internal static string CmdLineRenameMapFile {
+            get {
+                return ResourceManager.GetString("CmdLineRenameMapFile", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to save the names that differ between an assembly and its renamed version (eg. obfuscated names you renamed) to a rename map: dnSpy.Console --rename-create names.dnspyrenames original.dll renamed.dll.
+        /// </summary>
+        internal static string CmdLineDescription_RenameCreate {
+            get {
+                return ResourceManager.GetString("CmdLineDescription_RenameCreate", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to apply a rename map to another version of the assembly and save the result: dnSpy.Console --rename-apply names.dnspyrenames -o renamed.dll new.dll.
+        /// </summary>
+        internal static string CmdLineDescription_RenameApply {
+            get {
+                return ResourceManager.GetString("CmdLineDescription_RenameApply", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Missing rename map file name.
+        /// </summary>
+        internal static string MissingRenameMapFile {
+            get {
+                return ResourceManager.GetString("MissingRenameMapFile", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to --rename-create needs two files: the original and the renamed assembly.
+        /// </summary>
+        internal static string RenameCreateNeedsTwoFiles {
+            get {
+                return ResourceManager.GetString("RenameCreateNeedsTwoFiles", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to --rename-apply needs one assembly.
+        /// </summary>
+        internal static string RenameApplyNeedsOneFile {
+            get {
+                return ResourceManager.GetString("RenameApplyNeedsOneFile", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to --rename-apply needs the output file name (-o).
+        /// </summary>
+        internal static string RenameApplyNeedsOutputFile {
+            get {
+                return ResourceManager.GetString("RenameApplyNeedsOutputFile", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to not found in the renamed assembly.
+        /// </summary>
+        internal static string RenameNotPaired {
+            get {
+                return ResourceManager.GetString("RenameNotPaired", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Rename map with {0} rename(s) saved to {1}.
+        /// </summary>
+        internal static string RenameCreated {
+            get {
+                return ResourceManager.GetString("RenameCreated", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to {0} of {1} rename(s) applied ({2} already applied), saved to {3}.
+        /// </summary>
+        internal static string RenameApplied {
+            get {
+                return ResourceManager.GetString("RenameApplied", resourceCulture);
+            }
+        }
     }
 }

@@ -2357,4 +2357,52 @@ Most options will be re-initialized when this checkbox is clicked</value>
   <data name="Patch_NotApplied" xml:space="preserve">
     <value>Not applied:</value>
   </data>
+  <data name="Rename_Command" xml:space="preserve">
+    <value>Re_name...</value>
+  </data>
+  <data name="Rename_Title" xml:space="preserve">
+    <value>Rename</value>
+  </data>
+  <data name="Rename_NewName" xml:space="preserve">
+    <value>New name (for a type: Namespace.Name):</value>
+  </data>
+  <data name="Rename_NameEmpty" xml:space="preserve">
+    <value>The name can't be empty</value>
+  </data>
+  <data name="RenameMap_ExportCommand" xml:space="preserve">
+    <value>_Export Rename Map...</value>
+  </data>
+  <data name="RenameMap_ApplyCommand" xml:space="preserve">
+    <value>Apply Rename M_ap...</value>
+  </data>
+  <data name="RenameMap_Files" xml:space="preserve">
+    <value>dnSpy rename maps</value>
+  </data>
+  <data name="RenameMap_NoChanges" xml:space="preserve">
+    <value>No type, member or parameter of {0} has another name than in its file ({1}), so there is nothing to export. Rename something first (Rename... (F2), or Edit Type, Edit Method, ...).</value>
+  </data>
+  <data name="RenameMap_Exported" xml:space="preserve">
+    <value>{0} rename(s) saved to {1}.</value>
+  </data>
+  <data name="RenameMap_Renames" xml:space="preserve">
+    <value>Renames:</value>
+  </data>
+  <data name="RenameMap_NotPaired" xml:space="preserve">
+    <value>Not found in the file, so not in the map:</value>
+  </data>
+  <data name="RenameMap_OtherAssembly" xml:space="preserve">
+    <value>The rename map was made from {0}, the selected assembly is {1}. Apply it anyway?</value>
+  </data>
+  <data name="RenameMap_Applied" xml:space="preserve">
+    <value>{0} of {1} rename(s) applied to {2} ({3} already applied). Use File &gt; Save Module to save it; Edit &gt; Undo removes the renames.</value>
+  </data>
+  <data name="RenameMap_Renamed" xml:space="preserve">
+    <value>Renamed (and how each one was found):</value>
+  </data>
+  <data name="RenameMap_NotApplied" xml:space="preserve">
+    <value>Not applied:</value>
+  </data>
+  <data name="RenameMap_UndoDescription" xml:space="preserve">
+    <value>Apply Rename Map</value>
+  </data>
 </root>

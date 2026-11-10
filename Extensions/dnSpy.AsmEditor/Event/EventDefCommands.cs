@@ -1,5 +1,6 @@
 /*
     Copyright (C) 2014-2019 de4dot@gmail.com
+    Copyright (C) 2026- marinusmaurice@outlook.com
 
     This file is part of dnSpy
 
@@ -392,7 +393,8 @@ namespace dnSpy.AsmEditor.Event {
 		readonly int origParentChildIndex;
 		readonly bool nameChanged;
 
-		EventDefSettingsCommand(EventNode eventNode, EventDefOptions options) {
+		// Also used by Rename... (RenameCommands.cs)
+		internal EventDefSettingsCommand(EventNode eventNode, EventDefOptions options) {
 			this.eventNode = eventNode;
 			newOptions = options;
 			origOptions = new EventDefOptions(eventNode.EventDef);
