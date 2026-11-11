@@ -7,6 +7,16 @@ What changed in each release of this fork, newest first. The release workflow pu
 
 Each section starts with a short summary, then **New Features** (new things you can do), **Enhancements** (existing things that work better) and **Bug Fixes**, with a link to the commit for each item. Technical details are in [All changes in detail](docs/CHANGES.md#all-changes-in-detail) and in [docs/MODERNIZATION_PLAN.md](docs/MODERNIZATION_PLAN.md).
 
+## 7.32.0.0
+
+String decryption: replace an obfuscator's string decryptor calls by the strings they return, without running the obfuscated code. Also has everything in 7.31.0.0 and earlier.
+
+### New Features
+
+- **Decrypt Strings...**: right-click an assembly (or File menu) to find the methods that decrypt its strings (static methods that return a string and are called with constants, like `a.b(1234)` or ConfuserEx's `Get<string>(id)`) and replace each call by its string, so the decompiled code shows `"Licence key accepted"` instead of `a.b(1234)`. The decryptors run in dnSpy's own emulator, not for real: none of the assembly's code runs, and the only .NET methods it may call are ones that compute something (strings, arrays, encodings, ciphers, hashes, collections), not files, processes or reflection. The message lists what was decrypted, what wasn't and why. One edit for Edit > Undo; File > Save Module saves the decrypted assembly.
+- **Decrypt Strings with This Method**: right-click a method (also in the code view) to use only it as the decryptor.
+- `dnSpy.Console --decrypt-strings -o decrypted.dll obfuscated.dll` does the same from the command line (`--decryptor 0x06000012` to pick the method).
+
 ## 7.31.0.0
 
 Rename maps: give an obfuscated assembly's types and members real names once, and apply them again to its next version. Also has everything in 7.30.0.1 and earlier.

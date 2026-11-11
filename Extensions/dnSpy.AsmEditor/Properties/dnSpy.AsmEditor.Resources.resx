@@ -2405,4 +2405,46 @@ Most options will be re-initialized when this checkbox is clicked</value>
   <data name="RenameMap_UndoDescription" xml:space="preserve">
     <value>Apply Rename Map</value>
   </data>
+  <data name="DecryptStrings_Command" xml:space="preserve">
+    <value>Decrypt S_trings...</value>
+  </data>
+  <data name="DecryptStrings_MethodCommand" xml:space="preserve">
+    <value>Decrypt Strings with This Method</value>
+  </data>
+  <data name="DecryptStrings_NoneFound" xml:space="preserve">
+    <value>No string decryptors found in {0}: no static method that returns a string and takes numbers or strings is called with constants.</value>
+  </data>
+  <data name="DecryptStrings_NoCalls" xml:space="preserve">
+    <value>{0} isn't called with constant arguments.</value>
+  </data>
+  <data name="DecryptStrings_Ask" xml:space="preserve">
+    <value>These methods look like string decryptors:
+
+{0}
+
+Run them in dnSpy's emulator and replace their calls by the strings they return? None of the assembly's code runs: the emulator runs its instructions itself and calls only .NET methods that compute something (strings, arrays, encodings, ciphers, hashes, collections), not files, processes or reflection.
+
+Only say Yes if they are decryptors: a method that looks up something the program sets while it runs would be replaced by what it returns at start-up.</value>
+  </data>
+  <data name="DecryptStrings_Calls" xml:space="preserve">
+    <value>{0} ({1} call(s))</value>
+  </data>
+  <data name="DecryptStrings_CallCount" xml:space="preserve">
+    <value>{0} call(s)</value>
+  </data>
+  <data name="DecryptStrings_Result" xml:space="preserve">
+    <value>{0} of {1} call(s) decrypted.</value>
+  </data>
+  <data name="DecryptStrings_Decrypted" xml:space="preserve">
+    <value>Decrypted:</value>
+  </data>
+  <data name="DecryptStrings_Failed" xml:space="preserve">
+    <value>Not decrypted:</value>
+  </data>
+  <data name="DecryptStrings_Skipped" xml:space="preserve">
+    <value>Module initializers skipped:</value>
+  </data>
+  <data name="DecryptStrings_UndoDescription" xml:space="preserve">
+    <value>Decrypt Strings</value>
+  </data>
 </root>

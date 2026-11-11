@@ -14,6 +14,7 @@
 	  - the side-by-side view's language choice and tab sync (../SideBySideCheck)
 	  - patch export/import: a patch made from ../PatchCases and its edited version, applied to a newer version (../PatchCheck)
 	  - rename maps: renames made in obfuscated ../RenameCases, applied to a newer version obfuscated with other names (../RenameCheck)
+	  - string decryption: dnSpy.Console --decrypt-strings on ../StringDecryptCases (its decryptors run in the emulator)
 	  - the tracepoint message keywords ($HITCOUNT, $TICK, $TIME, ...) (../TracepointCheck)
 	  - pinned and recent files in File -> Recent Files (../RecentFilesCheck)
 	  - which release the update check offers, with and without beta versions (../UpdateCheck)
@@ -437,6 +438,44 @@ try {
 		elseif (Compare-Object $expectedRun $consoleRun) { Fail 'Rename maps: v2 renamed by dnSpy.Console prints something different'; $consoleRun | ForEach-Object { Write-Host "  $_" } }
 		else { Write-Host '  OK: dnSpy.Console --rename-create / --rename-apply, same output' }
 	}
+
+	# String decryption: ../StringDecryptCases has its strings encrypted like obfuscators do. dnSpy.Console --decrypt-strings
+	# must decrypt every call in its emulator (so BadStrings.Get, which writes a file, must not run), skip the anti-debugging
+	# module initializer, and the decrypted program must print the same and have the strings in its code
+	Write-Host '== String decryption'
+	$decryptDir = Join-Path $work 'decrypt-cases'
+	Invoke-Checked "build StringDecryptCases" { dotnet build (Join-Path $PSScriptRoot '..\StringDecryptCases\StringDecryptCases.csproj') -c Release -o $decryptDir -v:q -nologo } > $null
+	$decryptOut = Join-Path $work 'decrypt-out'
+	Copy-Item $decryptDir $decryptOut -Recurse
+	$marker = Join-Path ([IO.Path]::GetTempPath()) 'dnspy-decrypt-marker.txt'
+	Remove-Item $marker -ErrorAction SilentlyContinue
+	# The call of BadStrings.Get isn't decrypted, so the exit code is 1
+	$decryptOutput = @(& $Console --decrypt-strings -o (Join-Path $decryptOut 'StringDecryptCases.dll') (Join-Path $decryptDir 'StringDecryptCases.dll'))
+	$decryptExit = $LASTEXITCODE
+	$ranCode = Test-Path $marker
+	$expectedStrings = @('Hello from the XOR table', 'Licence key accepted', 'Reversed UTF-16 in base64', 'Read from an embedded resource',
+		'Cached in a dictionary', 'Generic Get<string>(uint)', 'Set up by a module initializer', 'Decrypted with AES-256',
+		'Caesar shift by three', 'Virtual override shifts ten')
+	$decryptedStrings = @($decryptOutput | Where-Object { $_.StartsWith('+ ') } | ForEach-Object { $s = $_.Substring($_.IndexOf(': "') + 3); $s.Substring(0, $s.Length - 1) })
+	$notDecrypted = @($decryptOutput | Where-Object { $_.StartsWith('! ') })
+	$skippedInit = @($decryptOutput | Where-Object { $_.StartsWith('? ') })
+	if ($ranCode) { Fail 'String decryption: code of the assembly ran (BadStrings.Get wrote its file)' }
+	elseif ((Compare-Object $expectedStrings $decryptedStrings -SyncWindow 0) -or $notDecrypted.Count -ne 1 -or -not $notDecrypted[0].Contains('GetTempPath') -or
+		$skippedInit.Count -ne 1 -or -not $skippedInit[0].Contains('AntiDebug') -or $decryptExit -ne 1) {
+		Fail "String decryption: dnSpy.Console decrypted $($decryptedStrings.Count) calls, $($notDecrypted.Count) not decrypted, $($skippedInit.Count) initializers skipped, exit code $decryptExit (expected the 10 strings, BadStrings.Get not (GetTempPath), AntiDebug skipped, 1)"
+		$decryptOutput | ForEach-Object { Write-Host "  $_" }
+	}
+	else {
+		$expectedRun = Invoke-Checked "run StringDecryptCases" { dotnet (Join-Path $decryptDir 'StringDecryptCases.dll') }
+		$decryptedRun = Invoke-Checked "run decrypted StringDecryptCases" { dotnet (Join-Path $decryptOut 'StringDecryptCases.dll') }
+		$decryptedCode = & $Console --no-color --no-tokens -t StringDecryptCases.Program (Join-Path $decryptOut 'StringDecryptCases.dll') 2>&1 | Out-String
+		$missing = @($expectedStrings | Where-Object { -not $decryptedCode.Contains('"' + $_ + '"') })
+		if (Compare-Object $expectedRun $decryptedRun) { Fail 'String decryption: the decrypted program prints something different'; $decryptedRun | ForEach-Object { Write-Host "  $_" } }
+		elseif ($missing.Count) { Fail "String decryption: not in the decompiled Main: $($missing -join ', ')" }
+		else { Write-Host "  OK: $($decryptedStrings.Count) calls of 6 decryptors decrypted (XOR table, base64, resource with lock and cache, generic Get<string> with a module initializer, AES, own classes with an override), the file-writing one not run, same output" }
+	}
+	# Running the programs above wrote it
+	Remove-Item $marker -ErrorAction SilentlyContinue
 
 	# Assembly diff: the two versions of Test/DiffCases differ exactly in the members marked V2; a lambda, an iterator
 	# and an unchanged type must not show up

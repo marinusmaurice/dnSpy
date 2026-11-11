@@ -39,6 +39,7 @@ using dnSpy.Decompiler.Listing;
 using dnSpy.Decompiler.Protection;
 using dnSpy.Decompiler.Patch;
 using dnSpy.Decompiler.Rename;
+using dnSpy.Decompiler.StringDecryption;
 using dnSpy.Decompiler.MSBuild;
 
 namespace dnSpy_Console {
@@ -195,6 +196,8 @@ namespace dnSpy_Console {
 		string? patchApplyFile;
 		string? renameCreateFile;
 		string? renameApplyFile;
+		bool decryptStrings;
+		readonly List<uint> decryptorTokens = new List<uint>();
 		Guid projectGuid = Guid.NewGuid();
 		int numThreads;
 		int mdToken;
@@ -386,6 +389,8 @@ namespace dnSpy_Console {
 			new UsageInfo("--patch-apply", dnSpy_Console_Resources.CmdLinePatchFile, dnSpy_Console_Resources.CmdLineDescription_PatchApply),
 			new UsageInfo("--rename-create", dnSpy_Console_Resources.CmdLineRenameMapFile, dnSpy_Console_Resources.CmdLineDescription_RenameCreate),
 			new UsageInfo("--rename-apply", dnSpy_Console_Resources.CmdLineRenameMapFile, dnSpy_Console_Resources.CmdLineDescription_RenameApply),
+			new UsageInfo("--decrypt-strings", null, dnSpy_Console_Resources.CmdLineDescription_DecryptStrings),
+			new UsageInfo("--decryptor", "N", dnSpy_Console_Resources.CmdLineDescription_Decryptor),
 			new UsageInfo("--batch", dnSpy_Console_Resources.CmdLineFile, dnSpy_Console_Resources.CmdLineDescription_Batch),
 			new UsageInfo("@" + dnSpy_Console_Resources.CmdLineFile, null, dnSpy_Console_Resources.CmdLineDescription_ResponseFile),
 			new UsageInfo("-r", null, dnSpy_Console_Resources.CmdLineDescription_RecursiveSearch),
@@ -494,6 +499,8 @@ namespace dnSpy_Console {
 			"patch-apply",
 			"rename-create",
 			"rename-apply",
+			"decrypt-strings",
+			"decryptor",
 			"batch",
 		};
 
@@ -713,6 +720,19 @@ namespace dnSpy_Console {
 							renameApplyFile = Path.GetFullPath(next);
 						break;
 
+					case "--decrypt-strings":
+						decryptStrings = true;
+						break;
+
+					case "--decryptor":
+						if (next is null)
+							throw new ErrorException(dnSpy_Console_Resources.MissingDecryptorToken);
+						i++;
+						decryptorTokens.Add((uint)SimpleTypeConverter.ParseInt32(next, int.MinValue, int.MaxValue, out error));
+						if (!string2.IsNullOrEmpty(error))
+							throw new ErrorException(error);
+						break;
+
 					case "--project-guid":
 						if (next is null || !Guid.TryParse(next, out projectGuid))
 							throw new ErrorException(dnSpy_Console_Resources.InvalidGuid);
@@ -818,6 +838,13 @@ namespace dnSpy_Console {
 				if (string2.IsNullOrEmpty(outputDir))
 					throw new ErrorException(dnSpy_Console_Resources.RenameApplyNeedsOutputFile);
 				ApplyRenameMap(renameApplyFile, files[0].Module, outputDir);
+			}
+			else if (decryptStrings) {
+				if (files.Count != 1)
+					throw new ErrorException(dnSpy_Console_Resources.DecryptStringsNeedsOneFile);
+				if (string2.IsNullOrEmpty(outputDir))
+					throw new ErrorException(dnSpy_Console_Resources.DecryptStringsNeedsOutputFile);
+				DecryptStrings(files[0].Module, outputDir);
 			}
 			else if (diff) {
 				if (files.Count != 2)
@@ -1009,6 +1036,60 @@ namespace dnSpy_Console {
 			else
 				module.Write(outputFile);
 			Console.WriteLine(dnSpy_Console_Resources.RenameApplied, result.Renamed.Count, result.Total, result.AlreadyApplied, outputFile);
+		}
+
+		void DecryptStrings(ModuleDef module, string outputFile) {
+			List<MethodDef>? only = null;
+			if (decryptorTokens.Count > 0) {
+				only = new List<MethodDef>();
+				foreach (var token in decryptorTokens) {
+					var method = module.ResolveToken(token) as MethodDef;
+					if (!StringDecryptor.CanBeDecryptor(method))
+						throw new ErrorException(string.Format(dnSpy_Console_Resources.DecryptorNotFound, token));
+					only.Add(method!);
+				}
+			}
+			var decryptors = StringDecryptor.FindDecryptors(module, only);
+			if (decryptors.Count == 0)
+				throw new ErrorException(dnSpy_Console_Resources.NoDecryptorsFound);
+			foreach (var info in decryptors)
+				Console.WriteLine("* {0} (0x{1:X8}): {2}", info.Method.FullName, info.Method.MDToken.Raw, string.Format(dnSpy_Console_Resources.DecryptorCalls, info.CallSites));
+			var result = StringDecryptor.Decrypt(module, decryptors.Select(a => a.Method));
+			foreach (var line in result.SkippedInitializers)
+				Console.WriteLine("? {0}: {1}", dnSpy_Console_Resources.InitializerSkipped, line);
+			foreach (var s in result.Decrypted)
+				Console.WriteLine("+ {0} IL_{1:X4}: {2}", s.Method.FullName, s.Offset, QuoteString(s.Value));
+			foreach (var f in result.Failed) {
+				Console.WriteLine("! {0} IL_{1:X4} ({2}): {3}", f.Method.FullName, f.Offset, f.Decryptor.Name, f.Reason);
+				errors++;
+			}
+			if (module is ModuleDefMD md && !md.IsILOnly)
+				md.NativeWrite(outputFile);
+			else
+				module.Write(outputFile);
+			Console.WriteLine(dnSpy_Console_Resources.StringsDecrypted, result.Decrypted.Count, result.Decrypted.Count + result.Failed.Count, outputFile);
+		}
+
+		static string QuoteString(string s) {
+			var sb = new StringBuilder(s.Length + 2);
+			sb.Append('"');
+			foreach (var c in s) {
+				switch (c) {
+				case '"': sb.Append("\\\""); break;
+				case '\\': sb.Append(@"\\"); break;
+				case '\n': sb.Append(@"\n"); break;
+				case '\r': sb.Append(@"\r"); break;
+				case '\t': sb.Append(@"\t"); break;
+				default:
+					if (char.IsControl(c))
+						sb.Append(@"\u").Append(((int)c).ToString("X4"));
+					else
+						sb.Append(c);
+					break;
+				}
+			}
+			sb.Append('"');
+			return sb.ToString();
 		}
 
 		Indenter GetIndenter() {

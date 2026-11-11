@@ -450,4 +450,34 @@
   <data name="RenameApplied" xml:space="preserve">
     <value>{0} of {1} rename(s) applied ({2} already applied), saved to {3}</value>
   </data>
+  <data name="CmdLineDescription_DecryptStrings" xml:space="preserve">
+    <value>find the string decryptors (static methods that return a string and are called with constants) and replace their calls by the strings, then save the result. The decryptors run in an emulator: none of the assembly's code runs. dnSpy.Console --decrypt-strings -o decrypted.dll obfuscated.dll</value>
+  </data>
+  <data name="CmdLineDescription_Decryptor" xml:space="preserve">
+    <value>with --decrypt-strings: use only this method (metadata token, eg. 0x06000012) as the decryptor; can be used more than once</value>
+  </data>
+  <data name="MissingDecryptorToken" xml:space="preserve">
+    <value>Missing metadata token of the decryptor method</value>
+  </data>
+  <data name="DecryptStringsNeedsOneFile" xml:space="preserve">
+    <value>--decrypt-strings needs one assembly</value>
+  </data>
+  <data name="DecryptStringsNeedsOutputFile" xml:space="preserve">
+    <value>--decrypt-strings needs the output file name (-o)</value>
+  </data>
+  <data name="DecryptorNotFound" xml:space="preserve">
+    <value>Method 0x{0:X8} isn't a static method that returns a string and takes numbers or strings</value>
+  </data>
+  <data name="NoDecryptorsFound" xml:space="preserve">
+    <value>No string decryptors found: no static method that returns a string and takes numbers or strings is called with constants</value>
+  </data>
+  <data name="DecryptorCalls" xml:space="preserve">
+    <value>{0} call(s)</value>
+  </data>
+  <data name="InitializerSkipped" xml:space="preserve">
+    <value>skipped (module initializer)</value>
+  </data>
+  <data name="StringsDecrypted" xml:space="preserve">
+    <value>{0} of {1} call(s) decrypted, saved to {2}</value>
+  </data>
 </root>

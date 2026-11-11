@@ -6906,5 +6906,113 @@ namespace dnSpy.AsmEditor.Properties {
                 return ResourceManager.GetString("RenameMap_UndoDescription", resourceCulture);
             }
         }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Decrypt S_trings....
+        /// </summary>
+        public static string DecryptStrings_Command {
+            get {
+                return ResourceManager.GetString("DecryptStrings_Command", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Decrypt Strings with This Method.
+        /// </summary>
+        public static string DecryptStrings_MethodCommand {
+            get {
+                return ResourceManager.GetString("DecryptStrings_MethodCommand", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to No string decryptors found in {0}: no static method that returns a string and takes numbers or strings is called with constants..
+        /// </summary>
+        public static string DecryptStrings_NoneFound {
+            get {
+                return ResourceManager.GetString("DecryptStrings_NoneFound", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to {0} isn&apos;t called with constant arguments..
+        /// </summary>
+        public static string DecryptStrings_NoCalls {
+            get {
+                return ResourceManager.GetString("DecryptStrings_NoCalls", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to These methods look like string decryptors:....
+        /// </summary>
+        public static string DecryptStrings_Ask {
+            get {
+                return ResourceManager.GetString("DecryptStrings_Ask", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to {0} ({1} call(s)).
+        /// </summary>
+        public static string DecryptStrings_Calls {
+            get {
+                return ResourceManager.GetString("DecryptStrings_Calls", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to {0} call(s).
+        /// </summary>
+        public static string DecryptStrings_CallCount {
+            get {
+                return ResourceManager.GetString("DecryptStrings_CallCount", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to {0} of {1} call(s) decrypted..
+        /// </summary>
+        public static string DecryptStrings_Result {
+            get {
+                return ResourceManager.GetString("DecryptStrings_Result", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Decrypted:.
+        /// </summary>
+        public static string DecryptStrings_Decrypted {
+            get {
+                return ResourceManager.GetString("DecryptStrings_Decrypted", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Not decrypted:.
+        /// </summary>
+        public static string DecryptStrings_Failed {
+            get {
+                return ResourceManager.GetString("DecryptStrings_Failed", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Module initializers skipped:.
+        /// </summary>
+        public static string DecryptStrings_Skipped {
+            get {
+                return ResourceManager.GetString("DecryptStrings_Skipped", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Decrypt Strings.
+        /// </summary>
+        public static string DecryptStrings_UndoDescription {
+            get {
+                return ResourceManager.GetString("DecryptStrings_UndoDescription", resourceCulture);
+            }
+        }
     }
 }

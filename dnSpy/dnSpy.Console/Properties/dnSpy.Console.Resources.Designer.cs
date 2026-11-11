@@ -1057,5 +1057,95 @@ namespace dnSpy.Console.Properties {
                 return ResourceManager.GetString("RenameApplied", resourceCulture);
             }
         }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to find the string decryptors (static methods that return a string and are called with constants) and replace their calls by the strings, then save the result. The decryptors run in an emulator: none of the assembly&apos;s code runs. dnSpy.Console --decrypt-strings -o decrypted.dll obfuscated.dll.
+        /// </summary>
+        internal static string CmdLineDescription_DecryptStrings {
+            get {
+                return ResourceManager.GetString("CmdLineDescription_DecryptStrings", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to with --decrypt-strings: use only this method (metadata token, eg. 0x06000012) as the decryptor; can be used more than once.
+        /// </summary>
+        internal static string CmdLineDescription_Decryptor {
+            get {
+                return ResourceManager.GetString("CmdLineDescription_Decryptor", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Missing metadata token of the decryptor method.
+        /// </summary>
+        internal static string MissingDecryptorToken {
+            get {
+                return ResourceManager.GetString("MissingDecryptorToken", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to --decrypt-strings needs one assembly.
+        /// </summary>
+        internal static string DecryptStringsNeedsOneFile {
+            get {
+                return ResourceManager.GetString("DecryptStringsNeedsOneFile", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to --decrypt-strings needs the output file name (-o).
+        /// </summary>
+        internal static string DecryptStringsNeedsOutputFile {
+            get {
+                return ResourceManager.GetString("DecryptStringsNeedsOutputFile", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Method 0x{0:X8} isn&apos;t a static method that returns a string and takes numbers or strings.
+        /// </summary>
+        internal static string DecryptorNotFound {
+            get {
+                return ResourceManager.GetString("DecryptorNotFound", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to No string decryptors found: no static method that returns a string and takes numbers or strings is called with constants.
+        /// </summary>
+        internal static string NoDecryptorsFound {
+            get {
+                return ResourceManager.GetString("NoDecryptorsFound", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to {0} call(s).
+        /// </summary>
+        internal static string DecryptorCalls {
+            get {
+                return ResourceManager.GetString("DecryptorCalls", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to skipped (module initializer).
+        /// </summary>
+        internal static string InitializerSkipped {
+            get {
+                return ResourceManager.GetString("InitializerSkipped", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to {0} of {1} call(s) decrypted, saved to {2}.
+        /// </summary>
+        internal static string StringsDecrypted {
+            get {
+                return ResourceManager.GetString("StringsDecrypted", resourceCulture);
+            }
+        }
     }
 }
