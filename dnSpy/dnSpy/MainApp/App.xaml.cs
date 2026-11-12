@@ -1,5 +1,6 @@
 /*
     Copyright (C) 2014-2019 de4dot@gmail.com
+    Copyright (C) 2026- marinusmaurice@outlook.com
 
     This file is part of dnSpy
 
@@ -329,7 +330,7 @@ namespace dnSpy.MainApp {
 						continue;
 					if (!CanLoadExtension(file))
 						continue;
-					var asm = Assembly.LoadFrom(file);
+					var asm = LoadExtensionAssembly(file);
 					if (!CanLoadExtension(asm)) {
 						Debug.WriteLine($"Old extension detected ({file})");
 						continue;
@@ -342,6 +343,23 @@ namespace dnSpy.MainApp {
 				}
 			}
 			return asms.ToArray();
+		}
+
+		static Assembly LoadExtensionAssembly(string file) {
+#if !NET
+			// .NET Framework: an extension in bin (the probing path) is loaded by name, like the assemblies that reference
+			// it. LoadFrom expands a short 8.3 path (dnSpy started from eg. C:\Users\ADMINI~1\...) to the long path, while
+			// references are found through the app's base directory as it was given, so the same file was loaded twice and
+			// WPF couldn't find a window's XAML ("does not have a resource identified by the URI"), eg. Debug Program.
+			if (StringComparer.OrdinalIgnoreCase.Equals(Path.GetDirectoryName(file), AppDirectories.BinDirectory)) {
+				try {
+					return Assembly.Load(AssemblyName.GetAssemblyName(file));
+				}
+				catch (Exception ex) when (ex is FileNotFoundException || ex is FileLoadException || ex is BadImageFormatException) {
+				}
+			}
+#endif
+			return Assembly.LoadFrom(file);
 		}
 
 		IEnumerable<string> GetExtensionFiles(string baseDir) {

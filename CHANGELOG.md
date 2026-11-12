@@ -7,6 +7,14 @@ What changed in each release of this fork, newest first. The release workflow pu
 
 Each section starts with a short summary, then **New Features** (new things you can do), **Enhancements** (existing things that work better) and **Bug Fixes**, with a link to the commit for each item. Technical details are in [All changes in detail](docs/CHANGES.md#all-changes-in-detail) and in [docs/MODERNIZATION_PLAN.md](docs/MODERNIZATION_PLAN.md).
 
+## 7.33.1.0
+
+A fix for the .NET Framework build. Also has everything in 7.33.0.0 and earlier.
+
+### Bug Fixes
+
+- **.NET Framework build: debugging didn't start** when dnSpy was started through a short (8.3) path, eg. `C:\Users\ADMINI~1\...` from a shortcut, a script or `%TEMP%`: Start showed an error ("does not have a resource identified by the URI /dnSpy.Debugger.x;...") and the debugger windows (Locals, Debug Program) couldn't open, because the debugger extension was loaded twice. Extensions are now loaded once however dnSpy is started. The .NET build wasn't affected.
+
 ## 7.33.0.0
 
 Heap snapshots: compare the heap at two breaks to see which objects are new, and see how much memory each object and type keeps alive (retained size). Also has everything in 7.32.0.0 and earlier.
