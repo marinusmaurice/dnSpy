@@ -1,5 +1,6 @@
 /*
     Copyright (C) 2014-2019 de4dot@gmail.com
+    Copyright (C) 2026- marinusmaurice@outlook.com
 
     This file is part of dnSpy
 
@@ -93,6 +94,47 @@ namespace dnSpy.AsmEditor.MethodBody {
 			}
 		}
 		SequencePoint? sequencePoint;
+
+		// Set by CilBodyVM's stack check and branch arrow layout (they aren't part of the instruction)
+
+		/// <summary>Stack depth before the instruction, empty if no path reaches it</summary>
+		public string StackText {
+			get => stackText;
+			set {
+				if (stackText != value) {
+					stackText = value;
+					OnPropertyChanged(nameof(StackText));
+				}
+			}
+		}
+		string stackText = string.Empty;
+
+		/// <summary>The stack problems of this instruction (one per line), or null</summary>
+		public string? StackProblem {
+			get => stackProblem;
+			set {
+				if (stackProblem != value) {
+					stackProblem = value;
+					OnPropertyChanged(nameof(StackProblem));
+					OnPropertyChanged(nameof(HasStackProblem));
+				}
+			}
+		}
+		string? stackProblem;
+
+		public bool HasStackProblem => stackProblem is not null;
+
+		/// <summary>What this row draws of the branch arrows (see <see cref="BranchArrowLayout"/>), or null</summary>
+		public BranchArrowParts[]? BranchArrows {
+			get => branchArrows;
+			set {
+				if (branchArrows != value) {
+					branchArrows = value;
+					OnPropertyChanged(nameof(BranchArrows));
+				}
+			}
+		}
+		BranchArrowParts[]? branchArrows;
 
 		InstructionVM(bool dummy) {
 			InstructionOperandVM = null!;

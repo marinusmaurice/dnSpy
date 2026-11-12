@@ -1,5 +1,6 @@
 /*
     Copyright (C) 2014-2019 de4dot@gmail.com
+    Copyright (C) 2026- marinusmaurice@outlook.com
 
     This file is part of dnSpy
 
@@ -17,6 +18,7 @@
     along with dnSpy.  If not, see <http://www.gnu.org/licenses/>.
 */
 
+using System.ComponentModel;
 using System.Windows;
 using System.Windows.Controls;
 
@@ -61,6 +63,24 @@ namespace dnSpy.AsmEditor.MethodBody {
 			localsListHelper.OnDataContextChanged(data);
 			instructionsListHelper.OnDataContextChanged(data);
 			exceptionHandlersListHelper.OnDataContextChanged(data);
+
+			// The branch arrows column is as wide as its lanes
+			if (cilBodyVM is not null)
+				cilBodyVM.PropertyChanged -= CilBodyVM_PropertyChanged;
+			cilBodyVM = data.CilBodyVM;
+			if (cilBodyVM is not null) {
+				cilBodyVM.PropertyChanged += CilBodyVM_PropertyChanged;
+				UpdateBranchArrowsColumn();
+			}
 		}
+		CilBodyVM? cilBodyVM;
+
+		void CilBodyVM_PropertyChanged(object? sender, PropertyChangedEventArgs e) {
+			if (e.PropertyName == nameof(MethodBody.CilBodyVM.BranchLaneCount))
+				UpdateBranchArrowsColumn();
+		}
+
+		void UpdateBranchArrowsColumn() =>
+			branchArrowsColumn.Width = BranchArrowsControl.GetWidth(cilBodyVM?.BranchLaneCount ?? 0);
 	}
 }

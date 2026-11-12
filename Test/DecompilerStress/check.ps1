@@ -17,6 +17,7 @@
 	  - string decryption: dnSpy.Console --decrypt-strings on ../StringDecryptCases (its decryptors run in the emulator)
 	  - the tracepoint message keywords ($HITCOUNT, $TICK, $TIME, ...) (../TracepointCheck)
 	  - heap snapshots: the dominator tree, retained sizes and new objects, also on a real process's heap (../HeapSnapshotCheck)
+	  - the IL editor's stack check and branch arrows, also on every method of System.Private.CoreLib and System.Linq (../ILEditorCheck)
 	  - pinned and recent files in File -> Recent Files (../RecentFilesCheck)
 	  - which release the update check offers, with and without beta versions (../UpdateCheck)
 	  - Open from NuGet's package sources from NuGet.config, search and download over V3, V2 and folder feeds (../NuGetFeedCheck)
@@ -277,6 +278,13 @@ try {
 	$heapCheck = Invoke-Checked "run HeapSnapshotCheck" { dotnet run --project (Join-Path $PSScriptRoot '..\HeapSnapshotCheck\HeapSnapshotCheck.csproj') -c Release -v:q -nologo }
 	if (-not ($heapCheck -contains 'All heap snapshot checks passed')) { Fail 'Heap snapshots: checks failed'; $heapCheck | ForEach-Object { Write-Host "  $_" } }
 	else { Write-Host '  OK: dominator tree (300 random graphs, 3 million node list), retained sizes, new objects; a real heap' }
+
+	# IL editor: the stack check and the branch arrow layout, compiled on their own
+	Write-Host '== IL editor'
+	$ilCheck = Invoke-Checked "run ILEditorCheck" { dotnet run --project (Join-Path $PSScriptRoot '..\ILEditorCheck\ILEditorCheck.csproj') -c Release -v:q -nologo }
+	$ilPassed = @($ilCheck) | Where-Object { $_ -like 'All IL editor checks passed*' } | Select-Object -First 1
+	if (-not $ilPassed) { Fail 'IL editor: checks failed'; $ilCheck | ForEach-Object { Write-Host "  $_" } }
+	else { Write-Host "  OK: stack check (no false problems in real code, each kind of problem found), branch arrow lanes $($ilPassed -replace '^All IL editor checks passed ', '')" }
 
 	# Updates: the release tag parser and which release is offered, with and without betas (no network)
 	Write-Host '== Update check'

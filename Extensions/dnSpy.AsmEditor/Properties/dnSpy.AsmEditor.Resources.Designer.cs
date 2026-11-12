@@ -7014,5 +7014,139 @@ namespace dnSpy.AsmEditor.Properties {
                 return ResourceManager.GetString("DecryptStrings_UndoDescription", resourceCulture);
             }
         }
+    /// <summary>
+        ///   Looks up a localized string similar to Stack.
+        /// </summary>
+        public static string MethodBody_Column_Stack {
+            get {
+                return ResourceManager.GetString("MethodBody_Column_Stack", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Values on the stack before the instruction (empty: no path reaches it).
+        /// </summary>
+        public static string MethodBody_Column_Stack_ToolTip {
+            get {
+                return ResourceManager.GetString("MethodBody_Column_Stack_ToolTip", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to IL_{0:X4}: pops {2} value(s) but the stack has {1}.
+        /// </summary>
+        public static string ILStack_Underflow {
+            get {
+                return ResourceManager.GetString("ILStack_Underflow", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to IL_{0:X4}: the stack has {1} value(s) here but {2} when coming from IL_{3:X4}.
+        /// </summary>
+        public static string ILStack_Mismatch {
+            get {
+                return ResourceManager.GetString("ILStack_Mismatch", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to IL_{0:X4}: the stack has {1} value(s) here but {2} on another path.
+        /// </summary>
+        public static string ILStack_MismatchNoSource {
+            get {
+                return ResourceManager.GetString("ILStack_MismatchNoSource", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to IL_{0:X4}: branches to an instruction that isn't in the method.
+        /// </summary>
+        public static string ILStack_BadTarget {
+            get {
+                return ResourceManager.GetString("ILStack_BadTarget", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to IL_{0:X4}: the code runs past the last instruction (end it with ret, br, throw or leave).
+        /// </summary>
+        public static string ILStack_FallsOffEnd {
+            get {
+                return ResourceManager.GetString("ILStack_FallsOffEnd", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to IL_{0:X4}: ret with {1} value(s) on the stack, it needs {2}.
+        /// </summary>
+        public static string ILStack_BadReturn {
+            get {
+                return ResourceManager.GetString("ILStack_BadReturn", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to IL_{0:X4}: the stack must be empty when a try block starts, it has {1} value(s).
+        /// </summary>
+        public static string ILStack_TryNotEmpty {
+            get {
+                return ResourceManager.GetString("ILStack_TryNotEmpty", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to IL_{0:X4}: the stack gets {1} deep but MaxStack is {2} (raise MaxStack or untick Keep Old MaxStack).
+        /// </summary>
+        public static string ILStack_MaxStack {
+            get {
+                return ResourceManager.GetString("ILStack_MaxStack", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to An exception handler uses an instruction that isn't in the method.
+        /// </summary>
+        public static string ILStack_BadExceptionHandler {
+            get {
+                return ResourceManager.GetString("ILStack_BadExceptionHandler", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Stack OK: up to {0} value(s)..
+        /// </summary>
+        public static string ILStack_OK {
+            get {
+                return ResourceManager.GetString("ILStack_OK", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to {0} stack problem(s): {1}.
+        /// </summary>
+        public static string ILStack_Problems {
+            get {
+                return ResourceManager.GetString("ILStack_Problems", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Stack not checked: fix the errors first..
+        /// </summary>
+        public static string ILStack_NotChecked {
+            get {
+                return ResourceManager.GetString("ILStack_NotChecked", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to The IL has {0} stack problem(s). The method is invalid (the runtime will reject it) and saving the module may fail:  {1}  Save anyway?.
+        /// </summary>
+        public static string ILStack_SaveAnyway {
+            get {
+                return ResourceManager.GetString("ILStack_SaveAnyway", resourceCulture);
+            }
+        }
     }
 }

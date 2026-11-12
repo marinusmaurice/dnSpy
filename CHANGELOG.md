@@ -7,6 +7,16 @@ What changed in each release of this fork, newest first. The release workflow pu
 
 Each section starts with a short summary, then **New Features** (new things you can do), **Enhancements** (existing things that work better) and **Bug Fixes**, with a link to the commit for each item. Technical details are in [All changes in detail](docs/CHANGES.md#all-changes-in-detail) and in [docs/MODERNIZATION_PLAN.md](docs/MODERNIZATION_PLAN.md).
 
+## 7.34.0.0
+
+The IL editor (Edit IL Instructions) checks the stack as you edit and draws the branches as arrows. Also has everything in 7.33.1.0 and earlier.
+
+### New Features
+
+- **Stack check**: the instructions list has a **Stack** column, the number of values on the stack before each instruction, and the line above the list says whether the method is valid. A row turns red when something is wrong there, and its tooltip says what: an instruction that pops more than is on the stack, two paths that reach an instruction with a different stack, a branch to an instruction that isn't in the method, code that runs past the last instruction, `ret` with the wrong number of values, a `try` block entered with values on the stack, or more values than MaxStack (with Keep Old MaxStack ticked). The check runs as you edit.
+- **Check before saving**: OK with stack problems lists them and asks whether to save anyway, since the runtime would reject the method (and saving the module could fail).
+- **Branch arrows**: a column left of the instructions draws an arrow from each branch (`br`, `brtrue`, `leave`, each `switch` target, ...) to its target, so loops and jumps are easy to follow.
+
 ## 7.33.1.0
 
 A fix for the .NET Framework build. Also has everything in 7.33.0.0 and earlier.

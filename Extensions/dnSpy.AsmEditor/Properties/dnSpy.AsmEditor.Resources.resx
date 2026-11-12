@@ -2447,4 +2447,53 @@ Only say Yes if they are decryptors: a method that looks up something the progra
   <data name="DecryptStrings_UndoDescription" xml:space="preserve">
     <value>Decrypt Strings</value>
   </data>
+  <data name="MethodBody_Column_Stack" xml:space="preserve">
+    <value>Stack</value>
+  </data>
+  <data name="MethodBody_Column_Stack_ToolTip" xml:space="preserve">
+    <value>Values on the stack before the instruction (empty: no path reaches it)</value>
+  </data>
+  <data name="ILStack_Underflow" xml:space="preserve">
+    <value>IL_{0:X4}: pops {2} value(s) but the stack has {1}</value>
+  </data>
+  <data name="ILStack_Mismatch" xml:space="preserve">
+    <value>IL_{0:X4}: the stack has {1} value(s) here but {2} when coming from IL_{3:X4}</value>
+  </data>
+  <data name="ILStack_MismatchNoSource" xml:space="preserve">
+    <value>IL_{0:X4}: the stack has {1} value(s) here but {2} on another path</value>
+  </data>
+  <data name="ILStack_BadTarget" xml:space="preserve">
+    <value>IL_{0:X4}: branches to an instruction that isn't in the method</value>
+  </data>
+  <data name="ILStack_FallsOffEnd" xml:space="preserve">
+    <value>IL_{0:X4}: the code runs past the last instruction (end it with ret, br, throw or leave)</value>
+  </data>
+  <data name="ILStack_BadReturn" xml:space="preserve">
+    <value>IL_{0:X4}: ret with {1} value(s) on the stack, it needs {2}</value>
+  </data>
+  <data name="ILStack_TryNotEmpty" xml:space="preserve">
+    <value>IL_{0:X4}: the stack must be empty when a try block starts, it has {1} value(s)</value>
+  </data>
+  <data name="ILStack_MaxStack" xml:space="preserve">
+    <value>IL_{0:X4}: the stack gets {1} deep but MaxStack is {2} (raise MaxStack or untick Keep Old MaxStack)</value>
+  </data>
+  <data name="ILStack_BadExceptionHandler" xml:space="preserve">
+    <value>An exception handler uses an instruction that isn't in the method</value>
+  </data>
+  <data name="ILStack_OK" xml:space="preserve">
+    <value>Stack OK: up to {0} value(s).</value>
+  </data>
+  <data name="ILStack_Problems" xml:space="preserve">
+    <value>{0} stack problem(s): {1}</value>
+  </data>
+  <data name="ILStack_NotChecked" xml:space="preserve">
+    <value>Stack not checked: fix the errors first.</value>
+  </data>
+  <data name="ILStack_SaveAnyway" xml:space="preserve">
+    <value>The IL has {0} stack problem(s). The method is invalid (the runtime will reject it) and saving the module may fail:
+
+{1}
+
+Save anyway?</value>
+  </data>
 </root>

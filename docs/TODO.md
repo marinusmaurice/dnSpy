@@ -85,7 +85,7 @@ Suggested first, in this order:
 ### Editing and patching
 
 - [ ] **S–M** Undo history panel: list of edits, jump to and revert each one.
-- [ ] **M** IL editor: syntax highlighting, branch arrows, stack validation before saving.
+- [x] **M** IL editor: branch arrows, a stack check as you edit and before saving (7.34.0.0; syntax highlighting was already there).
 - [x] **S** Edit Method "test compile only" (compile without applying): Test Compile button / Shift+F6 / context menu in the code editing dialog boxes (7.19.0.0; not click-tested).
 - [x] **M** Rename refactoring for obfuscated members, with a saved rename map that can be re-applied (7.31.0.0: Rename... (F2), Export/Apply Rename Map..., `dnSpy.Console --rename-create`/`--rename-apply`, [RENAME_MAP.md](RENAME_MAP.md). Later: generic parameter names, resources named after renamed types, renaming a virtual method together with its overrides).
 

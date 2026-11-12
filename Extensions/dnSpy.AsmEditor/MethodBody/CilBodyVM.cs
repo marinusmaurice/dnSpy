@@ -1,5 +1,6 @@
 /*
     Copyright (C) 2014-2019 de4dot@gmail.com
+    Copyright (C) 2026- marinusmaurice@outlook.com
 
     This file is part of dnSpy
 
@@ -21,12 +22,16 @@ using System;
 using System.Collections.Generic;
 using System.Collections.Specialized;
 using System.ComponentModel;
+using System.Globalization;
 using System.Linq;
+using System.Text;
 using System.Windows.Input;
+using System.Windows.Threading;
 using dnlib.DotNet;
 using dnlib.DotNet.Emit;
 using dnSpy.AsmEditor.Commands;
 using dnSpy.AsmEditor.DnlibDialogs;
+using dnSpy.AsmEditor.Properties;
 using dnSpy.AsmEditor.ViewHelpers;
 using dnSpy.Contracts.Decompiler;
 using dnSpy.Contracts.MVVM;
@@ -55,6 +60,7 @@ namespace dnSpy.AsmEditor.MethodBody {
 				if (keepOldMaxStack != value) {
 					keepOldMaxStack = value;
 					OnPropertyChanged(nameof(KeepOldMaxStack));
+					ScheduleStackCheck();
 				}
 			}
 		}
@@ -769,6 +775,7 @@ namespace dnSpy.AsmEditor.MethodBody {
 			InstructionsUpdateIndexes(0);
 			ExceptionHandlersUpdateIndexes(0);
 			HasErrorUpdated();
+			ScheduleStackCheck();
 		}
 
 		public CilBodyOptions CopyTo(CilBodyOptions options) {
@@ -813,12 +820,185 @@ namespace dnSpy.AsmEditor.MethodBody {
 		}
 		void RestoreHasError(bool old) {
 			HasError_disabled = old;
-			if (!HasError_disabled)
+			if (!HasError_disabled) {
 				HasErrorUpdated();
+				ScheduleStackCheck();
+			}
 		}
 		void CallHasErrorUpdated() {
-			if (!HasError_disabled)
+			if (!HasError_disabled) {
 				HasErrorUpdated();
+				ScheduleStackCheck();
+			}
+		}
+
+		// ---- Stack check and branch arrows: after a change, once the UI is idle
+
+		/// <summary>The stack check's result in one line</summary>
+		public string StackSummary {
+			get => stackSummary;
+			private set {
+				if (stackSummary != value) {
+					stackSummary = value;
+					OnPropertyChanged(nameof(StackSummary));
+				}
+			}
+		}
+		string stackSummary = string.Empty;
+
+		/// <summary>All stack problems, one per line, or null</summary>
+		public string? StackProblemsText {
+			get => stackProblemsText;
+			private set {
+				if (stackProblemsText != value) {
+					stackProblemsText = value;
+					OnPropertyChanged(nameof(StackProblemsText));
+				}
+			}
+		}
+		string? stackProblemsText;
+
+		public int StackProblemCount {
+			get => stackProblemCount;
+			private set {
+				if (stackProblemCount != value) {
+					stackProblemCount = value;
+					OnPropertyChanged(nameof(StackProblemCount));
+					OnPropertyChanged(nameof(HasStackProblems));
+				}
+			}
+		}
+		int stackProblemCount;
+
+		public bool HasStackProblems => stackProblemCount > 0;
+
+		/// <summary>Number of branch arrow lanes (the arrows column's width)</summary>
+		public int BranchLaneCount {
+			get => branchLaneCount;
+			private set {
+				if (branchLaneCount != value) {
+					branchLaneCount = value;
+					OnPropertyChanged(nameof(BranchLaneCount));
+				}
+			}
+		}
+		int branchLaneCount;
+
+		bool stackCheckScheduled;
+		void ScheduleStackCheck() {
+			if (stackCheckScheduled)
+				return;
+			stackCheckScheduled = true;
+			Dispatcher.CurrentDispatcher.BeginInvoke(DispatcherPriority.Background, new Action(() => {
+				stackCheckScheduled = false;
+				CheckStack();
+			}));
+		}
+
+		/// <summary>
+		/// Runs the stack check now (eg. before saving)
+		/// </summary>
+		public void CheckStack() {
+			var instrVMs = InstructionsListVM;
+			ILStackAnalysis? analysis = null;
+			IList<Instruction>? instrs = null;
+			if (!HasError) {
+				try {
+					var options = CopyTo(new CilBodyOptions());
+					instrs = options.Instructions;
+					bool hasReturnValue = ownerMethod.MethodSig?.RetType?.RemovePinnedAndModifiers()?.ElementType is ElementType et && et != ElementType.Void;
+					analysis = ILStackAnalyzer.Analyze(instrs, options.ExceptionHandlers, hasReturnValue, KeepOldMaxStack ? MaxStack.Value : null);
+				}
+				catch (Exception ex) when (ex is InvalidOperationException || ex is ArgumentException || ex is NullReferenceException || ex is KeyNotFoundException) {
+					analysis = null;
+				}
+			}
+			if (analysis is null || instrs is null || instrs.Count != instrVMs.Count) {
+				foreach (var vm in instrVMs) {
+					vm.StackText = string.Empty;
+					vm.StackProblem = null;
+					vm.BranchArrows = null;
+				}
+				BranchLaneCount = 0;
+				StackProblemCount = 0;
+				StackProblemsText = null;
+				StackSummary = instrVMs.Count == 0 ? string.Empty : dnSpy_AsmEditor_Resources.ILStack_NotChecked;
+				return;
+			}
+
+			var perInstr = new Dictionary<int, StringBuilder>();
+			var all = new StringBuilder();
+			foreach (var problem in analysis.Problems) {
+				var text = FormatProblem(problem, instrVMs);
+				if (all.Length > 0)
+					all.AppendLine();
+				all.Append(text);
+				if (problem.Index >= 0) {
+					if (!perInstr.TryGetValue(problem.Index, out var sb))
+						perInstr[problem.Index] = sb = new StringBuilder();
+					else
+						sb.AppendLine();
+					sb.Append(text);
+				}
+			}
+
+			// Branch arrows: from each branch to its targets
+			var indexOf = new Dictionary<Instruction, int>(instrs.Count);
+			for (int i = 0; i < instrs.Count; i++)
+				indexOf[instrs[i]] = i;
+			var arrows = new List<(int, int)>();
+			for (int i = 0; i < instrs.Count; i++) {
+				if (instrs[i].Operand is Instruction target && indexOf.TryGetValue(target, out int t))
+					arrows.Add((i, t));
+				else if (instrs[i].Operand is IList<Instruction> targets) {
+					foreach (var target2 in targets) {
+						if (target2 is not null && indexOf.TryGetValue(target2, out int t2))
+							arrows.Add((i, t2));
+					}
+				}
+			}
+			var layout = BranchArrowLayout.Create(instrs.Count, arrows);
+
+			for (int i = 0; i < instrVMs.Count; i++) {
+				var vm = instrVMs[i];
+				int depth = analysis.DepthBefore[i];
+				vm.StackText = depth < 0 ? string.Empty : depth.ToString(CultureInfo.CurrentCulture);
+				vm.StackProblem = perInstr.TryGetValue(i, out var sb) ? sb.ToString() : null;
+				vm.BranchArrows = layout.Rows[i];
+			}
+			BranchLaneCount = layout.LaneCount;
+			StackProblemCount = analysis.Problems.Count;
+			StackProblemsText = analysis.Problems.Count == 0 ? null : all.ToString();
+			if (analysis.Problems.Count == 0)
+				StackSummary = string.Format(dnSpy_AsmEditor_Resources.ILStack_OK, analysis.MaxDepth.ToString(CultureInfo.CurrentCulture));
+			else
+				StackSummary = string.Format(dnSpy_AsmEditor_Resources.ILStack_Problems, analysis.Problems.Count.ToString(CultureInfo.CurrentCulture), FormatProblem(analysis.Problems[0], instrVMs));
+		}
+
+		static string FormatProblem(ILProblem problem, IList<InstructionVM> instrs) {
+			uint Offset(int index) => (uint)index < (uint)instrs.Count ? instrs[index].Offset : 0;
+			uint offset = Offset(problem.Index);
+			switch (problem.Kind) {
+			case ILProblemKind.StackUnderflow:
+				return string.Format(dnSpy_AsmEditor_Resources.ILStack_Underflow, offset, problem.Value1, problem.Value2);
+			case ILProblemKind.StackDepthMismatch:
+				if (problem.Other < 0)
+					return string.Format(dnSpy_AsmEditor_Resources.ILStack_MismatchNoSource, offset, problem.Value1, problem.Value2);
+				return string.Format(dnSpy_AsmEditor_Resources.ILStack_Mismatch, offset, problem.Value1, problem.Value2, Offset(problem.Other));
+			case ILProblemKind.BadBranchTarget:
+				return string.Format(dnSpy_AsmEditor_Resources.ILStack_BadTarget, offset);
+			case ILProblemKind.FallsOffEnd:
+				return string.Format(dnSpy_AsmEditor_Resources.ILStack_FallsOffEnd, offset);
+			case ILProblemKind.BadReturnStack:
+				return string.Format(dnSpy_AsmEditor_Resources.ILStack_BadReturn, offset, problem.Value1, problem.Value2);
+			case ILProblemKind.StackNotEmptyAtTry:
+				return string.Format(dnSpy_AsmEditor_Resources.ILStack_TryNotEmpty, offset, problem.Value1);
+			case ILProblemKind.MaxStackExceeded:
+				return string.Format(dnSpy_AsmEditor_Resources.ILStack_MaxStack, offset, problem.Value1, problem.Value2);
+			case ILProblemKind.BadExceptionHandler:
+			default:
+				return dnSpy_AsmEditor_Resources.ILStack_BadExceptionHandler;
+			}
 		}
 	}
 }

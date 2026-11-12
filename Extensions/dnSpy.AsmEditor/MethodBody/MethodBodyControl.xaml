@@ -1,5 +1,6 @@
 <!--
     Copyright (C) 2014-2019 de4dot@gmail.com
+    Copyright (C) 2026- marinusmaurice@outlook.com
 
     This file is part of dnSpy
 
@@ -75,6 +76,7 @@
                 <Grid Grid.Row="1" Visibility="{Binding IsCilBody, Converter={StaticResource BooleanToVisibilityConverter}}">
                     <Grid.RowDefinitions>
                         <RowDefinition Height="Auto" />
+                        <RowDefinition Height="Auto" />
                         <RowDefinition Height="*" />
                     </Grid.RowDefinitions>
                     <Grid Grid.Row="0">
@@ -101,11 +103,25 @@
                         <Label Grid.Column="8" Margin="5 0 0 0" Target="{Binding ElementName=localVarSigTokTextBox}" Content="_LocalVarSigTok" />
                         <TextBox Grid.Column="9" Margin="5 0 0 0" Name="localVarSigTokTextBox" Text="{Binding CilBodyVM.LocalVarSigTok.StringValue, ValidatesOnDataErrors=True, ValidatesOnExceptions=True, UpdateSourceTrigger=PropertyChanged}" />
                     </Grid>
+                    <!-- The stack check's result; the tooltip lists all problems -->
+                    <TextBlock Grid.Row="1" Margin="5 4 5 4" TextTrimming="CharacterEllipsis" Text="{Binding CilBodyVM.StackSummary}" ToolTip="{Binding CilBodyVM.StackProblemsText}" ToolTipService.ShowDuration="60000">
+                        <TextBlock.Style>
+                            <Style TargetType="TextBlock">
+                                <Setter Property="Foreground" Value="{DynamicResource SystemColorsControlText}" />
+                                <Style.Triggers>
+                                    <DataTrigger Binding="{Binding CilBodyVM.HasStackProblems}" Value="True">
+                                        <Setter Property="Foreground" Value="#FFE04848" />
+                                        <Setter Property="FontWeight" Value="Bold" />
+                                    </DataTrigger>
+                                </Style.Triggers>
+                            </Style>
+                        </TextBlock.Style>
+                    </TextBlock>
                     <!-- Use recycling mode or the virtualizer will free the ListViewItems only a
                     few seconds after letting go of the scroll bar. That will result in a few secs
                     where the UI doesn't respond. -->
                     <ListView
-                        Grid.Row="1"
+                        Grid.Row="2"
                         VirtualizingStackPanel.IsVirtualizing="True"
                         VirtualizingStackPanel.VirtualizationMode="Recycling"
                         mvvm:AutomationPeerMemoryLeakWorkaround.Initialize="True"
@@ -120,6 +136,14 @@
                         </ListView.Resources>
                         <ListView.View>
                             <GridView AllowsColumnReorder="True">
+                                <!-- Branch arrows; the width is set from the number of lanes (MethodBodyControl.xaml.cs) -->
+                                <GridViewColumn x:Name="branchArrowsColumn" Width="0">
+                                    <GridViewColumn.CellTemplate>
+                                        <DataTemplate>
+                                            <mbody:BranchArrowsControl Margin="-6 -2" Parts="{Binding BranchArrows}" Foreground="#FF3D8BDB" />
+                                        </DataTemplate>
+                                    </GridViewColumn.CellTemplate>
+                                </GridViewColumn>
                                 <GridViewColumn Header="{x:Static p:dnSpy_AsmEditor_Resources.Index}">
                                     <GridViewColumn.CellTemplate>
                                         <DataTemplate>
@@ -131,6 +155,26 @@
                                     <GridViewColumn.CellTemplate>
                                         <DataTemplate>
                                             <TextBlock Style="{StaticResource CilLabelTextBlockStyle}" Text="{Binding Offset, StringFormat={}{0:X4}}" />
+                                        </DataTemplate>
+                                    </GridViewColumn.CellTemplate>
+                                </GridViewColumn>
+                                <GridViewColumn Width="44">
+                                    <GridViewColumnHeader Content="{x:Static p:dnSpy_AsmEditor_Resources.MethodBody_Column_Stack}" ToolTip="{x:Static p:dnSpy_AsmEditor_Resources.MethodBody_Column_Stack_ToolTip}" />
+                                    <GridViewColumn.CellTemplate>
+                                        <DataTemplate>
+                                            <TextBlock Text="{Binding StackText}" TextAlignment="Right" MinWidth="24" ToolTip="{Binding StackProblem}">
+                                                <TextBlock.Style>
+                                                    <Style TargetType="TextBlock" BasedOn="{StaticResource CilLabelTextBlockStyle}">
+                                                        <Style.Triggers>
+                                                            <DataTrigger Binding="{Binding HasStackProblem}" Value="True">
+                                                                <Setter Property="Foreground" Value="White" />
+                                                                <Setter Property="Background" Value="#FFD03838" />
+                                                                <Setter Property="FontWeight" Value="Bold" />
+                                                            </DataTrigger>
+                                                        </Style.Triggers>
+                                                    </Style>
+                                                </TextBlock.Style>
+                                            </TextBlock>
                                         </DataTemplate>
                                     </GridViewColumn.CellTemplate>
                                 </GridViewColumn>

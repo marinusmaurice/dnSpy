@@ -1,0 +1,28 @@
+<!--
+    Copyright (C) 2026- marinusmaurice@outlook.com
+-->
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <!--
+    IL editor test: compiles the IL editor's stack check and branch arrow layout (they don't use WPF) and checks
+    them: no problems in any method of System.Private.CoreLib and System.Linq (compiler output is valid IL) and
+    never a deeper stack than their max stack, each kind of problem on made-up methods, and where the arrows go.
+    check.ps1 runs it, see ../DecompilerStress/README.md.
+  -->
+  <PropertyGroup>
+    <OutputType>Exe</OutputType>
+    <TargetFramework>net10.0</TargetFramework>
+    <Nullable>enable</Nullable>
+    <LangVersion>13.0</LangVersion>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <Compile Include="..\..\Extensions\dnSpy.AsmEditor\MethodBody\ILStackAnalyzer.cs" Link="Linked\ILStackAnalyzer.cs" />
+    <Compile Include="..\..\Extensions\dnSpy.AsmEditor\MethodBody\BranchArrowLayout.cs" Link="Linked\BranchArrowLayout.cs" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <PackageReference Include="dnlib" Version="4.5.0" />
+  </ItemGroup>
+
+</Project>
