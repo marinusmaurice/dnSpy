@@ -41,7 +41,7 @@ using dnSpy.Debugger.DotNet.CorDebug.Impl.Evaluation.Hooks;
 using dnSpy.Debugger.DotNet.Metadata;
 
 namespace dnSpy.Debugger.DotNet.CorDebug.Impl.Evaluation {
-	sealed partial class DbgCorDebugInternalRuntimeImpl : DbgCorDebugInternalRuntime, IDbgDotNetRuntime, IDbgDotNetHeapRuntime, IDbgDotNetHeapStatisticsRuntime, IDbgDotNetHeapRootPathRuntime, ICorDebugRuntime {
+	sealed partial class DbgCorDebugInternalRuntimeImpl : DbgCorDebugInternalRuntime, IDbgDotNetRuntime, IDbgDotNetHeapRuntime, IDbgDotNetHeapStatisticsRuntime, IDbgDotNetHeapRootPathRuntime, IDbgDotNetHeapSnapshotRuntime, ICorDebugRuntime {
 		public override DbgRuntime Runtime { get; }
 		public override DmdRuntime ReflectionRuntime { get; }
 		public override CorDebugRuntimeVersion Version { get; }
@@ -274,6 +274,19 @@ namespace dnSpy.Debugger.DotNet.CorDebug.Impl.Evaluation {
 			if (Dispatcher.CheckAccess())
 				return engine.GetHeapRootPath_CorDebug(address, cancellationToken);
 			return Dispatcher.TryInvokeRethrow(() => engine.GetHeapRootPath_CorDebug(address, cancellationToken), out var result) ? result : null;
+		}
+
+		public DbgDotNetHeapSnapshot? GetHeapSnapshot(DbgEvaluationInfo evalInfo, CancellationToken cancellationToken) {
+			if (Dispatcher.CheckAccess())
+				return engine.GetHeapSnapshot_CorDebug(cancellationToken);
+			return Dispatcher.TryInvokeRethrow(() => engine.GetHeapSnapshot_CorDebug(cancellationToken), out var result) ? result : null;
+		}
+
+		public DbgDotNetValue[]? GetHeapObjects(DbgEvaluationInfo evalInfo, ulong[] addresses) {
+			var appDomain = evalInfo.Frame.AppDomain?.GetReflectionAppDomain() ?? ReflectionRuntime.GetAppDomains()[0];
+			if (Dispatcher.CheckAccess())
+				return engine.GetHeapObjects_CorDebug(appDomain, addresses);
+			return Dispatcher.TryInvokeRethrow(() => engine.GetHeapObjects_CorDebug(appDomain, addresses), out var result) ? result : null;
 		}
 
 		public DbgDotNetValue[]? GetHeapObjects(DbgEvaluationInfo evalInfo, ulong typeHandle, int maxCount) {

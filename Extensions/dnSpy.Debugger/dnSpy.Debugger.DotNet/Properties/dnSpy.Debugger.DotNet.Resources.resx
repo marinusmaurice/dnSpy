@@ -477,4 +477,46 @@
   <data name="HttpTraffic_CallStack_Help" xml:space="preserve">
     <value>Where the request was sent, in the program's code (double-click a frame to go to it)</value>
   </data>
+  <data name="Heap_TakeSnapshot" xml:space="preserve">
+    <value>Take _Snapshot</value>
+  </data>
+  <data name="Heap_CompareWith" xml:space="preserve">
+    <value>Compare with:</value>
+  </data>
+  <data name="Heap_Compare_PreviousBreak" xml:space="preserve">
+    <value>Previous break</value>
+  </data>
+  <data name="Heap_SnapshotName" xml:space="preserve">
+    <value>Snapshot {0} ({1})</value>
+  </data>
+  <data name="Heap_Column_Retained" xml:space="preserve">
+    <value>Retained</value>
+  </data>
+  <data name="Heap_Column_New" xml:space="preserve">
+    <value>New</value>
+  </data>
+  <data name="Heap_OnlyNew" xml:space="preserve">
+    <value>Only new</value>
+  </data>
+  <data name="Heap_Status_TakingSnapshot" xml:space="preserve">
+    <value>Taking a snapshot (all objects and their retained sizes)...</value>
+  </data>
+  <data name="Heap_Status_Snapshot" xml:space="preserve">
+    <value>{0}: {1} objects, {2} bytes, {3} types.</value>
+  </data>
+  <data name="Heap_Status_ComparedWith" xml:space="preserve">
+    <value>+/- and New = compared with {0}: {1} new objects.</value>
+  </data>
+  <data name="Heap_Status_ComparedWithStats" xml:space="preserve">
+    <value>+/- = compared with {0}.</value>
+  </data>
+  <data name="Heap_Status_GcRan" xml:space="preserve">
+    <value>A GC ran in between ({0} objects of {1} were freed or moved): moved objects count as new.</value>
+  </data>
+  <data name="Heap_Status_NoRetained" xml:space="preserve">
+    <value>Retained sizes weren't computed (more than {0} objects).</value>
+  </data>
+  <data name="Heap_Objects_New" xml:space="preserve">
+    <value>{0}: {1} new objects</value>
+  </data>
 </root>

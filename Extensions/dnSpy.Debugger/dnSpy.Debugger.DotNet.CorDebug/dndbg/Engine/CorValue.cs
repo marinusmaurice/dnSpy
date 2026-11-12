@@ -18,6 +18,7 @@
 */
 
 using System;
+using System.Collections.Generic;
 using System.Diagnostics;
 using dndbg.COM.CorDebug;
 
@@ -274,6 +275,7 @@ namespace dndbg.Engine {
 			var h = obj as ICorDebugHandleValue;
 			if (h is null)
 				return false;
+			ForgetHandle(address);
 			int hr = h.Dispose();
 			bool success = hr == 0 || hr == CordbgErrors.CORDBG_E_OBJECT_NEUTERED;
 			Debug.Assert(success);
@@ -308,7 +310,33 @@ namespace dndbg.Engine {
 			if (h2 is null)
 				return null;
 			int hr = h2.CreateHandle(type, out var value);
-			return hr < 0 || value is null ? null : new CorValue(value);
+			if (hr < 0 || value is null)
+				return null;
+			var handle = new CorValue(value);
+			if (handle.address != 0) {
+				lock (debuggerHandles)
+					debuggerHandles.Add(handle.address);
+			}
+			return handle;
+		}
+
+		// The GC handles the debugger made (their addresses, ie. the handle slots), so the heap code can tell them
+		// from the program's own handles: they keep objects alive only because the debugger shows them
+		static readonly HashSet<ulong> debuggerHandles = new HashSet<ulong>();
+
+		static void ForgetHandle(ulong address) {
+			if (address == 0)
+				return;
+			lock (debuggerHandles)
+				debuggerHandles.Remove(address);
+		}
+
+		/// <summary>
+		/// true if the GC handle at <paramref name="handleAddress"/> was made by the debugger (and not disposed yet)
+		/// </summary>
+		public static bool IsDebuggerHandle(ulong handleAddress) {
+			lock (debuggerHandles)
+				return debuggerHandles.Contains(handleAddress);
 		}
 
 		public unsafe int WriteGenericValue(byte[]? data, CorProcess? process = null) {

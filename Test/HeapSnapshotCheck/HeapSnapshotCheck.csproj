@@ -1,0 +1,33 @@
+<!--
+    Copyright (C) 2026- marinusmaurice@outlook.com
+-->
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <!--
+    Heap snapshot test: compiles the dominator tree, the snapshot builder (ClrMD) and the snapshot comparison of the
+    Heap window and checks them: the dominator tree against a brute-force one on random graphs, a long linked list
+    (no stack overflow), the comparison on made-up snapshots, and a real heap: it starts itself as a child process
+    with known objects, reads that heap with ClrMD and checks the retained sizes and the new objects after the child
+    allocated more. check.ps1 runs it, see ../DecompilerStress/README.md.
+  -->
+  <PropertyGroup>
+    <OutputType>Exe</OutputType>
+    <TargetFramework>net10.0</TargetFramework>
+    <Nullable>enable</Nullable>
+    <LangVersion>13.0</LangVersion>
+    <PlatformTarget>x64</PlatformTarget>
+    <Optimize>true</Optimize>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <Compile Include="..\..\Extensions\dnSpy.Debugger\dnSpy.Debugger.DotNet.CorDebug\DAC\DominatorTree.cs" Link="Linked\DominatorTree.cs" />
+    <Compile Include="..\..\Extensions\dnSpy.Debugger\dnSpy.Debugger.DotNet.CorDebug\DAC\HeapSnapshotBuilder.cs" Link="Linked\HeapSnapshotBuilder.cs" />
+    <Compile Include="..\..\Extensions\dnSpy.Debugger\dnSpy.Debugger.DotNet\Heap\HeapSnapshotDiff.cs" Link="Linked\HeapSnapshotDiff.cs" />
+    <Compile Include="..\..\dnSpy\dnSpy.Contracts.Debugger.DotNet\Evaluation\DbgDotNetHeapSnapshot.cs" Link="Linked\DbgDotNetHeapSnapshot.cs" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Microsoft.Diagnostics.Runtime" Version="3.1.512801" />
+  </ItemGroup>
+
+</Project>

@@ -29,7 +29,10 @@
         </Grid.RowDefinitions>
         <DockPanel Grid.Row="0" Margin="2">
             <Button DockPanel.Dock="Left" Margin="0 0 6 0" Padding="4 1" Command="{Binding RefreshCommand}" Content="{x:Static p:dnSpy_Debugger_DotNet_Resources.AsyncTasks_Refresh}" />
+            <Button DockPanel.Dock="Left" Margin="0 0 6 0" Padding="4 1" Command="{Binding TakeSnapshotCommand}" Content="{x:Static p:dnSpy_Debugger_DotNet_Resources.Heap_TakeSnapshot}" />
             <Button DockPanel.Dock="Left" Margin="0 0 6 0" Padding="4 1" Command="{Binding ExportCommand}" Content="{x:Static p:dnSpy_Debugger_DotNet_Resources.Heap_Export}" />
+            <TextBlock DockPanel.Dock="Left" Margin="0 0 4 0" VerticalAlignment="Center" Foreground="{DynamicResource SystemColorsControlText}" Text="{x:Static p:dnSpy_Debugger_DotNet_Resources.Heap_CompareWith}" />
+            <ComboBox DockPanel.Dock="Left" Width="190" Margin="0 0 8 0" ItemsSource="{Binding CompareItems}" SelectedItem="{Binding SelectedCompare}" />
             <TextBlock DockPanel.Dock="Left" Margin="0 0 4 0" VerticalAlignment="Center" Foreground="{DynamicResource SystemColorsControlText}" Text="{x:Static p:dnSpy_Debugger_DotNet_Resources.Heap_Filter}" />
             <TextBox DockPanel.Dock="Left" Width="200" Margin="0 0 8 0" Text="{Binding Filter, UpdateSourceTrigger=PropertyChanged}" />
             <TextBlock VerticalAlignment="Center" Foreground="{DynamicResource SystemColorsControlText}" TextTrimming="CharacterEllipsis" Text="{Binding StatusText}" />
@@ -48,6 +51,10 @@
                         <GridViewColumnHeader Content="{x:Static p:dnSpy_Debugger_DotNet_Resources.Heap_Column_Size}" Tag="Size" />
                         <GridViewColumn.CellTemplate><DataTemplate><TextBlock Text="{Binding SizeText}" TextAlignment="Right" MinWidth="90" /></DataTemplate></GridViewColumn.CellTemplate>
                     </GridViewColumn>
+                    <GridViewColumn Width="110">
+                        <GridViewColumnHeader Content="{x:Static p:dnSpy_Debugger_DotNet_Resources.Heap_Column_Retained}" Tag="RetainedSort" />
+                        <GridViewColumn.CellTemplate><DataTemplate><TextBlock Text="{Binding RetainedText}" TextAlignment="Right" MinWidth="90" /></DataTemplate></GridViewColumn.CellTemplate>
+                    </GridViewColumn>
                     <GridViewColumn Width="90">
                         <GridViewColumnHeader Content="{x:Static p:dnSpy_Debugger_DotNet_Resources.Heap_Column_CountDelta}" Tag="CountDeltaSort" />
                         <GridViewColumn.CellTemplate><DataTemplate><TextBlock Text="{Binding CountDeltaText}" TextAlignment="Right" MinWidth="70" /></DataTemplate></GridViewColumn.CellTemplate>
@@ -55,6 +62,10 @@
                     <GridViewColumn Width="110">
                         <GridViewColumnHeader Content="{x:Static p:dnSpy_Debugger_DotNet_Resources.Heap_Column_SizeDelta}" Tag="SizeDeltaSort" />
                         <GridViewColumn.CellTemplate><DataTemplate><TextBlock Text="{Binding SizeDeltaText}" TextAlignment="Right" MinWidth="90" /></DataTemplate></GridViewColumn.CellTemplate>
+                    </GridViewColumn>
+                    <GridViewColumn Width="80">
+                        <GridViewColumnHeader Content="{x:Static p:dnSpy_Debugger_DotNet_Resources.Heap_Column_New}" Tag="NewCountSort" />
+                        <GridViewColumn.CellTemplate><DataTemplate><TextBlock Text="{Binding NewCountText}" TextAlignment="Right" MinWidth="60" /></DataTemplate></GridViewColumn.CellTemplate>
                     </GridViewColumn>
                 </GridView>
             </ListView.View>
@@ -69,6 +80,7 @@
             <DockPanel Grid.Column="0">
                 <DockPanel DockPanel.Dock="Top" Margin="2">
                     <Button DockPanel.Dock="Left" Margin="0 0 6 0" Padding="4 0" Command="{Binding WhyAliveCommand}" Content="{x:Static p:dnSpy_Debugger_DotNet_Resources.Heap_WhyAlive}" />
+                    <CheckBox DockPanel.Dock="Left" Margin="0 0 8 0" VerticalAlignment="Center" IsChecked="{Binding OnlyNew}" Content="{x:Static p:dnSpy_Debugger_DotNet_Resources.Heap_OnlyNew}" />
                     <TextBlock VerticalAlignment="Center" Foreground="{DynamicResource SystemColorsControlText}" TextTrimming="CharacterEllipsis" Text="{Binding ObjectsText}" />
                 </DockPanel>
                 <ListView ItemsSource="{Binding Objects}" SelectedItem="{Binding SelectedObject}" SelectionMode="Single">
@@ -80,6 +92,9 @@
                     <ListView.View>
                         <GridView>
                             <GridViewColumn Header="{x:Static p:dnSpy_Debugger_DotNet_Resources.Heap_Column_Address}" Width="130" DisplayMemberBinding="{Binding Address}" />
+                            <GridViewColumn Header="{x:Static p:dnSpy_Debugger_DotNet_Resources.Heap_Column_Retained}" Width="100">
+                                <GridViewColumn.CellTemplate><DataTemplate><TextBlock Text="{Binding Retained}" TextAlignment="Right" MinWidth="80" /></DataTemplate></GridViewColumn.CellTemplate>
+                            </GridViewColumn>
                             <GridViewColumn Header="{x:Static p:dnSpy_Debugger_DotNet_Resources.Heap_Column_Fields}" Width="400" DisplayMemberBinding="{Binding Summary}" />
                             <GridViewColumn Header="{x:Static p:dnSpy_Debugger_DotNet_Resources.AsyncTasks_Column_Type}" Width="250" DisplayMemberBinding="{Binding TypeName}" />
                         </GridView>

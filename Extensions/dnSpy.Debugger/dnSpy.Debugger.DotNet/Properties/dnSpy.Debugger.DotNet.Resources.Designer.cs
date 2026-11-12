@@ -1139,5 +1139,130 @@ namespace dnSpy.Debugger.DotNet.Properties {
             }
         }
         
+    /// <summary>
+        ///   Looks up a localized string similar to Take _Snapshot.
+        /// </summary>
+        public static string Heap_TakeSnapshot {
+            get {
+                return ResourceManager.GetString("Heap_TakeSnapshot", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Compare with:.
+        /// </summary>
+        public static string Heap_CompareWith {
+            get {
+                return ResourceManager.GetString("Heap_CompareWith", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Previous break.
+        /// </summary>
+        public static string Heap_Compare_PreviousBreak {
+            get {
+                return ResourceManager.GetString("Heap_Compare_PreviousBreak", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Snapshot {0} ({1}).
+        /// </summary>
+        public static string Heap_SnapshotName {
+            get {
+                return ResourceManager.GetString("Heap_SnapshotName", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Retained.
+        /// </summary>
+        public static string Heap_Column_Retained {
+            get {
+                return ResourceManager.GetString("Heap_Column_Retained", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to New.
+        /// </summary>
+        public static string Heap_Column_New {
+            get {
+                return ResourceManager.GetString("Heap_Column_New", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Only new.
+        /// </summary>
+        public static string Heap_OnlyNew {
+            get {
+                return ResourceManager.GetString("Heap_OnlyNew", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Taking a snapshot (all objects and their retained sizes)....
+        /// </summary>
+        public static string Heap_Status_TakingSnapshot {
+            get {
+                return ResourceManager.GetString("Heap_Status_TakingSnapshot", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to {0}: {1} objects, {2} bytes, {3} types..
+        /// </summary>
+        public static string Heap_Status_Snapshot {
+            get {
+                return ResourceManager.GetString("Heap_Status_Snapshot", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to +/- and New = compared with {0}: {1} new objects..
+        /// </summary>
+        public static string Heap_Status_ComparedWith {
+            get {
+                return ResourceManager.GetString("Heap_Status_ComparedWith", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to +/- = compared with {0}..
+        /// </summary>
+        public static string Heap_Status_ComparedWithStats {
+            get {
+                return ResourceManager.GetString("Heap_Status_ComparedWithStats", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to A GC ran in between ({0} objects of {1} were freed or moved): moved objects count as new..
+        /// </summary>
+        public static string Heap_Status_GcRan {
+            get {
+                return ResourceManager.GetString("Heap_Status_GcRan", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Retained sizes weren't computed (more than {0} objects)..
+        /// </summary>
+        public static string Heap_Status_NoRetained {
+            get {
+                return ResourceManager.GetString("Heap_Status_NoRetained", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to {0}: {1} new objects.
+        /// </summary>
+        public static string Heap_Objects_New {
+            get {
+                return ResourceManager.GetString("Heap_Objects_New", resourceCulture);
+            }
+        }
     }
 }

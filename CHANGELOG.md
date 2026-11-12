@@ -7,6 +7,20 @@ What changed in each release of this fork, newest first. The release workflow pu
 
 Each section starts with a short summary, then **New Features** (new things you can do), **Enhancements** (existing things that work better) and **Bug Fixes**, with a link to the commit for each item. Technical details are in [All changes in detail](docs/CHANGES.md#all-changes-in-detail) and in [docs/MODERNIZATION_PLAN.md](docs/MODERNIZATION_PLAN.md).
 
+## 7.33.0.0
+
+Heap snapshots: compare the heap at two breaks to see which objects are new, and see how much memory each object and type keeps alive (retained size). Also has everything in 7.32.0.0 and earlier.
+
+### New Features
+
+- **Take Snapshot** in the Heap window (**Debug > Windows > Heap**): saves every object on the heap at this break, with its **retained size**: the memory that only it keeps alive, so the memory a GC would free if it were gone, eg. a `Dictionary` that holds 80 MB. The types list gets a **Retained** column (objects inside another object of the same type are counted once, so a linked list's type retains what its first node does), and the objects list shows each object's retained size, biggest first.
+- **Compare with**: take a snapshot, let the program run, break and take another: the types list compares the two, with a **New** column for the number of objects that weren't there in the first one. Tick **Only new** to list just those objects of a type, then **Why Alive?** to see what keeps each one alive: the way to find what leaks. Pick any earlier snapshot (or the previous break) in **Compare with**. If a GC ran in between and moved objects, the status line says so, since moved objects then count as new.
+- **Export...** also saves the retained size and the new count.
+
+### Bug Fixes
+
+- **Why Alive?** for .NET (not .NET Framework) programs said an object listed in the Heap window was kept alive by a `StrongHandle`: that was dnSpy's own handle to show the object. dnSpy's handles are now left out, so it shows the program's own chain of references.
+
 ## 7.32.0.0
 
 String decryption: replace an obfuscator's string decryptor calls by the strings they return, without running the obfuscated code. Also has everything in 7.31.0.0 and earlier.

@@ -76,6 +76,23 @@ namespace dnSpy.Debugger.DotNet.CorDebug.Impl {
 			return clrDac.GetRootPath(address, cancellationToken)?.Select(a => new DbgDotNetHeapRootPathStep(a.Address, a.TypeName, a.Via)).ToArray();
 		}
 
+		internal DbgDotNetHeapSnapshot? GetHeapSnapshot_CorDebug(CancellationToken cancellationToken) {
+			debuggerThread.VerifyAccess();
+			if (!IsPaused)
+				return null;
+			return clrDac.GetHeapSnapshot(cancellationToken);
+		}
+
+		internal DbgDotNetValue[]? GetHeapObjects_CorDebug(DmdAppDomain reflectionAppDomain, ulong[] addresses) {
+			debuggerThread.VerifyAccess();
+			if (!IsPaused)
+				return null;
+			var process = dnDebugger.Processes.FirstOrDefault()?.CorProcess;
+			if (process is null)
+				return null;
+			return CreateValues(process, addresses, reflectionAppDomain);
+		}
+
 		DbgDotNetValue[] CreateValues(CorProcess process, ulong[] addresses, DmdAppDomain reflectionAppDomain) {
 			var result = new List<DbgDotNetValue>(addresses.Length);
 			foreach (var address in addresses) {

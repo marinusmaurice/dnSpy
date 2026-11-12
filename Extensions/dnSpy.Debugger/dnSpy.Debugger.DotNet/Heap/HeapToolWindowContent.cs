@@ -49,7 +49,8 @@ using dnSpy.Debugger.DotNet.Properties;
 using dnSpy.Debugger.DotNet.UI;
 
 // The Heap tool window: the types on the GC heap (count, size, and the change since the previous
-// break), the objects of a type ("Find All Instances") and their fields.
+// break), the objects of a type ("Find All Instances") and their fields. Take Snapshot saves all objects with
+// their retained sizes; Compare with a snapshot shows the new objects per type.
 namespace dnSpy.Debugger.DotNet.Heap {
 	[Export(typeof(IToolWindowContentProvider))]
 	sealed class HeapToolWindowContentProvider : IToolWindowContentProvider {
@@ -104,27 +105,41 @@ namespace dnSpy.Debugger.DotNet.Heap {
 	}
 
 	sealed class HeapTypeVM {
-		public DbgDotNetHeapTypeStatistics Info { get; }
-		public string TypeName => Info.TypeName;
-		public long Count => Info.Count;
-		public long Size => Info.TotalSize;
-		/// <summary>Change since the previous break, or null if it's the first one</summary>
+		public string TypeName { get; }
+		/// <summary>Identifies the type in <see cref="IDbgDotNetHeapStatisticsRuntime.GetHeapObjects(DbgEvaluationInfo, ulong, int)"/></summary>
+		public ulong TypeHandle { get; }
+		public long Count { get; }
+		public long Size { get; }
+		/// <summary>Retained size (from a snapshot of this break), or null</summary>
+		public long? Retained { get; }
+		/// <summary>Change since the previous break or the snapshot compared with, or null if there's none</summary>
 		public long? CountDelta { get; }
 		public long? SizeDelta { get; }
+		/// <summary>Number of objects that aren't in the snapshot compared with, or null</summary>
+		public long? NewCount { get; }
 		public string CountText => Count.ToString("N0", CultureInfo.CurrentCulture);
 		public string SizeText => Size.ToString("N0", CultureInfo.CurrentCulture);
+		public string RetainedText => Retained?.ToString("N0", CultureInfo.CurrentCulture) ?? string.Empty;
 		public string CountDeltaText => FormatDelta(CountDelta);
 		public string SizeDeltaText => FormatDelta(SizeDelta);
+		public string NewCountText => NewCount is long n && n != 0 ? n.ToString("N0", CultureInfo.CurrentCulture) : string.Empty;
 		// Sorted on these: a type that's new since the previous break has the whole count as its change
 		public long CountDeltaSort => CountDelta ?? 0;
 		public long SizeDeltaSort => SizeDelta ?? 0;
+		public long RetainedSort => Retained ?? -1;
+		public long NewCountSort => NewCount ?? 0;
 
-		public HeapTypeVM(DbgDotNetHeapTypeStatistics info, DbgDotNetHeapTypeStatistics? previous, bool hasPrevious) {
-			Info = info;
+		public HeapTypeVM(HeapTypeInfo info, HeapTypeInfo? previous, bool hasPrevious, long? newCount) {
+			TypeName = info.TypeName;
+			TypeHandle = info.TypeHandle;
+			Count = info.Count;
+			Size = info.TotalSize;
+			Retained = info.RetainedSize >= 0 ? info.RetainedSize : null;
 			if (hasPrevious) {
 				CountDelta = info.Count - (previous?.Count ?? 0);
 				SizeDelta = info.TotalSize - (previous?.TotalSize ?? 0);
 			}
+			NewCount = newCount;
 		}
 
 		static string FormatDelta(long? delta) {
@@ -134,19 +149,79 @@ namespace dnSpy.Debugger.DotNet.Heap {
 		}
 	}
 
+	/// <summary>
+	/// A type's numbers from the heap statistics or a snapshot; types with the same name (eg. in two AppDomains) added together
+	/// </summary>
+	sealed class HeapTypeInfo {
+		public string TypeName { get; }
+		public ulong TypeHandle { get; }
+		public long Count { get; }
+		public long TotalSize { get; }
+		/// <summary>-1 if unknown</summary>
+		public long RetainedSize { get; }
+		public HeapTypeInfo(string typeName, ulong typeHandle, long count, long totalSize, long retainedSize) {
+			TypeName = typeName;
+			TypeHandle = typeHandle;
+			Count = count;
+			TotalSize = totalSize;
+			RetainedSize = retainedSize;
+		}
+
+		public static Dictionary<string, HeapTypeInfo> Create(IEnumerable<HeapTypeInfo> types) {
+			var dict = new Dictionary<string, HeapTypeInfo>(StringComparer.Ordinal);
+			foreach (var t in types) {
+				if (dict.TryGetValue(t.TypeName, out var e))
+					dict[t.TypeName] = new HeapTypeInfo(t.TypeName, e.TypeHandle, e.Count + t.Count, e.TotalSize + t.TotalSize, e.RetainedSize < 0 || t.RetainedSize < 0 ? -1 : e.RetainedSize + t.RetainedSize);
+				else
+					dict[t.TypeName] = t;
+			}
+			return dict;
+		}
+	}
+
+	/// <summary>
+	/// A snapshot taken in the Heap window
+	/// </summary>
+	sealed class HeapSnapshotVM {
+		public DbgDotNetHeapSnapshot Snapshot { get; }
+		public Dictionary<string, HeapTypeInfo> Types { get; }
+		public string Name { get; }
+		/// <summary>The break it was taken at (<see cref="HeapVM"/>'s break counter)</summary>
+		public int BreakId { get; }
+		public HeapSnapshotVM(DbgDotNetHeapSnapshot snapshot, int number, int breakId) {
+			Snapshot = snapshot;
+			Types = HeapTypeInfo.Create(snapshot.Types.Select(a => new HeapTypeInfo(a.TypeName, a.TypeHandle, a.Count, a.TotalSize, a.RetainedSize)));
+			Name = string.Format(dnSpy_Debugger_DotNet_Resources.Heap_SnapshotName, number.ToString(CultureInfo.CurrentCulture), DateTime.Now.ToString("T", CultureInfo.CurrentCulture));
+			BreakId = breakId;
+		}
+		public override string ToString() => Name;
+	}
+
+	/// <summary>
+	/// An item in the Compare with list: the previous break or a snapshot
+	/// </summary>
+	sealed class HeapCompareItem {
+		public HeapSnapshotVM? Snapshot { get; }
+		public HeapCompareItem(HeapSnapshotVM? snapshot) => Snapshot = snapshot;
+		public override string ToString() => Snapshot?.Name ?? dnSpy_Debugger_DotNet_Resources.Heap_Compare_PreviousBreak;
+	}
+
 	sealed class HeapObjectVM {
 		public DbgDotNetValue Value { get; }
 		public ulong AddressValue { get; }
 		public string Address { get; }
 		public string TypeName { get; }
 		public string Summary { get; }
+		/// <summary>Retained size (from a snapshot of this break), or empty</summary>
+		public string Retained { get; }
 
-		public HeapObjectVM(DbgDotNetValue value, string summary) {
+		public HeapObjectVM(DbgDotNetValue value, string summary, long? retained) {
 			Value = value;
 			AddressValue = HeapReader.GetAddress(value);
 			Address = HeapReader.FormatAddress(AddressValue);
 			TypeName = HeapReader.FormatTypeName(value.Type);
 			Summary = summary;
+			Retained = retained is long r && r >= 0 ? r.ToString("N0", CultureInfo.CurrentCulture) : string.Empty;
 		}
 	}
 
@@ -168,8 +243,15 @@ namespace dnSpy.Debugger.DotNet.Heap {
 		readonly Lazy<DbgLanguageService> dbgLanguageService;
 		readonly IPickSaveFilename pickSaveFilename;
 		readonly IMessageBoxService messageBoxService;
-		Dictionary<string, DbgDotNetHeapTypeStatistics>? previousStats;
-		Dictionary<string, DbgDotNetHeapTypeStatistics>? currentStats;
+		Dictionary<string, HeapTypeInfo>? previousStats;
+		Dictionary<string, HeapTypeInfo>? currentStats;
+		// Incremented when the process continues: a snapshot's objects are only valid at its break
+		int breakId;
+		int snapshotNumber;
+		int snapshotId;
+		bool isTakingSnapshot;
+		HeapSnapshotVM? latestSnapshot;
+		HeapSnapshotDiff? diff;
 		int refreshId;
 		int objectsId;
 		bool isVisible;
@@ -186,6 +268,40 @@ namespace dnSpy.Debugger.DotNet.Heap {
 		public ICommand BackCommand { get; }
 		public ICommand ExportCommand { get; }
 		public ICommand WhyAliveCommand { get; }
+		public ICommand TakeSnapshotCommand { get; }
+		/// <summary>Compare with: the previous break, then the snapshots</summary>
+		public ObservableCollection<HeapCompareItem> CompareItems { get; } = new ObservableCollection<HeapCompareItem>();
+
+		public HeapCompareItem? SelectedCompare {
+			get => selectedCompare;
+			set {
+				if (selectedCompare == value)
+					return;
+				selectedCompare = value;
+				OnPropertyChanged(nameof(SelectedCompare));
+				ShowTypes();
+				if (onlyNew && selectedType is not null)
+					ShowObjects(selectedType);
+			}
+		}
+		HeapCompareItem? selectedCompare;
+
+		/// <summary>Only list the objects that aren't in the snapshot compared with</summary>
+		public bool OnlyNew {
+			get => onlyNew;
+			set {
+				if (onlyNew == value)
+					return;
+				onlyNew = value;
+				OnPropertyChanged(nameof(OnlyNew));
+				if (selectedType is not null)
+					ShowObjects(selectedType);
+			}
+		}
+		bool onlyNew;
+
+		/// <summary>The snapshot of this break, or null</summary>
+		HeapSnapshotVM? CurrentSnapshot => latestSnapshot is not null && latestSnapshot.BreakId == breakId ? latestSnapshot : null;
 
 		public string Filter {
 			get => filter;
@@ -271,6 +387,8 @@ namespace dnSpy.Debugger.DotNet.Heap {
 			BackCommand = new RelayCommand(a => Back(), a => objectStack.Count > 0);
 			ExportCommand = new RelayCommand(a => Export(), a => Types.Count > 0);
 			WhyAliveCommand = new RelayCommand(a => ShowRootPath(a as HeapObjectVM ?? SelectedObject), a => (a as HeapObjectVM ?? SelectedObject) is not null);
+			TakeSnapshotCommand = new RelayCommand(a => TakeSnapshot(), a => !isTakingSnapshot && dbgManager.Value.IsDebugging && dbgManager.Value.IsRunning == false && CurrentSnapshot is null);
+			CompareItems.Add(selectedCompare = new HeapCompareItem(null));
 		}
 
 		void Initialize() {
@@ -285,6 +403,8 @@ namespace dnSpy.Debugger.DotNet.Heap {
 		void DbgManager_IsRunningChanged(object? sender, EventArgs e) {
 			bool paused = dbgManager.Value.IsRunning == false;
 			uiDispatcher.UI(() => {
+				if (!paused)
+					breakId++;
 				// The objects and fields are only valid while the process is paused
 				ClearObjects();
 				if (paused && isVisible)
@@ -295,8 +415,17 @@ namespace dnSpy.Debugger.DotNet.Heap {
 		void DbgManager_IsDebuggingChanged(object? sender, EventArgs e) => uiDispatcher.UI(() => {
 			if (!dbgManager.Value.IsDebugging) {
 				refreshId++;
+				snapshotId++;
+				isTakingSnapshot = false;
 				previousStats = null;
 				currentStats = null;
+				// The addresses mean nothing in another process
+				latestSnapshot = null;
+				diff = null;
+				snapshotNumber = 0;
+				CompareItems.Clear();
+				CompareItems.Add(selectedCompare = new HeapCompareItem(null));
+				OnPropertyChanged(nameof(SelectedCompare));
 				Types.Clear();
 				ClearObjects();
 				StatusText = dnSpy_Debugger_DotNet_Resources.AsyncTasks_Status_NotPaused;
@@ -375,35 +504,101 @@ namespace dnSpy.Debugger.DotNet.Heap {
 					return;
 				}
 				// The previous break's statistics, to show what changed. A refresh at the same break keeps them.
-				var newStats = new Dictionary<string, DbgDotNetHeapTypeStatistics>(StringComparer.Ordinal);
-				foreach (var s in stats) {
-					// Types with the same name (eg. in two AppDomains) are added together
-					if (newStats.TryGetValue(s.TypeName, out var existing))
-						newStats[s.TypeName] = new DbgDotNetHeapTypeStatistics(s.TypeName, existing.TypeHandle, existing.Count + s.Count, existing.TotalSize + s.TotalSize);
-					else
-						newStats[s.TypeName] = s;
-				}
+				var newStats = HeapTypeInfo.Create(stats.Select(a => new HeapTypeInfo(a.TypeName, a.TypeHandle, a.Count, a.TotalSize, -1)));
 				if (currentStats is not null && !SameStats(currentStats, newStats))
 					previousStats = currentStats;
 				currentStats = newStats;
-				var selectedName = selectedType?.TypeName;
-				Types.Clear();
-				bool hasPrevious = previousStats is not null;
-				foreach (var s in newStats.Values) {
-					DbgDotNetHeapTypeStatistics? prev = null;
-					previousStats?.TryGetValue(s.TypeName, out prev);
-					Types.Add(new HeapTypeVM(s, prev, hasPrevious));
-				}
-				long totalCount = newStats.Values.Sum(a => a.Count);
-				long totalSize = newStats.Values.Sum(a => a.TotalSize);
-				StatusText = string.Format(dnSpy_Debugger_DotNet_Resources.Heap_Status_Count, totalCount.ToString("N0", CultureInfo.CurrentCulture), totalSize.ToString("N0", CultureInfo.CurrentCulture), newStats.Count.ToString("N0", CultureInfo.CurrentCulture)) +
-					(hasPrevious ? " " + dnSpy_Debugger_DotNet_Resources.Heap_Status_Compared : string.Empty);
-				selectedType = selectedName is null ? null : Types.FirstOrDefault(a => a.TypeName == selectedName);
-				OnPropertyChanged(nameof(SelectedType));
+				ShowTypes();
 			});
 		}
 
-		static bool SameStats(Dictionary<string, DbgDotNetHeapTypeStatistics> a, Dictionary<string, DbgDotNetHeapTypeStatistics> b) {
+		/// <summary>
+		/// Shows the snapshot of this break or else the statistics, compared with the previous break or a snapshot
+		/// </summary>
+		void ShowTypes() {
+			var current = CurrentSnapshot;
+			var types = current?.Types ?? currentStats;
+			if (types is null)
+				return;
+			var baseline = selectedCompare?.Snapshot;
+			if (baseline == current && baseline is not null)
+				baseline = null;
+			var compare = baseline is not null ? baseline.Types : previousStats;
+			if (baseline is null || current is null)
+				diff = null;
+			else if (diff is null || diff.Baseline != baseline.Snapshot || diff.Current != current.Snapshot)
+				diff = HeapSnapshotDiff.Compute(baseline.Snapshot, current.Snapshot, CancellationToken.None);
+
+			var selectedName = selectedType?.TypeName;
+			Types.Clear();
+			foreach (var t in types.Values) {
+				HeapTypeInfo? prev = null;
+				compare?.TryGetValue(t.TypeName, out prev);
+				long? newCount = null;
+				if (diff is not null)
+					newCount = diff.NewCounts.TryGetValue(t.TypeName, out long c) ? c : 0;
+				Types.Add(new HeapTypeVM(t, prev, compare is not null, newCount));
+			}
+			var count = types.Values.Sum(a => a.Count).ToString("N0", CultureInfo.CurrentCulture);
+			var size = types.Values.Sum(a => a.TotalSize).ToString("N0", CultureInfo.CurrentCulture);
+			var typeCount = types.Count.ToString("N0", CultureInfo.CurrentCulture);
+			var sb = new StringBuilder();
+			if (isTakingSnapshot)
+				sb.Append(dnSpy_Debugger_DotNet_Resources.Heap_Status_TakingSnapshot);
+			else if (current is not null)
+				sb.Append(string.Format(dnSpy_Debugger_DotNet_Resources.Heap_Status_Snapshot, current.Name, count, size, typeCount));
+			else
+				sb.Append(string.Format(dnSpy_Debugger_DotNet_Resources.Heap_Status_Count, count, size, typeCount));
+			if (diff is not null && baseline is not null) {
+				sb.Append(' ').Append(string.Format(dnSpy_Debugger_DotNet_Resources.Heap_Status_ComparedWith, baseline.Name, diff.NewCount.ToString("N0", CultureInfo.CurrentCulture)));
+				if (diff.GoneOrMoved > 0)
+					sb.Append(' ').Append(string.Format(dnSpy_Debugger_DotNet_Resources.Heap_Status_GcRan, diff.GoneOrMoved.ToString("N0", CultureInfo.CurrentCulture), baseline.Name));
+			}
+			else if (baseline is not null)
+				sb.Append(' ').Append(string.Format(dnSpy_Debugger_DotNet_Resources.Heap_Status_ComparedWithStats, baseline.Name));
+			else if (previousStats is not null)
+				sb.Append(' ').Append(dnSpy_Debugger_DotNet_Resources.Heap_Status_Compared);
+			if (current is not null && current.Snapshot.RetainedSizes is null)
+				sb.Append(' ').Append(string.Format(dnSpy_Debugger_DotNet_Resources.Heap_Status_NoRetained, 20_000_000.ToString("N0", CultureInfo.CurrentCulture)));
+			StatusText = sb.ToString();
+			selectedType = selectedName is null ? null : Types.FirstOrDefault(a => a.TypeName == selectedName);
+			OnPropertyChanged(nameof(SelectedType));
+		}
+
+		/// <summary>
+		/// Saves all objects with their retained sizes; the window then shows this snapshot, compared with the previous one
+		/// </summary>
+		void TakeSnapshot() {
+			uiDispatcher.VerifyAccess();
+			int id = ++snapshotId;
+			int brk = breakId;
+			isTakingSnapshot = true;
+			StatusText = dnSpy_Debugger_DotNet_Resources.Heap_Status_TakingSnapshot;
+			RunOnRuntime((evalInfo, dnRuntime) => (dnRuntime as IDbgDotNetHeapSnapshotRuntime)?.GetHeapSnapshot(evalInfo, CancellationToken.None), (snapshot, error) => {
+				if (id != snapshotId)
+					return;
+				isTakingSnapshot = false;
+				CommandManager.InvalidateRequerySuggested();
+				if (snapshot is null || brk != breakId) {
+					StatusText = error ?? dnSpy_Debugger_DotNet_Resources.AsyncTasks_Status_HeapNotAvailable;
+					return;
+				}
+				var previous = latestSnapshot;
+				var vm = new HeapSnapshotVM(snapshot, ++snapshotNumber, brk);
+				latestSnapshot = vm;
+				CompareItems.Add(new HeapCompareItem(vm));
+				// Compare with the previous snapshot, unless the user picked a snapshot to compare with
+				if (previous is not null && selectedCompare?.Snapshot is null) {
+					selectedCompare = CompareItems.FirstOrDefault(a => a.Snapshot == previous) ?? selectedCompare;
+					OnPropertyChanged(nameof(SelectedCompare));
+				}
+				ShowTypes();
+				if (selectedType is not null)
+					ShowObjects(selectedType);
+			});
+		}
+
+		static bool SameStats(Dictionary<string, HeapTypeInfo> a, Dictionary<string, HeapTypeInfo> b) {
 			if (a.Count != b.Count)
 				return false;
 			foreach (var kv in a) {
@@ -417,8 +612,18 @@ namespace dnSpy.Debugger.DotNet.Heap {
 			ClearObjects();
 			int id = objectsId;
 			ObjectsText = dnSpy_Debugger_DotNet_Resources.Heap_Status_Reading;
-			RunOnRuntime((evalInfo, dnRuntime) => ReadObjects(evalInfo, dnRuntime, (dnRuntime as IDbgDotNetHeapStatisticsRuntime)?.GetHeapObjects(evalInfo, type.Info.TypeHandle, MaxObjects)),
-				(objects, error) => ShowObjects(id, type.TypeName, objects, error));
+			var current = CurrentSnapshot;
+			if (current is not null) {
+				// From the snapshot: the biggest retained size first, only the new ones if asked
+				var onlyNewIn = onlyNew ? diff : null;
+				var indexes = HeapSnapshotDiff.GetObjects(current.Snapshot, type.TypeName, onlyNewIn, MaxObjects);
+				var addresses = indexes.Select(a => current.Snapshot.Addresses[a]).ToArray();
+				RunOnRuntime((evalInfo, dnRuntime) => ReadObjects(evalInfo, dnRuntime, (dnRuntime as IDbgDotNetHeapSnapshotRuntime)?.GetHeapObjects(evalInfo, addresses)),
+					(objects, error) => ShowObjects(id, type.TypeName, objects, error, onlyNewIn is not null));
+				return;
+			}
+			RunOnRuntime((evalInfo, dnRuntime) => ReadObjects(evalInfo, dnRuntime, (dnRuntime as IDbgDotNetHeapStatisticsRuntime)?.GetHeapObjects(evalInfo, type.TypeHandle, MaxObjects)),
+				(objects, error) => ShowObjects(id, type.TypeName, objects, error, false));
 		}
 
 		/// <summary>
@@ -434,7 +639,7 @@ namespace dnSpy.Debugger.DotNet.Heap {
 				if (dmdType is null)
 					return null;
 				return ReadObjects(evalInfo, dnRuntime, (dnRuntime as IDbgDotNetHeapRuntime)?.GetHeapObjects(evalInfo, dmdType, MaxObjects));
-			}, (objects, error) => ShowObjects(id, typeName, objects, error ?? (objects is null ? dnSpy_Debugger_DotNet_Resources.Heap_TypeNotLoaded : null)));
+			}, (objects, error) => ShowObjects(id, typeName, objects, error ?? (objects is null ? dnSpy_Debugger_DotNet_Resources.Heap_TypeNotLoaded : null), false));
 		}
 
 		// The type in the debugged process: the loaded module with the same file name
@@ -465,16 +670,24 @@ namespace dnSpy.Debugger.DotNet.Heap {
 			return result;
 		}
 
-		void ShowObjects(int id, string typeName, List<(DbgDotNetValue value, string summary)>? objects, string? error) {
+		void ShowObjects(int id, string typeName, List<(DbgDotNetValue value, string summary)>? objects, string? error, bool onlyNew) {
 			if (id != objectsId)
 				return;
 			if (objects is null) {
 				ObjectsText = error ?? dnSpy_Debugger_DotNet_Resources.AsyncTasks_Status_HeapNotAvailable;
 				return;
 			}
-			foreach (var (value, summary) in objects)
-				Objects.Add(new HeapObjectVM(value, summary));
-			ObjectsText = string.Format(dnSpy_Debugger_DotNet_Resources.Heap_Objects_Count, typeName, objects.Count.ToString("N0", CultureInfo.CurrentCulture)) +
+			var snapshot = CurrentSnapshot?.Snapshot;
+			foreach (var (value, summary) in objects) {
+				long? retained = null;
+				if (snapshot?.RetainedSizes is long[] sizes) {
+					int index = snapshot.IndexOf(HeapReader.GetAddress(value));
+					if (index >= 0)
+						retained = sizes[index];
+				}
+				Objects.Add(new HeapObjectVM(value, summary, retained));
+			}
+			ObjectsText = string.Format(onlyNew ? dnSpy_Debugger_DotNet_Resources.Heap_Objects_New : dnSpy_Debugger_DotNet_Resources.Heap_Objects_Count, typeName, objects.Count.ToString("N0", CultureInfo.CurrentCulture)) +
 				(objects.Count >= MaxObjects ? " " + string.Format(dnSpy_Debugger_DotNet_Resources.Heap_Objects_Max, MaxObjects) : string.Empty);
 		}
 
@@ -514,15 +727,17 @@ namespace dnSpy.Debugger.DotNet.Heap {
 			if (file is null)
 				return;
 			var sb = new StringBuilder();
-			sb.AppendLine("Type,Count,Size,CountChange,SizeChange");
+			sb.AppendLine("Type,Count,Size,Retained,CountChange,SizeChange,New");
 			foreach (var item in TypesView) {
 				if (item is not HeapTypeVM t)
 					continue;
 				sb.Append(Csv(t.TypeName)).Append(',');
 				sb.Append(t.Count.ToString(CultureInfo.InvariantCulture)).Append(',');
 				sb.Append(t.Size.ToString(CultureInfo.InvariantCulture)).Append(',');
+				sb.Append(t.Retained?.ToString(CultureInfo.InvariantCulture) ?? string.Empty).Append(',');
 				sb.Append(t.CountDelta?.ToString(CultureInfo.InvariantCulture) ?? string.Empty).Append(',');
-				sb.Append(t.SizeDelta?.ToString(CultureInfo.InvariantCulture) ?? string.Empty);
+				sb.Append(t.SizeDelta?.ToString(CultureInfo.InvariantCulture) ?? string.Empty).Append(',');
+				sb.Append(t.NewCount?.ToString(CultureInfo.InvariantCulture) ?? string.Empty);
 				sb.AppendLine();
 			}
 			try {

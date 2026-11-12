@@ -16,6 +16,7 @@
 	  - rename maps: renames made in obfuscated ../RenameCases, applied to a newer version obfuscated with other names (../RenameCheck)
 	  - string decryption: dnSpy.Console --decrypt-strings on ../StringDecryptCases (its decryptors run in the emulator)
 	  - the tracepoint message keywords ($HITCOUNT, $TICK, $TIME, ...) (../TracepointCheck)
+	  - heap snapshots: the dominator tree, retained sizes and new objects, also on a real process's heap (../HeapSnapshotCheck)
 	  - pinned and recent files in File -> Recent Files (../RecentFilesCheck)
 	  - which release the update check offers, with and without beta versions (../UpdateCheck)
 	  - Open from NuGet's package sources from NuGet.config, search and download over V3, V2 and folder feeds (../NuGetFeedCheck)
@@ -269,6 +270,13 @@ try {
 	$traceCheck = Invoke-Checked "run TracepointCheck" { dotnet run --project (Join-Path $PSScriptRoot '..\TracepointCheck\TracepointCheck.csproj') -c Release -v:q -nologo }
 	if (-not ($traceCheck -contains 'All tracepoint checks passed')) { Fail 'Tracepoints: checks failed'; $traceCheck | ForEach-Object { Write-Host "  $_" } }
 	else { Write-Host '  OK: tracepoint keywords ($HITCOUNT, $TICK, $TIME), escapes, expressions, help text, dependent breakpoints' }
+
+	# Heap snapshots: the dominator tree, the snapshot builder (ClrMD) and the comparison, compiled on their own; the
+	# test reads the heap of a child process it starts (no debugger needed)
+	Write-Host '== Heap snapshots'
+	$heapCheck = Invoke-Checked "run HeapSnapshotCheck" { dotnet run --project (Join-Path $PSScriptRoot '..\HeapSnapshotCheck\HeapSnapshotCheck.csproj') -c Release -v:q -nologo }
+	if (-not ($heapCheck -contains 'All heap snapshot checks passed')) { Fail 'Heap snapshots: checks failed'; $heapCheck | ForEach-Object { Write-Host "  $_" } }
+	else { Write-Host '  OK: dominator tree (300 random graphs, 3 million node list), retained sizes, new objects; a real heap' }
 
 	# Updates: the release tag parser and which release is offered, with and without betas (no network)
 	Write-Host '== Update check'

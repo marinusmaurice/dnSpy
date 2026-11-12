@@ -23,6 +23,7 @@ using System.Collections.Generic;
 using System.Diagnostics;
 using System.IO;
 using System.Threading;
+using dnSpy.Contracts.Debugger.DotNet.Evaluation;
 using dnSpy.Contracts.Disassembly;
 using Microsoft.Diagnostics.Runtime;
 
@@ -216,7 +217,7 @@ namespace dnSpy.Debugger.DotNet.CorDebug.DAC {
 			try {
 				foreach (var root in heap.EnumerateRoots()) {
 					var obj = root.Object;
-					if (obj.Address == 0 || parents.ContainsKey(obj.Address))
+					if (obj.Address == 0 || parents.ContainsKey(obj.Address) || IsDebuggerRoot(root))
 						continue;
 					parents.Add(obj.Address, (0, root.RootKind.ToString()));
 					if (obj.Address == address)
@@ -254,6 +255,23 @@ namespace dnSpy.Debugger.DotNet.CorDebug.DAC {
 			}
 			return Array.Empty<ClrDacRootPathStep>();
 		}
+
+		public override DbgDotNetHeapSnapshot? GetHeapSnapshot(CancellationToken cancellationToken) {
+			var heap = GetHeap();
+			if (heap is null)
+				return null;
+			try {
+				return HeapSnapshotBuilder.Create(heap, HeapSnapshotBuilder.MaxObjectsWithRetainedSizes, IsDebuggerRoot, cancellationToken);
+			}
+			catch (Exception ex) when (ex is ClrDiagnosticsException || ex is InvalidOperationException || ex is IOException) {
+				return null;
+			}
+		}
+
+		// The debugger's own strong handles (the values it shows, the Heap window's objects on .NET) aren't why an
+		// object is alive
+		static bool IsDebuggerRoot(ClrRoot root) =>
+			root.RootKind == ClrRootKind.StrongHandle && dndbg.Engine.CorValue.IsDebuggerHandle(root.Address);
 
 		static ClrDacRootPathStep[] CreatePath(ClrHeap heap, Dictionary<ulong, (ulong parent, string via)> parents, ulong address) {
 			var steps = new List<ClrDacRootPathStep>();

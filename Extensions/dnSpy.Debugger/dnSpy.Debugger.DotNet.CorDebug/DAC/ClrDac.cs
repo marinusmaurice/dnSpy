@@ -19,6 +19,7 @@
 */
 
 using System.Threading;
+using dnSpy.Contracts.Debugger.DotNet.Evaluation;
 using dnSpy.Contracts.Disassembly;
 
 namespace dnSpy.Debugger.DotNet.CorDebug.DAC {
@@ -47,6 +48,11 @@ namespace dnSpy.Debugger.DotNet.CorDebug.DAC {
 		/// object first, the object last. An empty array if no root references it, null if the heap can't be walked.
 		/// </summary>
 		public virtual ClrDacRootPathStep[]? GetRootPath(ulong address, CancellationToken cancellationToken) => null;
+
+		/// <summary>
+		/// All objects with their types and retained sizes (see <see cref="HeapSnapshotBuilder"/>), or null if the heap can't be walked
+		/// </summary>
+		public virtual DbgDotNetHeapSnapshot? GetHeapSnapshot(CancellationToken cancellationToken) => null;
 	}
 
 	sealed class ClrDacRootPathStep {
