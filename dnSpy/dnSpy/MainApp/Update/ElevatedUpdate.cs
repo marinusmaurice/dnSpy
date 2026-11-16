@@ -43,31 +43,39 @@ namespace dnSpy.MainApp.Update {
 		public static string CreateScript(int processId, DateTime processStartTime, string zipFile, string sha256, string installDirectory, string? restartExe) {
 			if (sha256.Length != 64 || !IsHex(sha256))
 				throw new ArgumentException("Not a SHA-256 hash: " + sha256, nameof(sha256));
+			// Only .NET calls, no cmdlets: started from PowerShell 7 (eg. dnSpy started from a pwsh prompt), Windows
+			// PowerShell inherits PSModulePath and can fail to load its own modules (Get-FileHash, Copy-Item, ...)
 			var sb = new StringBuilder();
 			sb.AppendLine("$ErrorActionPreference = 'Stop'");
 			sb.AppendLine("$result = 1");
-			sb.AppendLine("function Test-Running { $p = Get-Process -Id " + processId.ToString(CultureInfo.InvariantCulture) + " -ErrorAction SilentlyContinue; [bool]($p -and $p.StartTime.ToFileTimeUtc() -eq " + processStartTime.ToFileTimeUtc().ToString(CultureInfo.InvariantCulture) + ") }");
-			sb.AppendLine("for ($i = 0; $i -lt 60 -and (Test-Running); $i++) { Start-Sleep -Seconds 1 }");
+			sb.AppendLine("function Test-Running {");
+			sb.AppendLine("  try { $p = [System.Diagnostics.Process]::GetProcessById(" + processId.ToString(CultureInfo.InvariantCulture) + ") } catch { return $false }");
+			sb.AppendLine("  try { return (-not $p.HasExited) -and $p.StartTime.ToFileTimeUtc() -eq " + processStartTime.ToFileTimeUtc().ToString(CultureInfo.InvariantCulture) + " } catch { return $false }");
+			sb.AppendLine("}");
+			sb.AppendLine("for ($i = 0; $i -lt 60 -and (Test-Running); $i++) { [System.Threading.Thread]::Sleep(1000) }");
 			sb.AppendLine("if (-not (Test-Running)) {");
 			sb.AppendLine("  $dir = " + Quote(installDirectory));
-			sb.AppendLine("  $work = Join-Path $dir ('.dnSpy-update-' + [guid]::NewGuid().ToString('N'))");
+			sb.AppendLine("  $work = [System.IO.Path]::Combine($dir, '.dnSpy-update-' + [guid]::NewGuid().ToString('N'))");
 			sb.AppendLine("  try {");
-			sb.AppendLine("    New-Item -ItemType Directory -Path $work | Out-Null");
-			sb.AppendLine("    $zip = Join-Path $work 'update.zip'");
-			sb.AppendLine("    Copy-Item -LiteralPath " + Quote(zipFile) + " -Destination $zip");
-			sb.AppendLine("    $hash = (Get-FileHash -LiteralPath $zip -Algorithm SHA256).Hash");
-			sb.AppendLine("    if ($hash -ne '" + sha256.ToUpperInvariant() + "') { throw 'The update file was changed after it was downloaded' }");
-			sb.AppendLine("    Add-Type -AssemblyName System.IO.Compression.FileSystem");
-			sb.AppendLine("    $files = Join-Path $work 'files'");
+			sb.AppendLine("    [System.IO.Directory]::CreateDirectory($work) | Out-Null");
+			sb.AppendLine("    $zip = [System.IO.Path]::Combine($work, 'update.zip')");
+			sb.AppendLine("    [System.IO.File]::Copy(" + Quote(zipFile) + ", $zip)");
+			sb.AppendLine("    $sha = [System.Security.Cryptography.SHA256]::Create()");
+			sb.AppendLine("    $stream = [System.IO.File]::OpenRead($zip)");
+			sb.AppendLine("    try { $hash = [System.BitConverter]::ToString($sha.ComputeHash($stream)).Replace('-', '') } finally { $stream.Dispose(); $sha.Dispose() }");
+			sb.AppendLine("    if ($hash -ne '" + sha256.ToUpperInvariant() + "') { $result = 2; throw 'The update file was changed after it was downloaded' }");
+			sb.AppendLine("    [System.Reflection.Assembly]::Load('System.IO.Compression.FileSystem, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089') | Out-Null");
+			sb.AppendLine("    $files = [System.IO.Path]::Combine($work, 'files')");
 			sb.AppendLine("    [System.IO.Compression.ZipFile]::ExtractToDirectory($zip, $files)");
-			sb.AppendLine("    & robocopy.exe $files $dir /E /R:10 /W:1 /NFL /NDL /NJH /NJS /NP | Out-Null");
+			sb.AppendLine("    $copyOutput = & ([System.IO.Path]::Combine([Environment]::SystemDirectory, 'robocopy.exe')) $files $dir /E /R:10 /W:1 /NFL /NDL /NJH /NJS /NP");
 			// robocopy: 0-7 = success
-			sb.AppendLine("    if ($LASTEXITCODE -lt 8) { $result = 0 }");
+			sb.AppendLine("    if ($LASTEXITCODE -lt 8) { $result = 0 } else { $result = 4; [Console]::Error.WriteLine('robocopy exit code ' + $LASTEXITCODE + ': ' + ($copyOutput -join ' ')) }");
 			sb.AppendLine("  }");
-			sb.AppendLine("  catch { }");
-			sb.AppendLine("  finally { Remove-Item -LiteralPath $work -Recurse -Force -ErrorAction SilentlyContinue }");
+			// Exit codes: 1 = dnSpy didn't exit, 2 = wrong hash, 3 = another error, 4 = copying failed
+			sb.AppendLine("  catch { if ($result -eq 1) { $result = 3 }; [Console]::Error.WriteLine($_.ToString()) }");
+			sb.AppendLine("  finally { try { if ([System.IO.Directory]::Exists($work)) { [System.IO.Directory]::Delete($work, $true) } } catch { } }");
 			if (restartExe is not null)
-				sb.AppendLine("  Start-Process -FilePath (Join-Path $env:SystemRoot 'explorer.exe') -ArgumentList ('\"' + " + Quote(restartExe) + " + '\"')");
+				sb.AppendLine("  try { [System.Diagnostics.Process]::Start([System.IO.Path]::Combine($env:SystemRoot, 'explorer.exe'), '\"' + " + Quote(restartExe) + " + '\"') | Out-Null } catch { }");
 			sb.AppendLine("}");
 			sb.AppendLine("exit $result");
 			return sb.ToString();

@@ -71,15 +71,19 @@ Check(ReleaseSelector.Select(new[] { ("v7.23.0.0-beta.1", false, true) }, false)
 		using var exited = System.Diagnostics.Process.Start(new System.Diagnostics.ProcessStartInfo("cmd.exe", "/c ping -n 2 127.0.0.1 >nul") { CreateNoWindow = true, UseShellExecute = false })!;
 		var exitedStart = exited.StartTime;
 		exited.WaitForExit();
-		int Run(string sha256) {
-			var script = ElevatedUpdate.CreateScript(exited.Id, exitedStart, zipFile, sha256, install, null);
-			using var p = System.Diagnostics.Process.Start(new System.Diagnostics.ProcessStartInfo(ElevatedUpdate.PowerShellPath, ElevatedUpdate.CreateArguments(script)) { CreateNoWindow = true, UseShellExecute = false })!;
+		string lastError = string.Empty;
+		int RunScript(string script) {
+			using var p = System.Diagnostics.Process.Start(new System.Diagnostics.ProcessStartInfo(ElevatedUpdate.PowerShellPath, ElevatedUpdate.CreateArguments(script)) { CreateNoWindow = true, UseShellExecute = false, RedirectStandardError = true, RedirectStandardOutput = true })!;
+			var stderr = p.StandardError.ReadToEndAsync();
+			var stdout = p.StandardOutput.ReadToEndAsync();
 			if (!p.WaitForExit(120_000)) {
 				p.Kill();
 				return -1;
 			}
+			lastError = (stderr.Result + " " + stdout.Result).Trim();
 			return p.ExitCode;
 		}
+		int Run(string sha256) => RunScript(ElevatedUpdate.CreateScript(exited.Id, exitedStart, zipFile, sha256, install, null));
 		string Read(params string[] path) {
 			var f = System.IO.Path.Combine(new[] { install }.Concat(path).ToArray());
 			return System.IO.File.Exists(f) ? System.IO.File.ReadAllText(f) : "(missing)";
@@ -87,12 +91,13 @@ Check(ReleaseSelector.Select(new[] { ("v7.23.0.0-beta.1", false, true) }, false)
 
 		// The wrong hash (eg. the zip was changed after the download): nothing is copied
 		var wrong = hash.Substring(0, 63) + (hash[63] == '0' ? '1' : '0');
-		Check(Run(wrong) == 1, "elevated update: exit code 1 with the wrong hash");
+		int wrongCode = Run(wrong);
+		Check(wrongCode == 2, $"elevated update: exit code {wrongCode} with the wrong hash, expected 2: {lastError}");
 		Check(Read("dnSpy.exe") == "old exe" && Read("bin", "dnSpy.dll") == "old dll", "elevated update: the wrong hash copies nothing");
 		Check(System.IO.Directory.GetDirectories(install, ".dnSpy-update-*").Length == 0, "elevated update: its work folder is removed after a failure");
 
 		int code = Run(hash.ToLowerInvariant());
-		Check(code == 0, $"elevated update: exit code {code}, expected 0");
+		Check(code == 0, $"elevated update: exit code {code}, expected 0: {lastError}");
 		Check(Read("dnSpy.exe") == "new exe", "elevated update: dnSpy.exe replaced");
 		Check(Read("bin", "dnSpy.dll") == "new dll" && Read("bin", "new.dll") == "added", "elevated update: bin files replaced and added");
 		Check(Read("dnSpy.xml") == "settings", "elevated update: other files (settings) kept");
@@ -108,9 +113,8 @@ Check(ReleaseSelector.Select(new[] { ("v7.23.0.0-beta.1", false, true) }, false)
 			}
 			// The same id with another start time: another process got dnSpy's id after it exited, so it doesn't wait
 			var reused = ElevatedUpdate.CreateScript(running.Id, running.StartTime.AddSeconds(-5), zipFile, hash, install, null);
-			using (var ps = System.Diagnostics.Process.Start(new System.Diagnostics.ProcessStartInfo(ElevatedUpdate.PowerShellPath, ElevatedUpdate.CreateArguments(reused)) { CreateNoWindow = true, UseShellExecute = false })!) {
-				Check(ps.WaitForExit(60_000) && ps.ExitCode == 0, "elevated update: a process that got dnSpy's id isn't waited for");
-			}
+			int reusedCode = RunScript(reused);
+			Check(reusedCode == 0, $"elevated update: a process that got dnSpy's id isn't waited for (exit code {reusedCode}: {lastError})");
 			running.Kill(true);
 		}
 
