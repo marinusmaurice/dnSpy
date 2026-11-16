@@ -2496,4 +2496,25 @@ Only say Yes if they are decryptors: a method that looks up something the progra
 
 Save anyway?</value>
   </data>
+  <data name="UndoHistoryCommand" xml:space="preserve">
+    <value>Undo _History</value>
+  </data>
+  <data name="UndoHistory_Window" xml:space="preserve">
+    <value>Undo History</value>
+  </data>
+  <data name="UndoHistory_Original" xml:space="preserve">
+    <value>(before the first edit)</value>
+  </data>
+  <data name="UndoHistory_Help" xml:space="preserve">
+    <value>Double-click an edit (or select it and press Enter) to undo or redo to it. Gray edits were undone and can be redone.</value>
+  </data>
+  <data name="UndoHistory_Column_Edit" xml:space="preserve">
+    <value>Edit</value>
+  </data>
+  <data name="UndoHistory_Column_Files" xml:space="preserve">
+    <value>Files</value>
+  </data>
+  <data name="UndoHistory_Column_Time" xml:space="preserve">
+    <value>Time</value>
+  </data>
 </root>

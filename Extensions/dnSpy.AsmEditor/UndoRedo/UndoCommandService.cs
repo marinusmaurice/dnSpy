@@ -1,5 +1,6 @@
 /*
     Copyright (C) 2014-2019 de4dot@gmail.com
+    Copyright (C) 2026- marinusmaurice@outlook.com
 
     This file is part of dnSpy
 
@@ -72,6 +73,38 @@ namespace dnSpy.AsmEditor.UndoRedo {
 		IUndoObject? GetUndoObject(object obj);
 		IEnumerable<object> GetUniqueDocuments(IEnumerable<object> docs);
 		void ClearRedo();
+
+		/// <summary>
+		/// The edits that can be undone, oldest first (the last one is the current state)
+		/// </summary>
+		IReadOnlyList<UndoHistoryItem> UndoHistory { get; }
+
+		/// <summary>
+		/// The edits that can be redone, the next one first
+		/// </summary>
+		IReadOnlyList<UndoHistoryItem> RedoHistory { get; }
+
+		/// <summary>
+		/// Undoes or redoes edits until <paramref name="undoCount"/> edits are applied (0 = before the first edit)
+		/// </summary>
+		void GoTo(int undoCount);
+	}
+
+	/// <summary>
+	/// An edit (a group of undo commands) in the undo history
+	/// </summary>
+	sealed class UndoHistoryItem {
+		/// <summary>What the edit did, eg. "Edit Method Code"</summary>
+		public string Description { get; }
+		/// <summary>The files it changed, eg. "MyApp.dll"</summary>
+		public string Documents { get; }
+		public DateTime Time { get; }
+
+		public UndoHistoryItem(string description, string documents, DateTime time) {
+			Description = description;
+			Documents = documents;
+			Time = time;
+		}
 	}
 
 	[Export(typeof(IUndoCommandService))]
@@ -101,6 +134,7 @@ namespace dnSpy.AsmEditor.UndoRedo {
 			public readonly List<IUndoCommand> Commands = new List<IUndoCommand>();
 			public readonly int CommandCounter;
 			public readonly int PrevCommandCounter;
+			public UndoHistoryItem? HistoryItem;
 
 			public UndoState(int prevCommandCounter, int commandCounter) {
 				PrevCommandCounter = prevCommandCounter;
@@ -166,6 +200,7 @@ namespace dnSpy.AsmEditor.UndoRedo {
 				throw new InvalidOperationException();
 
 			currentCommands.Commands.TrimExcess();
+			currentCommands.HistoryItem = CreateHistoryItem(currentCommands);
 			undoCommands.Add(currentCommands);
 
 			Clear(redoCommands);
@@ -401,6 +436,43 @@ namespace dnSpy.AsmEditor.UndoRedo {
 
 				Debug.Assert(found, $"Unknown modified object: {obj?.GetType()}: {obj}");
 			}
+		}
+
+		public IReadOnlyList<UndoHistoryItem> UndoHistory => undoCommands.Select(a => a.HistoryItem!).ToArray();
+		public IReadOnlyList<UndoHistoryItem> RedoHistory => Enumerable.Reverse(redoCommands).Select(a => a.HistoryItem!).ToArray();
+
+		public void GoTo(int undoCount) {
+			if (undoCount < 0 || undoCount > undoCommands.Count + redoCommands.Count)
+				throw new ArgumentOutOfRangeException(nameof(undoCount));
+			while (undoCommands.Count > undoCount)
+				Undo();
+			while (undoCommands.Count < undoCount)
+				Redo();
+		}
+
+		UndoHistoryItem CreateHistoryItem(UndoState group) {
+			// The descriptions of its commands, each once, in order
+			var descs = new List<string>();
+			foreach (var cmd in group.Commands) {
+				var desc = cmd.Description;
+				if (!string.IsNullOrEmpty(desc) && !descs.Contains(desc))
+					descs.Add(desc);
+			}
+			// The files now, while they're open: they may be closed before the edit is undone
+			var docs = new List<string>();
+			foreach (var uo in group.ModifiedObjects) {
+				foreach (var p in undoableDocumentsProviders) {
+					var doc = p.Value.GetDocument(uo);
+					if (doc is null)
+						continue;
+					var name = UndoHistoryNames.GetDocumentName(doc);
+					if (!string.IsNullOrEmpty(name) && !docs.Contains(name))
+						docs.Add(name);
+					break;
+				}
+			}
+			docs.Sort(StringComparer.OrdinalIgnoreCase);
+			return new UndoHistoryItem(string.Join("; ", descs), string.Join(", ", docs), DateTime.Now);
 		}
 
 		public IEnumerable<IUndoObject> UndoObjects => undoCommands.SelectMany(a => a.ModifiedObjects);

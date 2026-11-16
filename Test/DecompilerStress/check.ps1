@@ -18,6 +18,7 @@
 	  - the tracepoint message keywords ($HITCOUNT, $TICK, $TIME, ...) (../TracepointCheck)
 	  - heap snapshots: the dominator tree, retained sizes and new objects, also on a real process's heap (../HeapSnapshotCheck)
 	  - the IL editor's stack check and branch arrows, also on every method of System.Private.CoreLib and System.Linq (../ILEditorCheck)
+	  - the Undo History window's history and going to any edit in it (../UndoHistoryCheck)
 	  - pinned and recent files in File -> Recent Files (../RecentFilesCheck)
 	  - which release the update check offers, with and without beta versions (../UpdateCheck)
 	  - Open from NuGet's package sources from NuGet.config, search and download over V3, V2 and folder feeds (../NuGetFeedCheck)
@@ -285,6 +286,13 @@ try {
 	$ilPassed = @($ilCheck) | Where-Object { $_ -like 'All IL editor checks passed*' } | Select-Object -First 1
 	if (-not $ilPassed) { Fail 'IL editor: checks failed'; $ilCheck | ForEach-Object { Write-Host "  $_" } }
 	else { Write-Host "  OK: stack check (no false problems in real code, each kind of problem found), branch arrow lanes $($ilPassed -replace '^All IL editor checks passed ', '')" }
+
+	# Undo History: the undo service's history and GoTo, with made-up edits
+	Write-Host '== Undo History'
+	$undoCheck = Invoke-Checked "run UndoHistoryCheck" { dotnet run --project (Join-Path $PSScriptRoot '..\UndoHistoryCheck\UndoHistoryCheck.csproj') -c Release -v:q -nologo }
+	$undoPassed = @($undoCheck) | Where-Object { $_ -like 'All Undo History checks passed*' } | Select-Object -First 1
+	if (-not $undoPassed) { Fail 'Undo History: checks failed'; $undoCheck | ForEach-Object { Write-Host "  $_" } }
+	else { Write-Host "  OK: $($undoPassed -replace '^All Undo History checks passed ', '')" }
 
 	# Updates: the release tag parser and which release is offered, with and without betas (no network)
 	Write-Host '== Update check'

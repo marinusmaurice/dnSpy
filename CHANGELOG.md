@@ -7,6 +7,14 @@ What changed in each release of this fork, newest first. The release workflow pu
 
 Each section starts with a short summary, then **New Features** (new things you can do), **Enhancements** (existing things that work better) and **Bug Fixes**, with a link to the commit for each item. Technical details are in [All changes in detail](docs/CHANGES.md#all-changes-in-detail) and in [docs/MODERNIZATION_PLAN.md](docs/MODERNIZATION_PLAN.md).
 
+## 7.35.0.0
+
+An Undo History window: see every edit you made and go back or forward to any of them. Also has everything in 7.34.0.0 and earlier.
+
+### New Features
+
+- **Undo History** (**Edit → Undo History**): lists your edits (Rename, Edit Method, Decrypt Strings, Apply Rename Map, ...) with the files each one changed and when, oldest first, the current state marked. Double-click an edit (or select it and press Enter) to undo or redo everything up to it in one go; "(before the first edit)" undoes them all. Undone edits are gray until a new edit replaces them, like Edit → Redo.
+
 ## 7.34.0.0
 
 The IL editor (Edit IL Instructions) checks the stack as you edit and draws the branches as arrows. Also has everything in 7.33.1.0 and earlier.

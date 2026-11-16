@@ -92,6 +92,7 @@ The version in brackets is the release that added it. Details are in [CHANGELOG.
 - **Test Compile (Shift+F6)** in Edit Method/Class, without changing the assembly. *(7.19)*
 - **Generate PDB**: debug a third-party DLL in Visual Studio with its decompiled code. *(7.22, menu in 7.23)*
 - **IL editor**: a stack check as you edit, a warning before saving broken IL, and **branch arrows**. *(7.34)*
+- **Undo History**: every edit you made, with its files and time; double-click one to undo or redo to it. *(7.35)*
 
 ### Deobfuscation
 

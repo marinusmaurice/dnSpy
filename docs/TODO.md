@@ -84,7 +84,7 @@ Suggested first, in this order:
 
 ### Editing and patching
 
-- [ ] **S–M** Undo history panel: list of edits, jump to and revert each one.
+- [x] **S–M** Undo history panel: list of edits, jump to and revert each one (7.35.0.0).
 - [x] **M** IL editor: branch arrows, a stack check as you edit and before saving (7.34.0.0; syntax highlighting was already there).
 - [x] **S** Edit Method "test compile only" (compile without applying): Test Compile button / Shift+F6 / context menu in the code editing dialog boxes (7.19.0.0; not click-tested).
 - [x] **M** Rename refactoring for obfuscated members, with a saved rename map that can be re-applied (7.31.0.0: Rename... (F2), Export/Apply Rename Map..., `dnSpy.Console --rename-create`/`--rename-apply`, [RENAME_MAP.md](RENAME_MAP.md). Later: generic parameter names, resources named after renamed types, renaming a virtual method together with its overrides).
@@ -105,7 +105,7 @@ Suggested first, in this order:
 
 ### UI and quality of life
 
-- [ ] **S** Dark theme refresh, high-contrast theme, font picker, ligatures toggle.
+- [ ] **S** Dark theme refresh, ligatures toggle. (A high-contrast theme and a font picker were already there: the Themes menu and Options → Fonts and Colors.)
 - [x] **S** Recent files with pinning; restore last session (7.20.0.0: assembly explorer context menu → Pin to Recent Files, pinned files at the top of File → Recent Files, `Test/RecentFilesCheck`, menus not click-tested; restoring the last session was already there: open assemblies and, with "Restore tabs at startup", the tabs).
 - [x] **S** Portable mode (settings next to the exe): an empty `dnSpy.xml` next to `dnSpy.exe` keeps settings, startup profiles and NuGet downloads in the dnSpy folder (7.12.0.0; `Test/PortableCheck` in `check.ps1`, not click-tested).
 - [x] **S** Open `.nupkg` files (drag and drop) and browse the DLLs inside (7.1.0.0; grouped by folder, eg. lib/net8.0).

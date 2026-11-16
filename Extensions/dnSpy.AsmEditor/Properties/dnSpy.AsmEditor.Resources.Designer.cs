@@ -7148,5 +7148,68 @@ namespace dnSpy.AsmEditor.Properties {
                 return ResourceManager.GetString("ILStack_SaveAnyway", resourceCulture);
             }
         }
+        /// <summary>
+        ///   Looks up a localized string similar to Undo _History.
+        /// </summary>
+        public static string UndoHistoryCommand {
+            get {
+                return ResourceManager.GetString("UndoHistoryCommand", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Undo History.
+        /// </summary>
+        public static string UndoHistory_Window {
+            get {
+                return ResourceManager.GetString("UndoHistory_Window", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to (before the first edit).
+        /// </summary>
+        public static string UndoHistory_Original {
+            get {
+                return ResourceManager.GetString("UndoHistory_Original", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Double-click an edit (or select it and press Enter) to undo or redo to it. Gray edits were undone and can be redone..
+        /// </summary>
+        public static string UndoHistory_Help {
+            get {
+                return ResourceManager.GetString("UndoHistory_Help", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Edit.
+        /// </summary>
+        public static string UndoHistory_Column_Edit {
+            get {
+                return ResourceManager.GetString("UndoHistory_Column_Edit", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Files.
+        /// </summary>
+        public static string UndoHistory_Column_Files {
+            get {
+                return ResourceManager.GetString("UndoHistory_Column_Files", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Time.
+        /// </summary>
+        public static string UndoHistory_Column_Time {
+            get {
+                return ResourceManager.GetString("UndoHistory_Column_Time", resourceCulture);
+            }
+        }
+        
     }
 }

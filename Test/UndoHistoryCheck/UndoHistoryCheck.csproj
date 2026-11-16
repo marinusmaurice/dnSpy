@@ -1,0 +1,33 @@
+<!--
+    Copyright (C) 2026- marinusmaurice@outlook.com
+-->
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <!--
+    Undo History test: compiles the assembly editor's undo service (UndoCommandService) with made-up commands and
+    documents, and checks the history the Undo History window shows and going to any edit in it.
+    check.ps1 runs it, see ../DecompilerStress/README.md.
+  -->
+  <PropertyGroup>
+    <OutputType>Exe</OutputType>
+    <TargetFramework>net10.0-windows</TargetFramework>
+    <UseWPF>true</UseWPF>
+    <Nullable>enable</Nullable>
+    <LangVersion>13.0</LangVersion>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <Compile Include="..\..\Extensions\dnSpy.AsmEditor\UndoRedo\UndoCommandService.cs" Link="Linked\UndoCommandService.cs" />
+    <Compile Include="..\..\Extensions\dnSpy.AsmEditor\UndoRedo\UndoCommandServiceEventArgs.cs" Link="Linked\UndoCommandServiceEventArgs.cs" />
+    <Compile Include="..\..\Extensions\dnSpy.AsmEditor\UndoRedo\IUndoCommand.cs" Link="Linked\IUndoCommand.cs" />
+    <Compile Include="..\..\Extensions\dnSpy.AsmEditor\UndoRedo\IUndoObject.cs" Link="Linked\IUndoObject.cs" />
+    <Compile Include="..\..\Extensions\dnSpy.AsmEditor\UndoRedo\UndoObject.cs" Link="Linked\UndoObject.cs" />
+    <Compile Include="..\..\Extensions\dnSpy.AsmEditor\UndoRedo\IUndoableDocumentsProvider.cs" Link="Linked\IUndoableDocumentsProvider.cs" />
+    <Compile Include="..\..\dnSpy\dnSpy.Contracts.Logic\NRT_Helpers.cs" Link="Linked\NRT_Helpers.cs" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <PackageReference Include="System.ComponentModel.Composition" Version="10.0.0" />
+  </ItemGroup>
+
+</Project>
