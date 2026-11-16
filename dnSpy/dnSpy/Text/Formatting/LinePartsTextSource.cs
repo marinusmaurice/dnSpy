@@ -1,5 +1,6 @@
 /*
     Copyright (C) 2014-2019 de4dot@gmail.com
+    Copyright (C) 2026- marinusmaurice@outlook.com
 
     This file is part of dnSpy
 
@@ -82,7 +83,7 @@ namespace dnSpy.Text.Formatting {
 				if (length == 0)
 					return endOfLine;
 				maxLengthLeft -= length;
-				return new TextCharacters(text, baseOffset, length, part.TextRunProperties);
+				return new TextCharacters(text, baseOffset, length, FontLigatures.Apply(part.TextRunProperties!));
 			}
 		}
 		static readonly TextEndOfLine endOfLine = new TextEndOfLine(1);

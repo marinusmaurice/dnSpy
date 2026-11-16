@@ -1,5 +1,6 @@
 /*
     Copyright (C) 2014-2019 de4dot@gmail.com
+    Copyright (C) 2026- marinusmaurice@outlook.com
 
     This file is part of dnSpy
 
@@ -145,8 +146,12 @@ namespace dnSpy.MainApp.Update {
 			var dlg = new UpdateDlg { DataContext = vm, Owner = appWindow.MainWindow };
 			dlg.ShowDialog();
 			appSettings.CheckForUpdates = vm.CheckAtStartup;
-			if (vm.ReadyToInstall is UpdateFiles files)
-				Install(files);
+			if (vm.ReadyToInstall is UpdateFiles files) {
+				if (files.ZipFile is not null && release.AssetSha256 is not null)
+					InstallElevated(files.ZipFile, release.AssetSha256);
+				else
+					Install(files);
+			}
 		}
 
 		public static string FormatVersion(Version v) => v.ToString();
@@ -212,7 +217,11 @@ namespace dnSpy.MainApp.Update {
 		/// <summary>
 		/// Downloads, checks and unpacks the release's zip. Returns the unpacked files.
 		/// </summary>
-		public async Task<UpdateFiles> DownloadAsync(ReleaseInfo release, IProgress<(long done, long total)> progress, CancellationToken cancellationToken) {
+		/// <param name="release">The release</param>
+		/// <param name="progress">Download progress</param>
+		/// <param name="cancellationToken">Cancellation token</param>
+		/// <param name="unpack">false: keep the zip (an administrator installs it, see <see cref="ElevatedUpdate"/>)</param>
+		public async Task<UpdateFiles> DownloadAsync(ReleaseInfo release, IProgress<(long done, long total)> progress, CancellationToken cancellationToken, bool unpack = true) {
 			if (release.AssetUrl is null)
 				throw new InvalidOperationException(string.Format(dnSpy_Resources.Update_NoAsset, AssetName));
 			var workDir = Path.Combine(Path.GetTempPath(), "dnSpy-update-" + release.Version);
@@ -246,12 +255,40 @@ namespace dnSpy.MainApp.Update {
 					throw new InvalidDataException(dnSpy_Resources.Update_BadHash);
 			}
 
+			if (!unpack) {
+				using (var zip = ZipFile.OpenRead(zipFile)) {
+					if (!zip.Entries.Any(a => StringComparer.OrdinalIgnoreCase.Equals(a.FullName, Path.GetFileName(ExeFilename))))
+						throw new InvalidDataException(string.Format(dnSpy_Resources.Update_BadZip, Path.GetFileName(ExeFilename)));
+				}
+				return new UpdateFiles(workDir, null, zipFile);
+			}
+
 			var filesDir = Path.Combine(workDir, "files");
 			await Task.Run(() => ZipFile.ExtractToDirectory(zipFile, filesDir), cancellationToken);
 			File.Delete(zipFile);
 			if (!File.Exists(Path.Combine(filesDir, Path.GetFileName(ExeFilename))))
 				throw new InvalidDataException(string.Format(dnSpy_Resources.Update_BadZip, Path.GetFileName(ExeFilename)));
-			return new UpdateFiles(workDir, filesDir);
+			return new UpdateFiles(workDir, filesDir, null);
+		}
+
+		// dnSpy's folder needs administrator rights: Windows asks for them, then an elevated PowerShell checks and
+		// copies the files after dnSpy exits (see ElevatedUpdate)
+		void InstallElevated(string zipFile, string sha256) {
+			var script = ElevatedUpdate.CreateScript(Process.GetCurrentProcess().Id, zipFile, sha256, InstallDirectory, ExeFilename);
+			try {
+				Process.Start(new ProcessStartInfo(ElevatedUpdate.PowerShellPath, ElevatedUpdate.CreateArguments(script)) {
+					UseShellExecute = true,
+					Verb = "runas",
+					WindowStyle = ProcessWindowStyle.Hidden,
+					WorkingDirectory = Path.GetDirectoryName(zipFile)!,
+				});
+			}
+			catch (System.ComponentModel.Win32Exception ex) {
+				// 1223: the user said no
+				messageBoxService.Show(ex.NativeErrorCode == 1223 ? dnSpy_Resources.Update_ElevationCancelled : string.Format(dnSpy_Resources.Update_DownloadFailed, ex.Message));
+				return;
+			}
+			appWindow.MainWindow.Close();
 		}
 
 		// The script waits for dnSpy to exit (at most a minute, eg. if closing was cancelled), copies the new files over
@@ -292,10 +329,14 @@ namespace dnSpy.MainApp.Update {
 
 	sealed class UpdateFiles {
 		public string WorkDirectory { get; }
-		public string FilesDirectory { get; }
-		public UpdateFiles(string workDirectory, string filesDirectory) {
+		/// <summary>The unpacked files, or null if <see cref="ZipFile"/> is set</summary>
+		public string? FilesDirectory { get; }
+		/// <summary>The downloaded zip, when an administrator installs it, else null</summary>
+		public string? ZipFile { get; }
+		public UpdateFiles(string workDirectory, string? filesDirectory, string? zipFile) {
 			WorkDirectory = workDirectory;
 			FilesDirectory = filesDirectory;
+			ZipFile = zipFile;
 		}
 	}
 

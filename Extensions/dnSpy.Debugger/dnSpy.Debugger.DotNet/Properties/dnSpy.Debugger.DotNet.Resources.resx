@@ -519,4 +519,28 @@
   <data name="Heap_Objects_New" xml:space="preserve">
     <value>{0}: {1} new objects</value>
   </data>
+  <data name="Heap_SaveSnapshot" xml:space="preserve">
+    <value>Sa_ve Snapshot...</value>
+  </data>
+  <data name="Heap_SaveSnapshot_ToolTip" xml:space="preserve">
+    <value>Save the types of the latest snapshot (count, size, retained size) to a file, to compare a later debugging session with</value>
+  </data>
+  <data name="Heap_OpenSnapshot" xml:space="preserve">
+    <value>_Open Snapshot...</value>
+  </data>
+  <data name="Heap_OpenSnapshot_ToolTip" xml:space="preserve">
+    <value>Open a saved snapshot and compare with it. A saved snapshot is compared by type: Count +/- and Size +/-, not New.</value>
+  </data>
+  <data name="Heap_SavedSnapshotName" xml:space="preserve">
+    <value>{0} (saved {1})</value>
+  </data>
+  <data name="Heap_Snapshot_Filter" xml:space="preserve">
+    <value>dnSpy heap snapshots (*.dnheap)|*.dnheap|All files (*.*)|*.*</value>
+  </data>
+  <data name="Heap_Snapshot_OpenFailed" xml:space="preserve">
+    <value>Couldn't open {0}: {1}</value>
+  </data>
+  <data name="Heap_Status_OpenedNotPaused" xml:space="preserve">
+    <value>Opened {0}. Break the program to compare with it.</value>
+  </data>
 </root>

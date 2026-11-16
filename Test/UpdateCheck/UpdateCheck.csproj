@@ -17,6 +17,7 @@
 
   <ItemGroup>
     <Compile Include="..\..\dnSpy\dnSpy\MainApp\Update\ReleaseSelector.cs" Link="ReleaseSelector.cs" />
+    <Compile Include="..\..\dnSpy\dnSpy\MainApp\Update\ElevatedUpdate.cs" Link="ElevatedUpdate.cs" />
   </ItemGroup>
 
 </Project>

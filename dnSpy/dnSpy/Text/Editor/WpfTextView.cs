@@ -1,5 +1,6 @@
 /*
     Copyright (C) 2014-2019 de4dot@gmail.com
+    Copyright (C) 2026- marinusmaurice@outlook.com
 
     This file is part of dnSpy
 
@@ -407,6 +408,8 @@ namespace dnSpy.Text.Editor {
 				InvalidateFormattedLineSource(true);
 			else if (e.OptionId == DefaultDsTextViewOptions.RemoveExtraTextLineVerticalPixelsName)
 				UpdateRemoveExtraTextLineVerticalPixels();
+			else if (e.OptionId == FontLigatures.UseFontLigaturesName)
+				InvalidateFormattedLineSource(true);
 		}
 
 		void UpdateRemoveExtraTextLineVerticalPixels() {

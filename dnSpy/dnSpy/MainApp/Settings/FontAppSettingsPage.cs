@@ -1,5 +1,6 @@
 /*
     Copyright (C) 2014-2019 de4dot@gmail.com
+    Copyright (C) 2026- marinusmaurice@outlook.com
 
     This file is part of dnSpy
 
@@ -43,17 +44,19 @@ namespace dnSpy.MainApp.Settings {
 	sealed class FontAppSettingsPageProvider : IAppSettingsPageProvider {
 		readonly Lazy<FontAndColorOptionsProvider>[] fontAndColorOptionsProviders;
 		readonly FontAppSettingsPageOptions fontAppSettingsPageOptions;
+		readonly AppSettingsImpl appSettings;
 
 		[ImportingConstructor]
-		FontAppSettingsPageProvider([ImportMany] IEnumerable<Lazy<FontAndColorOptionsProvider>> fontAndColorOptionsProviders) {
+		FontAppSettingsPageProvider([ImportMany] IEnumerable<Lazy<FontAndColorOptionsProvider>> fontAndColorOptionsProviders, AppSettingsImpl appSettings) {
 			this.fontAndColorOptionsProviders = fontAndColorOptionsProviders.ToArray();
+			this.appSettings = appSettings;
 			fontAppSettingsPageOptions = new FontAppSettingsPageOptions();
 		}
 
 		public IEnumerable<AppSettingsPage> Create() {
 			var options = fontAndColorOptionsProviders.SelectMany(a => a.Value.GetFontAndColors()).ToArray();
 			if (options.Length != 0)
-				yield return new FontAppSettingsPage(options, fontAppSettingsPageOptions);
+				yield return new FontAppSettingsPage(options, fontAppSettingsPageOptions, appSettings);
 		}
 	}
 
@@ -93,14 +96,29 @@ namespace dnSpy.MainApp.Settings {
 		}
 		FontAndColorOptionsVM? selectedFontAndColorOptions;
 
+		/// <summary>Draw ligatures in the text views (Cascadia Code, Fira Code, ...)</summary>
+		public bool UseFontLigatures {
+			get => useFontLigatures;
+			set {
+				if (useFontLigatures != value) {
+					useFontLigatures = value;
+					OnPropertyChanged(nameof(UseFontLigatures));
+				}
+			}
+		}
+		bool useFontLigatures;
+
 		readonly FontAppSettingsPageOptions fontAppSettingsPageOptions;
+		readonly AppSettingsImpl appSettings;
 		readonly FontCollection allFonts;
 		readonly FontCollection monospacedFonts;
 
-		public FontAppSettingsPage(FontAndColorOptions[] options, FontAppSettingsPageOptions fontAppSettingsPageOptions) {
+		public FontAppSettingsPage(FontAndColorOptions[] options, FontAppSettingsPageOptions fontAppSettingsPageOptions, AppSettingsImpl appSettings) {
 			if (options is null)
 				throw new ArgumentNullException(nameof(options));
 			this.fontAppSettingsPageOptions = fontAppSettingsPageOptions;
+			this.appSettings = appSettings;
+			useFontLigatures = appSettings.UseFontLigatures;
 			allFonts = new FontCollection();
 			monospacedFonts = new FontCollection();
 			FontAndColorOptions = new ObservableCollection<FontAndColorOptionsVM>(options.OrderBy(a => a.DisplayName, StringComparer.CurrentCultureIgnoreCase).Select(a => new FontAndColorOptionsVM(a, GetFontCollection(a.FontOption.FontType))));
@@ -141,6 +159,7 @@ namespace dnSpy.MainApp.Settings {
 		public override void OnApply() {
 			foreach (var options in FontAndColorOptions)
 				options.OnApply();
+			appSettings.UseFontLigatures = UseFontLigatures;
 		}
 
 		public override void OnClosed() {

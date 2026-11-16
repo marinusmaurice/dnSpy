@@ -33,6 +33,7 @@ Without a snapshot the window works as before (counts and sizes at each break, c
 - Contract (additive): `IDbgDotNetHeapSnapshotRuntime`, `DbgDotNetHeapSnapshot`, `DbgDotNetHeapSnapshotType`. CorDebug (.NET Framework and .NET) implements it; Unity/Mono has no heap window.
 - The debugger's own GC handles don't count as roots (in snapshots and in Why Alive?): on .NET, dnSpy makes a strong handle for each value it shows, eg. the objects in the Heap window, and those would otherwise keep the objects alive. `CorValue` records the handles it makes until they're disposed.
 - Snapshots stay in memory until debugging stops (the addresses mean nothing in another process).
+- **Save Snapshot...** (7.37.0.0) saves the latest snapshot's types (count, size, retained size) to a `.dnheap` text file (`HeapSnapshotFile.cs`); **Open Snapshot...** adds a saved file to Compare with, in this or a later debugging session. It's compared by type (Count +/-, Size +/-), not by object: there's no New column for it. It stays in Compare with after debugging stops.
 
 ## Tests
 

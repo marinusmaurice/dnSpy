@@ -1,5 +1,6 @@
 <!--
     Copyright (C) 2014-2019 de4dot@gmail.com
+    Copyright (C) 2026- marinusmaurice@outlook.com
 
     This file is part of dnSpy
 
@@ -40,7 +41,10 @@
 
         <TextBlock Grid.Row="0" Margin="5 5 5 0" FontWeight="Bold" TextWrapping="Wrap" Text="{Binding Message}" />
         <TextBlock Grid.Row="1" Margin="5 5 5 0" TextWrapping="Wrap" Text="{x:Static p:dnSpy_Resources.Update_Explanation}" />
-        <TextBlock Grid.Row="2" Margin="5 5 5 0" TextWrapping="Wrap" Foreground="OrangeRed" Text="{Binding CantInstallReason}" Visibility="{Binding HasCantInstallReason, Converter={StaticResource booleanToVisibilityConverter}}" />
+        <StackPanel Grid.Row="2">
+            <TextBlock Margin="5 5 5 0" TextWrapping="Wrap" Foreground="OrangeRed" Text="{Binding CantInstallReason}" Visibility="{Binding HasCantInstallReason, Converter={StaticResource booleanToVisibilityConverter}}" />
+            <TextBlock Margin="5 5 5 0" TextWrapping="Wrap" Text="{x:Static p:dnSpy_Resources.Update_NeedsAdministrator}" Visibility="{Binding ShowNeedsAdministrator, Converter={StaticResource booleanToVisibilityConverter}}" />
+        </StackPanel>
         <TextBox Grid.Row="3" Margin="5 8 5 0" IsReadOnly="True" TextWrapping="Wrap" VerticalScrollBarVisibility="Auto" Text="{Binding ReleaseNotes, Mode=OneWay}" />
 
         <Grid Grid.Row="4" Margin="5 5 5 0">

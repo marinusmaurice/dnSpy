@@ -183,16 +183,28 @@ namespace dnSpy.Debugger.DotNet.Heap {
 	/// A snapshot taken in the Heap window
 	/// </summary>
 	sealed class HeapSnapshotVM {
-		public DbgDotNetHeapSnapshot Snapshot { get; }
+		/// <summary>The objects, or null for a snapshot opened from a file (it only has the types)</summary>
+		public DbgDotNetHeapSnapshot? Snapshot { get; }
 		public Dictionary<string, HeapTypeInfo> Types { get; }
 		public string Name { get; }
-		/// <summary>The break it was taken at (<see cref="HeapVM"/>'s break counter)</summary>
+		/// <summary>The break it was taken at (<see cref="HeapVM"/>'s break counter), -1 if opened from a file</summary>
 		public int BreakId { get; }
+		/// <summary>When it was taken (UTC)</summary>
+		public DateTime Time { get; }
+		public bool IsFromFile => Snapshot is null;
 		public HeapSnapshotVM(DbgDotNetHeapSnapshot snapshot, int number, int breakId) {
 			Snapshot = snapshot;
+			Time = DateTime.UtcNow;
 			Types = HeapTypeInfo.Create(snapshot.Types.Select(a => new HeapTypeInfo(a.TypeName, a.TypeHandle, a.Count, a.TotalSize, a.RetainedSize)));
-			Name = string.Format(dnSpy_Debugger_DotNet_Resources.Heap_SnapshotName, number.ToString(CultureInfo.CurrentCulture), DateTime.Now.ToString("T", CultureInfo.CurrentCulture));
+			Name = string.Format(dnSpy_Debugger_DotNet_Resources.Heap_SnapshotName, number.ToString(CultureInfo.CurrentCulture), Time.ToLocalTime().ToString("T", CultureInfo.CurrentCulture));
 			BreakId = breakId;
+		}
+		public HeapSnapshotVM(HeapSnapshotFile file, string fileName) {
+			Snapshot = null;
+			Time = file.Time;
+			Types = HeapTypeInfo.Create(file.Types.Select(a => new HeapTypeInfo(a.TypeName, 0, a.Count, a.TotalSize, a.RetainedSize)));
+			Name = string.Format(dnSpy_Debugger_DotNet_Resources.Heap_SavedSnapshotName, Path.GetFileNameWithoutExtension(fileName), file.Time.ToLocalTime().ToString("g", CultureInfo.CurrentCulture));
+			BreakId = -1;
 		}
 		public override string ToString() => Name;
 	}
@@ -242,6 +254,7 @@ namespace dnSpy.Debugger.DotNet.Heap {
 		readonly Lazy<DbgManager> dbgManager;
 		readonly Lazy<DbgLanguageService> dbgLanguageService;
 		readonly IPickSaveFilename pickSaveFilename;
+		readonly IPickFilename pickFilename;
 		readonly IMessageBoxService messageBoxService;
 		Dictionary<string, HeapTypeInfo>? previousStats;
 		Dictionary<string, HeapTypeInfo>? currentStats;
@@ -269,6 +282,8 @@ namespace dnSpy.Debugger.DotNet.Heap {
 		public ICommand ExportCommand { get; }
 		public ICommand WhyAliveCommand { get; }
 		public ICommand TakeSnapshotCommand { get; }
+		public ICommand SaveSnapshotCommand { get; }
+		public ICommand OpenSnapshotCommand { get; }
 		/// <summary>Compare with: the previous break, then the snapshots</summary>
 		public ObservableCollection<HeapCompareItem> CompareItems { get; } = new ObservableCollection<HeapCompareItem>();
 
@@ -374,11 +389,12 @@ namespace dnSpy.Debugger.DotNet.Heap {
 		}
 
 		[ImportingConstructor]
-		HeapVM(UIDispatcher uiDispatcher, Lazy<DbgManager> dbgManager, Lazy<DbgLanguageService> dbgLanguageService, IPickSaveFilename pickSaveFilename, IMessageBoxService messageBoxService) {
+		HeapVM(UIDispatcher uiDispatcher, Lazy<DbgManager> dbgManager, Lazy<DbgLanguageService> dbgLanguageService, IPickSaveFilename pickSaveFilename, IPickFilename pickFilename, IMessageBoxService messageBoxService) {
 			this.uiDispatcher = uiDispatcher;
 			this.dbgManager = dbgManager;
 			this.dbgLanguageService = dbgLanguageService;
 			this.pickSaveFilename = pickSaveFilename;
+			this.pickFilename = pickFilename;
 			this.messageBoxService = messageBoxService;
 			TypesView = CollectionViewSource.GetDefaultView(Types);
 			TypesView.Filter = o => filter.Length == 0 || (o is HeapTypeVM t && t.TypeName.IndexOf(filter, StringComparison.OrdinalIgnoreCase) >= 0);
@@ -388,6 +404,8 @@ namespace dnSpy.Debugger.DotNet.Heap {
 			ExportCommand = new RelayCommand(a => Export(), a => Types.Count > 0);
 			WhyAliveCommand = new RelayCommand(a => ShowRootPath(a as HeapObjectVM ?? SelectedObject), a => (a as HeapObjectVM ?? SelectedObject) is not null);
 			TakeSnapshotCommand = new RelayCommand(a => TakeSnapshot(), a => !isTakingSnapshot && dbgManager.Value.IsDebugging && dbgManager.Value.IsRunning == false && CurrentSnapshot is null);
+			SaveSnapshotCommand = new RelayCommand(a => SaveSnapshot(), a => latestSnapshot?.Snapshot is not null);
+			OpenSnapshotCommand = new RelayCommand(a => OpenSnapshot());
 			CompareItems.Add(selectedCompare = new HeapCompareItem(null));
 		}
 
@@ -423,8 +441,15 @@ namespace dnSpy.Debugger.DotNet.Heap {
 				latestSnapshot = null;
 				diff = null;
 				snapshotNumber = 0;
+				// Snapshots opened from files are kept: they're compared by type, in any process
+				var fromFiles = CompareItems.Where(a => a.Snapshot?.IsFromFile == true).ToList();
+				var selectedFromFile = fromFiles.Contains(selectedCompare!) ? selectedCompare : null;
 				CompareItems.Clear();
 				CompareItems.Add(selectedCompare = new HeapCompareItem(null));
+				foreach (var item in fromFiles)
+					CompareItems.Add(item);
+				if (selectedFromFile is not null)
+					selectedCompare = selectedFromFile;
 				OnPropertyChanged(nameof(SelectedCompare));
 				Types.Clear();
 				ClearObjects();
@@ -518,16 +543,20 @@ namespace dnSpy.Debugger.DotNet.Heap {
 		void ShowTypes() {
 			var current = CurrentSnapshot;
 			var types = current?.Types ?? currentStats;
-			if (types is null)
+			if (types is null) {
+				if (selectedCompare?.Snapshot is HeapSnapshotVM opened && opened.IsFromFile)
+					StatusText = string.Format(dnSpy_Debugger_DotNet_Resources.Heap_Status_OpenedNotPaused, opened.Name);
 				return;
+			}
 			var baseline = selectedCompare?.Snapshot;
 			if (baseline == current && baseline is not null)
 				baseline = null;
 			var compare = baseline is not null ? baseline.Types : previousStats;
-			if (baseline is null || current is null)
+			// New objects: only between two snapshots of this process (a file only has the types)
+			if (baseline?.Snapshot is null || current?.Snapshot is null)
 				diff = null;
-			else if (diff is null || diff.Baseline != baseline.Snapshot || diff.Current != current.Snapshot)
-				diff = HeapSnapshotDiff.Compute(baseline.Snapshot, current.Snapshot, CancellationToken.None);
+			else if (diff is null || diff.Baseline != baseline!.Snapshot || diff.Current != current!.Snapshot)
+				diff = HeapSnapshotDiff.Compute(baseline!.Snapshot!, current!.Snapshot!, CancellationToken.None);
 
 			var selectedName = selectedType?.TypeName;
 			Types.Clear();
@@ -558,7 +587,7 @@ namespace dnSpy.Debugger.DotNet.Heap {
 				sb.Append(' ').Append(string.Format(dnSpy_Debugger_DotNet_Resources.Heap_Status_ComparedWithStats, baseline.Name));
 			else if (previousStats is not null)
 				sb.Append(' ').Append(dnSpy_Debugger_DotNet_Resources.Heap_Status_Compared);
-			if (current is not null && current.Snapshot.RetainedSizes is null)
+			if (current?.Snapshot is not null && current.Snapshot.RetainedSizes is null)
 				sb.Append(' ').Append(string.Format(dnSpy_Debugger_DotNet_Resources.Heap_Status_NoRetained, 20_000_000.ToString("N0", CultureInfo.CurrentCulture)));
 			StatusText = sb.ToString();
 			selectedType = selectedName is null ? null : Types.FirstOrDefault(a => a.TypeName == selectedName);
@@ -616,8 +645,9 @@ namespace dnSpy.Debugger.DotNet.Heap {
 			if (current is not null) {
 				// From the snapshot: the biggest retained size first, only the new ones if asked
 				var onlyNewIn = onlyNew ? diff : null;
-				var indexes = HeapSnapshotDiff.GetObjects(current.Snapshot, type.TypeName, onlyNewIn, MaxObjects);
-				var addresses = indexes.Select(a => current.Snapshot.Addresses[a]).ToArray();
+				var snapshot = current.Snapshot!;
+				var indexes = HeapSnapshotDiff.GetObjects(snapshot, type.TypeName, onlyNewIn, MaxObjects);
+				var addresses = indexes.Select(a => snapshot.Addresses[a]).ToArray();
 				RunOnRuntime((evalInfo, dnRuntime) => ReadObjects(evalInfo, dnRuntime, (dnRuntime as IDbgDotNetHeapSnapshotRuntime)?.GetHeapObjects(evalInfo, addresses)),
 					(objects, error) => ShowObjects(id, type.TypeName, objects, error, onlyNewIn is not null));
 				return;
@@ -746,6 +776,50 @@ namespace dnSpy.Debugger.DotNet.Heap {
 			catch (Exception ex) when (ex is IOException || ex is UnauthorizedAccessException || ex is NotSupportedException || ex is ArgumentException) {
 				messageBoxService.Show(ex.Message);
 			}
+		}
+
+		/// <summary>
+		/// Saves the types of the latest snapshot to a file, to compare a later debugging session with
+		/// </summary>
+		void SaveSnapshot() {
+			var vm = latestSnapshot;
+			if (vm?.Snapshot is null)
+				return;
+			var processName = dbgManager.Value.CurrentProcess.Current?.Name ?? string.Empty;
+			var baseName = (processName.Length == 0 ? "heap" : Path.GetFileNameWithoutExtension(processName)) + "-" + vm.Time.ToLocalTime().ToString("yyyyMMdd-HHmmss", CultureInfo.InvariantCulture);
+			foreach (var c in Path.GetInvalidFileNameChars())
+				baseName = baseName.Replace(c, '_');
+			var file = pickSaveFilename.GetFilename(baseName + "." + HeapSnapshotFile.Extension, HeapSnapshotFile.Extension, dnSpy_Debugger_DotNet_Resources.Heap_Snapshot_Filter);
+			if (file is null)
+				return;
+			try {
+				using (var writer = new StreamWriter(file, false, new UTF8Encoding(false)))
+					HeapSnapshotFile.Create(vm.Snapshot, processName, vm.Time).Write(writer);
+			}
+			catch (Exception ex) when (ex is IOException || ex is UnauthorizedAccessException || ex is NotSupportedException || ex is ArgumentException) {
+				messageBoxService.Show(ex.Message);
+			}
+		}
+
+		/// <summary>
+		/// Opens a saved snapshot and compares with it (by type)
+		/// </summary>
+		void OpenSnapshot() {
+			var file = pickFilename.GetFilename(null, HeapSnapshotFile.Extension, dnSpy_Debugger_DotNet_Resources.Heap_Snapshot_Filter);
+			if (file is null)
+				return;
+			HeapSnapshotFile data;
+			try {
+				using (var reader = new StreamReader(file, Encoding.UTF8))
+					data = HeapSnapshotFile.Read(reader);
+			}
+			catch (Exception ex) when (ex is IOException || ex is UnauthorizedAccessException || ex is NotSupportedException || ex is ArgumentException || ex is InvalidDataException) {
+				messageBoxService.Show(string.Format(dnSpy_Debugger_DotNet_Resources.Heap_Snapshot_OpenFailed, file, ex.Message));
+				return;
+			}
+			var item = new HeapCompareItem(new HeapSnapshotVM(data, file));
+			CompareItems.Add(item);
+			SelectedCompare = item;
 		}
 
 		static string Csv(string s) => s.IndexOfAny(new[] { ',', '"', '\r', '\n' }) < 0 ? s : "\"" + s.Replace("\"", "\"\"") + "\"";

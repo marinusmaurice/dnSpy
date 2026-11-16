@@ -74,7 +74,7 @@ Suggested first, in this order:
 
 - [ ] **L** Edit and Continue: edit a method while paused and keep running.
 - [x] **M–L** Heap and memory analysis with ClrMD: objects by type/count/size and the change since the previous break, Find All Instances, fields (7.27.0.0). "Who references this": Why Alive? (7.28.0.0). Still open: open `.dmp` files offline.
-- [x] ★ **M** Compare heap snapshots and retained size (owner: "completes the leak story"): Take Snapshot, Compare with, the New column and Only new, retained sizes of objects and types from the dominator tree (7.33.0.0, [HEAP_SNAPSHOTS.md](HEAP_SNAPSHOTS.md)). Still open: save snapshots to a file, objects that moved in a GC (they count as new), snapshots of `.dmp` files.
+- [x] ★ **M** Compare heap snapshots and retained size (owner: "completes the leak story"): Take Snapshot, Compare with, the New column and Only new, retained sizes of objects and types from the dominator tree (7.33.0.0, [HEAP_SNAPSHOTS.md](HEAP_SNAPSHOTS.md)). Save Snapshot / Open Snapshot (types only, compared by type): 7.37.0.0. Still open: objects that moved in a GC (they count as new), snapshots of `.dmp` files.
 - [x] **L** Watch the program's HTTP calls without Fiddler (7.29.0.0: HTTP Traffic window, outgoing and incoming, HTTPS, bodies, Go to Code, break on URL/status/failure, cURL, HAR; .NET and .NET Framework). Fixes from a review in 7.29.1.0 to 7.29.3.0 (the `traceparent`/`Request-Id` header the capture adds is left as is). Incoming request/response bodies: 7.30.0.0. Still open: bodies on .NET Framework, ASP.NET (classic, System.Web) incoming requests, gRPC and WebSockets. Not wanted (owner, 2026-11-10): replaying / editing and resending a request.
 - [ ] **L** Remote debugging: another machine, Docker containers, WSL.
 - [x] **L** Async Tasks window (7.24.0.0: tasks from a heap walk, async method and await, double-click opens the method). Logical call stacks: 7.25.0.0. Copy: 7.26.0.0. 7.27.0.0: .NET Framework tasks listed (status and type). Still open: async method names for .NET Framework.
@@ -105,7 +105,7 @@ Suggested first, in this order:
 
 ### UI and quality of life
 
-- [ ] **S** Dark theme refresh, ligatures toggle. (A high-contrast theme and a font picker were already there: the Themes menu and Options → Fonts and Colors.)
+- [ ] **S** Dark theme refresh. (Ligatures toggle: 7.37.0.0, Options → Environment → Font → Use font ligatures. A high-contrast theme and a font picker were already there: the Themes menu and Options → Fonts and Colors.)
 - [x] **S** Recent files with pinning; restore last session (7.20.0.0: assembly explorer context menu → Pin to Recent Files, pinned files at the top of File → Recent Files, `Test/RecentFilesCheck`, menus not click-tested; restoring the last session was already there: open assemblies and, with "Restore tabs at startup", the tabs).
 - [x] **S** Portable mode (settings next to the exe): an empty `dnSpy.xml` next to `dnSpy.exe` keeps settings, startup profiles and NuGet downloads in the dnSpy folder (7.12.0.0; `Test/PortableCheck` in `check.ps1`, not click-tested).
 - [x] **S** Open `.nupkg` files (drag and drop) and browse the DLLs inside (7.1.0.0; grouped by folder, eg. lib/net8.0).
@@ -117,7 +117,7 @@ Suggested first, in this order:
 - [ ] **S** Translate the 7.3.0.0 strings (update dialog, Check for Updates, the General page's update option) in `dnSpy/dnSpy/Properties`.
 - [ ] **S** Translate the strings of 7.5.0.0 and later (Debug History, command palette, side-by-side, patches, Detect Protection, Test Compile, pinned recent files, Android packages); they show in English for now.
 - [x] **S** Updates: an option for prereleases (beta tags) (7.22.0.0: Include beta versions; `Test/UpdateCheck`).
-- [ ] **S** Updates: updating a dnSpy in a folder that needs admin rights (today it opens the release page).
+- [x] **S** Updates: updating a dnSpy in a folder that needs admin rights (7.37.0.0: Windows asks for permission, an elevated PowerShell checks the zip's SHA-256 again and copies the files. Not tested from one real release to the next).
 
 ### Extensibility and scripting
 

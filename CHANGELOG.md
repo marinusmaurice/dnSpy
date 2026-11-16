@@ -7,6 +7,19 @@ What changed in each release of this fork, newest first. The release workflow pu
 
 Each section starts with a short summary, then **New Features** (new things you can do), **Enhancements** (existing things that work better) and **Bug Fixes**, with a link to the commit for each item. Technical details are in [All changes in detail](docs/CHANGES.md#all-changes-in-detail) and in [docs/MODERNIZATION_PLAN.md](docs/MODERNIZATION_PLAN.md).
 
+## 7.37.0.0
+
+Save heap snapshots to compare a later debugging session, updates for a dnSpy in Program Files, and a switch for font ligatures. Also has everything in 7.36.0.0 and earlier.
+
+### New Features
+
+- **Save Snapshot... / Open Snapshot...** in the Heap window (**Debug → Windows → Heap**): save a snapshot's types (count, size, retained size) to a `.dnheap` file and open it in a later debugging session, eg. after a fix, to see what changed (Count +/- and Size +/-). An opened snapshot stays in **Compare with** after debugging stops. (Objects can't be matched between two processes, so the New column is only for snapshots of the same session.)
+- **Use font ligatures** (**Options → Environment → Font**): fonts such as Cascadia Code and Fira Code draw `=>`, `!=` and `==` as one symbol. Untick it to see every character; the code views change at once.
+
+### Enhancements
+
+- **Updates for a dnSpy in a folder that needs administrator rights** (eg. Program Files): **Update Now** downloads the update as before, then Windows asks for administrator permission to copy the new files. Before, dnSpy could only open the release page. The update file's SHA-256 is checked again by the part that runs as administrator, and dnSpy starts again as a normal user.
+
 ## 7.36.0.0
 
 A Graph window: call graphs, type hierarchies and assembly dependencies as pictures. Also has everything in 7.35.0.0 and earlier.

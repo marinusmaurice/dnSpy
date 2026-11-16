@@ -62,6 +62,18 @@ namespace dnSpy.MainApp {
 		}
 		bool includePrereleases;
 
+		/// <summary>Draw ligatures (eg. "=>" as one symbol in Cascadia Code or Fira Code) in the text views</summary>
+		public bool UseFontLigatures {
+			get => useFontLigatures;
+			set {
+				if (useFontLigatures != value) {
+					useFontLigatures = value;
+					OnPropertyChanged(nameof(UseFontLigatures));
+				}
+			}
+		}
+		bool useFontLigatures = true;
+
 		/// <summary>UTC time of the last update check</summary>
 		public DateTime LastUpdateCheck {
 			get => lastUpdateCheck;
@@ -89,6 +101,7 @@ namespace dnSpy.MainApp {
 			AllowMoreThanOneInstance = sect.Attribute<bool?>(nameof(AllowMoreThanOneInstance)) ?? AllowMoreThanOneInstance;
 			CheckForUpdates = sect.Attribute<bool?>(nameof(CheckForUpdates)) ?? CheckForUpdates;
 			IncludePrereleases = sect.Attribute<bool?>(nameof(IncludePrereleases)) ?? IncludePrereleases;
+			UseFontLigatures = sect.Attribute<bool?>(nameof(UseFontLigatures)) ?? UseFontLigatures;
 			if (DateTime.TryParse(sect.Attribute<string>(nameof(LastUpdateCheck)), CultureInfo.InvariantCulture, DateTimeStyles.AdjustToUniversal | DateTimeStyles.AssumeUniversal, out var lastCheck))
 				LastUpdateCheck = lastCheck;
 			PropertyChanged += AppSettingsImpl_PropertyChanged;
@@ -99,6 +112,7 @@ namespace dnSpy.MainApp {
 			sect.Attribute(nameof(AllowMoreThanOneInstance), AllowMoreThanOneInstance);
 			sect.Attribute(nameof(CheckForUpdates), CheckForUpdates);
 			sect.Attribute(nameof(IncludePrereleases), IncludePrereleases);
+			sect.Attribute(nameof(UseFontLigatures), UseFontLigatures);
 			sect.Attribute(nameof(LastUpdateCheck), LastUpdateCheck.ToString("o", CultureInfo.InvariantCulture));
 		}
 	}

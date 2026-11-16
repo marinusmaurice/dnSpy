@@ -23,6 +23,7 @@
     <Compile Include="..\..\Extensions\dnSpy.Debugger\dnSpy.Debugger.DotNet.CorDebug\DAC\DominatorTree.cs" Link="Linked\DominatorTree.cs" />
     <Compile Include="..\..\Extensions\dnSpy.Debugger\dnSpy.Debugger.DotNet.CorDebug\DAC\HeapSnapshotBuilder.cs" Link="Linked\HeapSnapshotBuilder.cs" />
     <Compile Include="..\..\Extensions\dnSpy.Debugger\dnSpy.Debugger.DotNet\Heap\HeapSnapshotDiff.cs" Link="Linked\HeapSnapshotDiff.cs" />
+    <Compile Include="..\..\Extensions\dnSpy.Debugger\dnSpy.Debugger.DotNet\Heap\HeapSnapshotFile.cs" Link="Linked\HeapSnapshotFile.cs" />
     <Compile Include="..\..\dnSpy\dnSpy.Contracts.Debugger.DotNet\Evaluation\DbgDotNetHeapSnapshot.cs" Link="Linked\DbgDotNetHeapSnapshot.cs" />
   </ItemGroup>
 

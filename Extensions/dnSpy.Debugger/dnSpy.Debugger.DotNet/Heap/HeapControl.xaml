@@ -30,6 +30,8 @@
         <DockPanel Grid.Row="0" Margin="2">
             <Button DockPanel.Dock="Left" Margin="0 0 6 0" Padding="4 1" Command="{Binding RefreshCommand}" Content="{x:Static p:dnSpy_Debugger_DotNet_Resources.AsyncTasks_Refresh}" />
             <Button DockPanel.Dock="Left" Margin="0 0 6 0" Padding="4 1" Command="{Binding TakeSnapshotCommand}" Content="{x:Static p:dnSpy_Debugger_DotNet_Resources.Heap_TakeSnapshot}" />
+            <Button DockPanel.Dock="Left" Margin="0 0 6 0" Padding="4 1" Command="{Binding SaveSnapshotCommand}" Content="{x:Static p:dnSpy_Debugger_DotNet_Resources.Heap_SaveSnapshot}" ToolTip="{x:Static p:dnSpy_Debugger_DotNet_Resources.Heap_SaveSnapshot_ToolTip}" />
+            <Button DockPanel.Dock="Left" Margin="0 0 6 0" Padding="4 1" Command="{Binding OpenSnapshotCommand}" Content="{x:Static p:dnSpy_Debugger_DotNet_Resources.Heap_OpenSnapshot}" ToolTip="{x:Static p:dnSpy_Debugger_DotNet_Resources.Heap_OpenSnapshot_ToolTip}" />
             <Button DockPanel.Dock="Left" Margin="0 0 6 0" Padding="4 1" Command="{Binding ExportCommand}" Content="{x:Static p:dnSpy_Debugger_DotNet_Resources.Heap_Export}" />
             <TextBlock DockPanel.Dock="Left" Margin="0 0 4 0" VerticalAlignment="Center" Foreground="{DynamicResource SystemColorsControlText}" Text="{x:Static p:dnSpy_Debugger_DotNet_Resources.Heap_CompareWith}" />
             <ComboBox DockPanel.Dock="Left" Width="190" Margin="0 0 8 0" ItemsSource="{Binding CompareItems}" SelectedItem="{Binding SelectedCompare}" />

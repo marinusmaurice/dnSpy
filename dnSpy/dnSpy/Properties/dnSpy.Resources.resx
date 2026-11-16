@@ -2292,4 +2292,16 @@ Filter can be changed in Assembly Explorer options.</value>
   <data name="EditNoteTitle" xml:space="preserve">
     <value>Edit Note</value>
   </data>
+  <data name="UseFontLigatures" xml:space="preserve">
+    <value>Use font _ligatures</value>
+  </data>
+  <data name="UseFontLigaturesToolTip" xml:space="preserve">
+    <value>Fonts such as Cascadia Code and Fira Code draw eg. =&gt; and != as one symbol. Turn it off to see every character.</value>
+  </data>
+  <data name="Update_NeedsAdministrator" xml:space="preserve">
+    <value>dnSpy's folder can only be changed by an administrator: Windows will ask for permission to install the update.</value>
+  </data>
+  <data name="Update_ElevationCancelled" xml:space="preserve">
+    <value>The update wasn't installed: Windows didn't get administrator permission. dnSpy is still the old version.</value>
+  </data>
 </root>

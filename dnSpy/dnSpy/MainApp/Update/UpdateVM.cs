@@ -1,5 +1,6 @@
 /*
     Copyright (C) 2014-2019 de4dot@gmail.com
+    Copyright (C) 2026- marinusmaurice@outlook.com
 
     This file is part of dnSpy
 
@@ -33,6 +34,9 @@ namespace dnSpy.MainApp.Update {
 		/// <summary>Why it can't be installed from dnSpy (null if it can)</summary>
 		public string? CantInstallReason { get; }
 		public bool HasCantInstallReason => CantInstallReason is not null;
+		/// <summary>dnSpy's folder needs administrator rights: Windows asks for them when the update is installed</summary>
+		public bool NeedsAdministrator { get; }
+		public bool ShowNeedsAdministrator => NeedsAdministrator && CanInstall;
 
 		public bool CheckAtStartup {
 			get => checkAtStartup;
@@ -96,8 +100,13 @@ namespace dnSpy.MainApp.Update {
 			ReleaseNotes = ToPlainText(release.Notes);
 			if (release.AssetUrl is null)
 				CantInstallReason = dnSpy_Resources.Update_NoAssetForBuild;
-			else if (!UpdateService.CanWriteInstallDirectory())
-				CantInstallReason = dnSpy_Resources.Update_ReadOnlyInstallDir;
+			else if (!UpdateService.CanWriteInstallDirectory()) {
+				// An administrator can install it if the zip's SHA-256 is known (the elevated part checks it again)
+				if (release.AssetSha256 is null)
+					CantInstallReason = dnSpy_Resources.Update_ReadOnlyInstallDir;
+				else
+					NeedsAdministrator = true;
+			}
 			CanInstall = CantInstallReason is null;
 		}
 
@@ -134,7 +143,7 @@ namespace dnSpy.MainApp.Update {
 				StatusText = string.Format(dnSpy_Resources.Update_DownloadProgress, a.done / (1024 * 1024), Math.Max(a.total, a.done) / (1024 * 1024));
 			});
 			try {
-				ReadyToInstall = await updateService.DownloadAsync(release, reporter, downloadCancellation.Token);
+				ReadyToInstall = await updateService.DownloadAsync(release, reporter, downloadCancellation.Token, unpack: !NeedsAdministrator);
 				return true;
 			}
 			catch (OperationCanceledException) {

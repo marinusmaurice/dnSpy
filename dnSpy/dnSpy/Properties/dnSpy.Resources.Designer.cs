@@ -6570,5 +6570,41 @@ namespace dnSpy.Properties {
             }
         }
         
+        /// <summary>
+        ///   Looks up a localized string similar to Use font _ligatures.
+        /// </summary>
+        public static string UseFontLigatures {
+            get {
+                return ResourceManager.GetString("UseFontLigatures", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Fonts such as Cascadia Code and Fira Code draw eg. =&gt; and != as one symbol. Turn it off to see every character..
+        /// </summary>
+        public static string UseFontLigaturesToolTip {
+            get {
+                return ResourceManager.GetString("UseFontLigaturesToolTip", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to dnSpy's folder can only be changed by an administrator: Windows will ask for permission to install the update..
+        /// </summary>
+        public static string Update_NeedsAdministrator {
+            get {
+                return ResourceManager.GetString("Update_NeedsAdministrator", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to The update wasn't installed: Windows didn't get administrator permission. dnSpy is still the old version..
+        /// </summary>
+        public static string Update_ElevationCancelled {
+            get {
+                return ResourceManager.GetString("Update_ElevationCancelled", resourceCulture);
+            }
+        }
+        
     }
 }

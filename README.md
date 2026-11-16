@@ -62,6 +62,7 @@ The version in brackets is the release that added it. Details are in [CHANGELOG.
 - **Android packages** (`.apk`, `.aab`): Xamarin and .NET 6–10 MAUI apps, decompressed. *(7.17, .NET 9+ in 7.21)*
 - **Pin files** to the top of File → Recent Files. *(7.20)*
 - **Portable mode**: an empty `dnSpy.xml` next to `dnSpy.exe` keeps all settings in the dnSpy folder. *(7.12)*
+- **Font ligatures on or off** (Cascadia Code, Fira Code): Options → Environment → Font. *(7.37)*
 
 ### Finding and comparing code
 
@@ -82,7 +83,7 @@ The version in brackets is the release that added it. Details are in [CHANGELOG.
 - **Async Tasks window**: every task, the `await` it's waiting at, and async call stacks. *(7.24, call stacks in 7.25, .NET Framework in 7.27)*
 - **Just-in-time debugger** for `Debugger.Launch()`. *(7.25)*
 - **Heap window**: objects by type and what grew since the last break *(7.27)*, **Find All Instances** *(7.27)*, **Why Alive?** and Export *(7.28)*.
-- **Heap snapshots**: compare two breaks to find leaks, and see each object's **retained size**. *(7.33)*
+- **Heap snapshots**: compare two breaks to find leaks, and see each object's **retained size**. *(7.33)* Save a snapshot and compare a later debugging session with it. *(7.37)*
 - **HTTP Traffic window**: live HTTP and HTTPS requests of the debugged program, like Fiddler, with bodies, call stacks and break on a request. *(7.29, incoming bodies in 7.30)*
 - **Bookmark notes**. *(7.28)*
 
@@ -108,7 +109,7 @@ The version in brackets is the release that added it. Details are in [CHANGELOG.
 
 ### Updates and releases
 
-- **Updates itself**: shows what changed and installs the new version. *(7.3)*, with optional beta versions *(7.22)*.
+- **Updates itself**: shows what changed and installs the new version. *(7.3)*, with optional beta versions *(7.22)*, also in Program Files (Windows asks for permission) *(7.37)*.
 - **Scoop and winget** manifests with every release. *(7.26)*
 - Every release is built by GitHub Actions and checked by regression tests.
 

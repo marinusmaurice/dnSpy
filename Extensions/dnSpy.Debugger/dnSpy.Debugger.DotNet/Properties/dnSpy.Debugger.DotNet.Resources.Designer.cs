@@ -1264,5 +1264,77 @@ namespace dnSpy.Debugger.DotNet.Properties {
                 return ResourceManager.GetString("Heap_Objects_New", resourceCulture);
             }
         }
+        /// <summary>
+        ///   Looks up a localized string similar to Sa_ve Snapshot....
+        /// </summary>
+        public static string Heap_SaveSnapshot {
+            get {
+                return ResourceManager.GetString("Heap_SaveSnapshot", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Save the types of the latest snapshot (count, size, retained size) to a file, to compare a later debugging session with.
+        /// </summary>
+        public static string Heap_SaveSnapshot_ToolTip {
+            get {
+                return ResourceManager.GetString("Heap_SaveSnapshot_ToolTip", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to _Open Snapshot....
+        /// </summary>
+        public static string Heap_OpenSnapshot {
+            get {
+                return ResourceManager.GetString("Heap_OpenSnapshot", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Open a saved snapshot and compare with it. A saved snapshot is compared by type: Count +/- and Size +/-, not New..
+        /// </summary>
+        public static string Heap_OpenSnapshot_ToolTip {
+            get {
+                return ResourceManager.GetString("Heap_OpenSnapshot_ToolTip", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to {0} (saved {1}).
+        /// </summary>
+        public static string Heap_SavedSnapshotName {
+            get {
+                return ResourceManager.GetString("Heap_SavedSnapshotName", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to dnSpy heap snapshots (*.dnheap)|*.dnheap|All files (*.*)|*.*.
+        /// </summary>
+        public static string Heap_Snapshot_Filter {
+            get {
+                return ResourceManager.GetString("Heap_Snapshot_Filter", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Couldn't open {0}: {1}.
+        /// </summary>
+        public static string Heap_Snapshot_OpenFailed {
+            get {
+                return ResourceManager.GetString("Heap_Snapshot_OpenFailed", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Opened {0}. Break the program to compare with it..
+        /// </summary>
+        public static string Heap_Status_OpenedNotPaused {
+            get {
+                return ResourceManager.GetString("Heap_Status_OpenedNotPaused", resourceCulture);
+            }
+        }
+        
     }
 }

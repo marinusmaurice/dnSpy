@@ -192,6 +192,48 @@ for (int graph = 0; graph < 300; graph++) {
 	}
 }
 
+// ---- Save Snapshot / Open Snapshot: the types in a text file
+{
+	var snap = new DbgDotNetHeapSnapshot(new[] {
+		new DbgDotNetHeapSnapshotType("System.String", 1, 10, 1000, 1200),
+		new DbgDotNetHeapSnapshotType("System.Collections.Generic.Dictionary<System.String, Café.Ünïcode>", 2, 3, 300, -1),
+		new DbgDotNetHeapSnapshotType("Odd\tName\nWith tab", 3, 1, 24, 24),
+	}, new ulong[] { 1, 2, 3 }, new[] { 0, 1, 2 }, null);
+	var time = new DateTime(2026, 11, 16, 14, 30, 5, DateTimeKind.Utc);
+	var file = HeapSnapshotFile.Create(snap, "My App.exe", time);
+	var sw = new System.IO.StringWriter();
+	file.Write(sw);
+	var text = sw.ToString();
+	var back = HeapSnapshotFile.Read(new System.IO.StringReader(text));
+	Check(back.ProcessName == "My App.exe" && back.Time == time && back.Time.Kind == DateTimeKind.Utc, "snapshot file: process and time");
+	Check(back.Types.Count == 3, "snapshot file: 3 types");
+	Check(back.Types[1].TypeName == "System.Collections.Generic.Dictionary<System.String, Café.Ünïcode>" && back.Types[1].Count == 3 && back.Types[1].TotalSize == 300 && back.Types[1].RetainedSize == -1, "snapshot file: a type with unknown retained size");
+	Check(back.Types[0].Count == 10 && back.Types[0].TotalSize == 1000 && back.Types[0].RetainedSize == 1200, "snapshot file: counts and sizes");
+	Check(back.Types[2].TypeName == "Odd Name With tab", "snapshot file: tabs and new lines in a name don't break it");
+	Check(!text.Contains("\r"), "snapshot file: the same file on every machine (\\n line ends)");
+	// Windows line ends (eg. after a git checkout) are fine too
+	var crlf = HeapSnapshotFile.Read(new System.IO.StringReader(text.Replace("\n", "\r\n")));
+	Check(crlf.Types.Count == 3 && crlf.Types[2].TypeName == "Odd Name With tab", "snapshot file: CRLF line ends");
+	// A later format's extra header line is skipped
+	var extra = HeapSnapshotFile.Read(new System.IO.StringReader(text.Replace("types\t", "future\tsomething\ntypes\t")));
+	Check(extra.Types.Count == 3, "snapshot file: unknown header lines are skipped");
+	void Bad(string content, string what) {
+		try {
+			HeapSnapshotFile.Read(new System.IO.StringReader(content));
+			Check(false, "snapshot file: " + what + " is refused");
+		}
+		catch (System.IO.InvalidDataException) { }
+	}
+	Bad("", "an empty file");
+	Bad("Type,Count,Size\n", "a CSV export");
+	Bad(text.Replace("dnSpy heap snapshot 1", "dnSpy heap snapshot 2"), "a newer format");
+	Bad(text.Substring(0, text.LastIndexOf("1\t24\t24", StringComparison.Ordinal)), "a cut-off file");
+	Bad(text.Replace("10\t1000\t1200", "ten\t1000\t1200"), "a bad number");
+	Bad(text.Replace("10\t1000\t1200", "10\t1000\t-5"), "a retained size below -1");
+	// The window adds types with the same name together (two AppDomains)
+	Check(HeapSnapshotFile.Create(snap, "", time).Types.Sum(a => a.Count) == 14, "snapshot file: all objects");
+}
+
 if (fails == 0) {
 	Console.WriteLine("All heap snapshot checks passed");
 	return 0;
