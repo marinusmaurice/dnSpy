@@ -3,6 +3,11 @@
 -->
 # dnSpy
 
+[![Latest release](https://img.shields.io/github/v/release/marinusmaurice/dnSpy?label=release)](https://github.com/marinusmaurice/dnSpy/releases/latest)
+[![Build](https://github.com/marinusmaurice/dnSpy/actions/workflows/build.yml/badge.svg?branch=master)](https://github.com/marinusmaurice/dnSpy/actions/workflows/build.yml)
+[![Downloads](https://img.shields.io/github/downloads/marinusmaurice/dnSpy/total)](https://github.com/marinusmaurice/dnSpy/releases)
+[![License: GPL v3](https://img.shields.io/badge/license-GPLv3-blue)](dnSpy/dnSpy/LicenseInfo/GPLv3.txt)
+
 > **This is a continuation of the original dnSpy by 0xd4d: https://github.com/dnSpy/dnSpy**
 > The original was archived in December 2020 at version [6.1.8](https://github.com/dnSpy/dnSpy/releases/tag/v6.1.8). Version 7 picks up where it left off.
 
