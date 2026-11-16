@@ -101,7 +101,7 @@ Suggested first, in this order:
 - [x] **M** Regex and full-text search across decompiled code. (7.23.0.0: Search window → Search For: Code (decompiled), `/regex/`, click-tested. Later: search in parallel, it's slow on big assemblies.)
 - [x] **S** Find usages: group by assembly (7.23.0.0), export (7.25.0.0). Read/write: fields have Read By and Assigned By, properties Used By per getter and setter.
 - [x] **S** Bookmarks with notes (7.28.0.0: Note column and Edit Note...; bookmarks were already saved with their assembly and location).
-- [ ] **M** Graph views: call graph, type hierarchy, dependencies.
+- [x] **M** Graph views: call graph, type hierarchy, dependencies (7.36.0.0: View → Graph, Show Call Graph / Show Type Hierarchy / Show Dependency Graph, Save As SVG or DOT. Later: virtual calls (callers through a base method or an interface), a graph of a whole namespace or assembly's types, fewer crossing arrows in big graphs).
 
 ### UI and quality of life
 

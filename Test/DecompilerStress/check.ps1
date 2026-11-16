@@ -19,6 +19,7 @@
 	  - heap snapshots: the dominator tree, retained sizes and new objects, also on a real process's heap (../HeapSnapshotCheck)
 	  - the IL editor's stack check and branch arrows, also on every method of System.Private.CoreLib and System.Linq (../ILEditorCheck)
 	  - the Undo History window's history and going to any edit in it (../UndoHistoryCheck)
+	  - the Graph window's call graphs, type hierarchies and assembly dependencies, their layout, SVG and DOT (../GraphCheck)
 	  - pinned and recent files in File -> Recent Files (../RecentFilesCheck)
 	  - which release the update check offers, with and without beta versions (../UpdateCheck)
 	  - Open from NuGet's package sources from NuGet.config, search and download over V3, V2 and folder feeds (../NuGetFeedCheck)
@@ -293,6 +294,13 @@ try {
 	$undoPassed = @($undoCheck) | Where-Object { $_ -like 'All Undo History checks passed*' } | Select-Object -First 1
 	if (-not $undoPassed) { Fail 'Undo History: checks failed'; $undoCheck | ForEach-Object { Write-Host "  $_" } }
 	else { Write-Host "  OK: $($undoPassed -replace '^All Undo History checks passed ', '')" }
+
+	# Graph window: call graph, type hierarchy and dependencies of sample types and of System.Private.CoreLib, layout, SVG, DOT
+	Write-Host '== Graph window'
+	$graphCheck = Invoke-Checked "run GraphCheck" { dotnet run --project (Join-Path $PSScriptRoot '..\GraphCheck\GraphCheck.csproj') -c Release -v:q -nologo }
+	$graphPassed = @($graphCheck) | Where-Object { $_ -like 'All Graph checks passed*' } | Select-Object -First 1
+	if (-not $graphPassed) { Fail 'Graph window: checks failed'; $graphCheck | ForEach-Object { Write-Host "  $_" } }
+	else { Write-Host "  OK: $($graphPassed -replace '^All Graph checks passed ', '')" }
 
 	# Updates: the release tag parser and which release is offered, with and without betas (no network)
 	Write-Host '== Update check'

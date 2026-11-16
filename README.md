@@ -71,6 +71,7 @@ The version in brackets is the release that added it. Details are in [CHANGELOG.
 - **Search the decompiled code** (plain text or `/regex/`). *(7.23)*
 - **Analyzer**: results grouped by assembly *(7.23)*, and Export Results to CSV or text *(7.25)*.
 - **Go to Original Source**: the real source file through Source Link and the symbol servers. *(7.26)*
+- **Graph window**: a method's **call graph**, a type's **hierarchy** and an assembly's **dependencies** as pictures; double-click a box to go to its code, save as SVG. *(7.36)*
 
 ### Debugging
 

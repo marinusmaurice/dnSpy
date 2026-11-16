@@ -1,0 +1,32 @@
+<!--
+    Copyright (C) 2026- marinusmaurice@outlook.com
+-->
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <!--
+    Graph window test: compiles the Graph window's graph builder, layout and export (they don't use WPF) and checks
+    the call graph, type hierarchy and assembly dependencies of the sample types in Samples.cs, the "+N more" and node
+    limits on System.Private.CoreLib, the layout (no overlapping boxes, layers in order) and the SVG and DOT files.
+    check.ps1 runs it, see ../DecompilerStress/README.md.
+  -->
+  <PropertyGroup>
+    <OutputType>Exe</OutputType>
+    <TargetFramework>net10.0</TargetFramework>
+    <Nullable>enable</Nullable>
+    <LangVersion>13.0</LangVersion>
+    <!-- The samples must keep their calls -->
+    <Optimize>false</Optimize>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <Compile Include="..\..\Extensions\dnSpy.Analyzer\Graphs\Graph.cs" Link="Linked\Graph.cs" />
+    <Compile Include="..\..\Extensions\dnSpy.Analyzer\Graphs\GraphBuilder.cs" Link="Linked\GraphBuilder.cs" />
+    <Compile Include="..\..\Extensions\dnSpy.Analyzer\Graphs\GraphLayout.cs" Link="Linked\GraphLayout.cs" />
+    <Compile Include="..\..\Extensions\dnSpy.Analyzer\Graphs\GraphExport.cs" Link="Linked\GraphExport.cs" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <PackageReference Include="dnlib" Version="4.5.0" />
+  </ItemGroup>
+
+</Project>

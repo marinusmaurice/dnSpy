@@ -374,5 +374,212 @@ namespace dnSpy.Analyzer.Properties {
             }
         }
         
+        /// <summary>
+        ///   Looks up a localized string similar to Show Call _Graph.
+        /// </summary>
+        public static string ShowCallGraphCommand {
+            get {
+                return ResourceManager.GetString("ShowCallGraphCommand", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Show Type _Hierarchy.
+        /// </summary>
+        public static string ShowTypeHierarchyCommand {
+            get {
+                return ResourceManager.GetString("ShowTypeHierarchyCommand", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Show _Dependency Graph.
+        /// </summary>
+        public static string ShowDependencyGraphCommand {
+            get {
+                return ResourceManager.GetString("ShowDependencyGraphCommand", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to _Graph.
+        /// </summary>
+        public static string GraphWindowCommand {
+            get {
+                return ResourceManager.GetString("GraphWindowCommand", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Graph.
+        /// </summary>
+        public static string Graph_Window {
+            get {
+                return ResourceManager.GetString("Graph_Window", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Back.
+        /// </summary>
+        public static string Graph_Back {
+            get {
+                return ResourceManager.GetString("Graph_Back", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Depth:.
+        /// </summary>
+        public static string Graph_Depth {
+            get {
+                return ResourceManager.GetString("Graph_Depth", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Save As....
+        /// </summary>
+        public static string Graph_SaveAs {
+            get {
+                return ResourceManager.GetString("Graph_SaveAs", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to SVG picture (*.svg)|*.svg|Graphviz (*.dot)|*.dot.
+        /// </summary>
+        public static string Graph_SaveFilter {
+            get {
+                return ResourceManager.GetString("Graph_SaveFilter", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Building the graph....
+        /// </summary>
+        public static string Graph_Building {
+            get {
+                return ResourceManager.GetString("Graph_Building", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to {0} boxes, {1} arrows.
+        /// </summary>
+        public static string Graph_Status {
+            get {
+                return ResourceManager.GetString("Graph_Status", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to (stopped at {0} boxes).
+        /// </summary>
+        public static string Graph_Truncated {
+            get {
+                return ResourceManager.GetString("Graph_Truncated", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Couldn't build the graph: {0}.
+        /// </summary>
+        public static string Graph_Error {
+            get {
+                return ResourceManager.GetString("Graph_Error", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Right-click a method and choose Show Call Graph, a type and choose Show Type Hierarchy, or an assembly in the Assembly Explorer and choose Show Dependency Graph. Double-click a box to go to its code; right-click it to make it the center of the graph..
+        /// </summary>
+        public static string Graph_Help {
+            get {
+                return ResourceManager.GetString("Graph_Help", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Go to Code.
+        /// </summary>
+        public static string Graph_GoToCode {
+            get {
+                return ResourceManager.GetString("Graph_GoToCode", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Go to Code in New Tab.
+        /// </summary>
+        public static string Graph_GoToCodeNewTab {
+            get {
+                return ResourceManager.GetString("Graph_GoToCodeNewTab", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Double-click.
+        /// </summary>
+        public static string Graph_DoubleClick {
+            get {
+                return ResourceManager.GetString("Graph_DoubleClick", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Shift+Double-click.
+        /// </summary>
+        public static string Graph_ShiftDoubleClick {
+            get {
+                return ResourceManager.GetString("Graph_ShiftDoubleClick", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Graph from Here.
+        /// </summary>
+        public static string Graph_GraphFromHere {
+            get {
+                return ResourceManager.GetString("Graph_GraphFromHere", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Copy Name.
+        /// </summary>
+        public static string Graph_CopyName {
+            get {
+                return ResourceManager.GetString("Graph_CopyName", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Call graph of {0}.
+        /// </summary>
+        public static string Graph_Title_CallGraph {
+            get {
+                return ResourceManager.GetString("Graph_Title_CallGraph", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Type hierarchy of {0}.
+        /// </summary>
+        public static string Graph_Title_TypeHierarchy {
+            get {
+                return ResourceManager.GetString("Graph_Title_TypeHierarchy", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Dependencies of {0}.
+        /// </summary>
+        public static string Graph_Title_Dependencies {
+            get {
+                return ResourceManager.GetString("Graph_Title_Dependencies", resourceCulture);
+            }
+        }
+        
     }
 }

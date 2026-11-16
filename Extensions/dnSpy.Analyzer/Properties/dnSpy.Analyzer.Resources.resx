@@ -222,4 +222,73 @@
   <data name="ExportResults_Header" xml:space="preserve">
     <value>Search,Assembly,Result,Member,Token</value>
   </data>
+  <data name="ShowCallGraphCommand" xml:space="preserve">
+    <value>Show Call _Graph</value>
+  </data>
+  <data name="ShowTypeHierarchyCommand" xml:space="preserve">
+    <value>Show Type _Hierarchy</value>
+  </data>
+  <data name="ShowDependencyGraphCommand" xml:space="preserve">
+    <value>Show _Dependency Graph</value>
+  </data>
+  <data name="GraphWindowCommand" xml:space="preserve">
+    <value>_Graph</value>
+  </data>
+  <data name="Graph_Window" xml:space="preserve">
+    <value>Graph</value>
+  </data>
+  <data name="Graph_Back" xml:space="preserve">
+    <value>Back</value>
+  </data>
+  <data name="Graph_Depth" xml:space="preserve">
+    <value>Depth:</value>
+  </data>
+  <data name="Graph_SaveAs" xml:space="preserve">
+    <value>Save As...</value>
+  </data>
+  <data name="Graph_SaveFilter" xml:space="preserve">
+    <value>SVG picture (*.svg)|*.svg|Graphviz (*.dot)|*.dot</value>
+  </data>
+  <data name="Graph_Building" xml:space="preserve">
+    <value>Building the graph...</value>
+  </data>
+  <data name="Graph_Status" xml:space="preserve">
+    <value>{0} boxes, {1} arrows</value>
+  </data>
+  <data name="Graph_Truncated" xml:space="preserve">
+    <value>(stopped at {0} boxes)</value>
+  </data>
+  <data name="Graph_Error" xml:space="preserve">
+    <value>Couldn't build the graph: {0}</value>
+  </data>
+  <data name="Graph_Help" xml:space="preserve">
+    <value>Right-click a method and choose Show Call Graph, a type and choose Show Type Hierarchy, or an assembly in the Assembly Explorer and choose Show Dependency Graph. Double-click a box to go to its code; right-click it to make it the center of the graph.</value>
+  </data>
+  <data name="Graph_GoToCode" xml:space="preserve">
+    <value>Go to Code</value>
+  </data>
+  <data name="Graph_GoToCodeNewTab" xml:space="preserve">
+    <value>Go to Code in New Tab</value>
+  </data>
+  <data name="Graph_DoubleClick" xml:space="preserve">
+    <value>Double-click</value>
+  </data>
+  <data name="Graph_ShiftDoubleClick" xml:space="preserve">
+    <value>Shift+Double-click</value>
+  </data>
+  <data name="Graph_GraphFromHere" xml:space="preserve">
+    <value>Graph from Here</value>
+  </data>
+  <data name="Graph_CopyName" xml:space="preserve">
+    <value>Copy Name</value>
+  </data>
+  <data name="Graph_Title_CallGraph" xml:space="preserve">
+    <value>Call graph of {0}</value>
+  </data>
+  <data name="Graph_Title_TypeHierarchy" xml:space="preserve">
+    <value>Type hierarchy of {0}</value>
+  </data>
+  <data name="Graph_Title_Dependencies" xml:space="preserve">
+    <value>Dependencies of {0}</value>
+  </data>
 </root>

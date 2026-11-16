@@ -7,6 +7,17 @@ What changed in each release of this fork, newest first. The release workflow pu
 
 Each section starts with a short summary, then **New Features** (new things you can do), **Enhancements** (existing things that work better) and **Bug Fixes**, with a link to the commit for each item. Technical details are in [All changes in detail](docs/CHANGES.md#all-changes-in-detail) and in [docs/MODERNIZATION_PLAN.md](docs/MODERNIZATION_PLAN.md).
 
+## 7.36.0.0
+
+A Graph window: call graphs, type hierarchies and assembly dependencies as pictures. Also has everything in 7.35.0.0 and earlier.
+
+### New Features
+
+- **Show Call Graph** (right-click a method in the code or the Assembly Explorer): the methods that call it on the left, what it calls on the right, with arrows. **Depth** shows the callers' callers and what the called methods call, up to 3 levels.
+- **Show Type Hierarchy** (right-click a type): its base types up to `object` and its interfaces above it, the types that derive from it below. For an interface: the types that implement it.
+- **Show Dependency Graph** (right-click an assembly in the Assembly Explorer): the assemblies it references on the right, the open assemblies that use it on the left.
+- In the Graph window (**View → Graph**), double-click a box to go to its code, or right-click it and choose **Graph from Here** to put it in the middle (**Back** goes back). Things outside the open assemblies have dashed boxes. **Save As...** saves the graph as an SVG picture or a Graphviz `.dot` file.
+
 ## 7.35.0.0
 
 An Undo History window: see every edit you made and go back or forward to any of them. Also has everything in 7.34.0.0 and earlier.
