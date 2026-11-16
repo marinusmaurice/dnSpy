@@ -42,14 +42,25 @@ New-Item -ItemType Directory $work > $null
 
 function Fail([string]$message) {
 	Write-Host "FAIL: $message" -ForegroundColor Red
+	Write-Annotation $message
 	$script:failed++
+}
+
+# On GitHub Actions, a failure is also an error annotation: anyone can read those (the log needs a sign-in)
+function Write-Annotation([string]$message) {
+	if (-not $env:GITHUB_ACTIONS) { return }
+	$text = $message.Replace('%', '%25').Replace("`r", '').Replace("`n", '%0A')
+	Write-Host "::error title=check.ps1::$text"
 }
 
 function Invoke-Checked([string]$name, [scriptblock]$action) {
 	$output = & $action 2>&1
 	if ($LASTEXITCODE) {
-		$output | Select-Object -Last 30 | ForEach-Object { Write-Host "  $_" }
-		throw "$name failed (exit code $LASTEXITCODE)"
+		$code = $LASTEXITCODE
+		$last = @($output | Select-Object -Last 30 | ForEach-Object { "$_" })
+		$last | ForEach-Object { Write-Host "  $_" }
+		Write-Annotation ("$name (exit code $code):`n" + ($last -join "`n"))
+		throw "$name failed (exit code $code)"
 	}
 	return $output
 }
