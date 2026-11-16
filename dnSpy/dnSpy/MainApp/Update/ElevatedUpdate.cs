@@ -37,15 +37,18 @@ namespace dnSpy.MainApp.Update {
 		/// <paramref name="zipFile"/> into a new folder in <paramref name="installDirectory"/>, checks its SHA-256
 		/// (<paramref name="sha256"/>, hex), unpacks it and copies the files over the install directory, then starts
 		/// <paramref name="restartExe"/> (if not null) through explorer.exe. Exit code 0 if the files were copied.
+		/// The process is identified by its id and start time (<paramref name="processStartTime"/>): Windows can give
+		/// the id to a new process once dnSpy has exited.
 		/// </summary>
-		public static string CreateScript(int processId, string zipFile, string sha256, string installDirectory, string? restartExe) {
+		public static string CreateScript(int processId, DateTime processStartTime, string zipFile, string sha256, string installDirectory, string? restartExe) {
 			if (sha256.Length != 64 || !IsHex(sha256))
 				throw new ArgumentException("Not a SHA-256 hash: " + sha256, nameof(sha256));
 			var sb = new StringBuilder();
 			sb.AppendLine("$ErrorActionPreference = 'Stop'");
 			sb.AppendLine("$result = 1");
-			sb.AppendLine("for ($i = 0; $i -lt 60 -and (Get-Process -Id " + processId.ToString(CultureInfo.InvariantCulture) + " -ErrorAction SilentlyContinue); $i++) { Start-Sleep -Seconds 1 }");
-			sb.AppendLine("if (-not (Get-Process -Id " + processId.ToString(CultureInfo.InvariantCulture) + " -ErrorAction SilentlyContinue)) {");
+			sb.AppendLine("function Test-Running { $p = Get-Process -Id " + processId.ToString(CultureInfo.InvariantCulture) + " -ErrorAction SilentlyContinue; [bool]($p -and $p.StartTime.ToFileTimeUtc() -eq " + processStartTime.ToFileTimeUtc().ToString(CultureInfo.InvariantCulture) + ") }");
+			sb.AppendLine("for ($i = 0; $i -lt 60 -and (Test-Running); $i++) { Start-Sleep -Seconds 1 }");
+			sb.AppendLine("if (-not (Test-Running)) {");
 			sb.AppendLine("  $dir = " + Quote(installDirectory));
 			sb.AppendLine("  $work = Join-Path $dir ('.dnSpy-update-' + [guid]::NewGuid().ToString('N'))");
 			sb.AppendLine("  try {");

@@ -274,7 +274,8 @@ namespace dnSpy.MainApp.Update {
 		// dnSpy's folder needs administrator rights: Windows asks for them, then an elevated PowerShell checks and
 		// copies the files after dnSpy exits (see ElevatedUpdate)
 		void InstallElevated(string zipFile, string sha256) {
-			var script = ElevatedUpdate.CreateScript(Process.GetCurrentProcess().Id, zipFile, sha256, InstallDirectory, ExeFilename);
+			var me = Process.GetCurrentProcess();
+			var script = ElevatedUpdate.CreateScript(me.Id, me.StartTime, zipFile, sha256, InstallDirectory, ExeFilename);
 			try {
 				Process.Start(new ProcessStartInfo(ElevatedUpdate.PowerShellPath, ElevatedUpdate.CreateArguments(script)) {
 					UseShellExecute = true,

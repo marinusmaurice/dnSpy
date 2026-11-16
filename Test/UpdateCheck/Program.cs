@@ -66,14 +66,13 @@ Check(ReleaseSelector.Select(new[] { ("v7.23.0.0-beta.1", false, true) }, false)
 		using (var sha = System.Security.Cryptography.SHA256.Create())
 		using (var stream = System.IO.File.OpenRead(zipFile))
 			hash = Convert.ToHexString(sha.ComputeHash(stream));
-		// A process that has exited: the script doesn't wait
-		int exitedPid;
-		using (var p = System.Diagnostics.Process.Start(new System.Diagnostics.ProcessStartInfo("cmd.exe", "/c exit") { CreateNoWindow = true, UseShellExecute = false })!) {
-			p.WaitForExit();
-			exitedPid = p.Id;
-		}
+		// A process that has exited: the script doesn't wait. Its handle stays open so Windows can't give its id to
+		// another process while the test runs.
+		using var exited = System.Diagnostics.Process.Start(new System.Diagnostics.ProcessStartInfo("cmd.exe", "/c ping -n 2 127.0.0.1 >nul") { CreateNoWindow = true, UseShellExecute = false })!;
+		var exitedStart = exited.StartTime;
+		exited.WaitForExit();
 		int Run(string sha256) {
-			var script = ElevatedUpdate.CreateScript(exitedPid, zipFile, sha256, install, null);
+			var script = ElevatedUpdate.CreateScript(exited.Id, exitedStart, zipFile, sha256, install, null);
 			using var p = System.Diagnostics.Process.Start(new System.Diagnostics.ProcessStartInfo(ElevatedUpdate.PowerShellPath, ElevatedUpdate.CreateArguments(script)) { CreateNoWindow = true, UseShellExecute = false })!;
 			if (!p.WaitForExit(120_000)) {
 				p.Kill();
@@ -102,15 +101,21 @@ Check(ReleaseSelector.Select(new[] { ("v7.23.0.0-beta.1", false, true) }, false)
 
 		// The script waits for dnSpy to exit: with a running process it waits (stopped here after a few seconds)
 		using (var running = System.Diagnostics.Process.Start(new System.Diagnostics.ProcessStartInfo("cmd.exe", "/c ping -n 30 127.0.0.1 >nul") { CreateNoWindow = true, UseShellExecute = false })!) {
-			var script = ElevatedUpdate.CreateScript(running.Id, zipFile, hash, install, null);
-			using var ps = System.Diagnostics.Process.Start(new System.Diagnostics.ProcessStartInfo(ElevatedUpdate.PowerShellPath, ElevatedUpdate.CreateArguments(script)) { CreateNoWindow = true, UseShellExecute = false })!;
-			Check(!ps.WaitForExit(4000), "elevated update: waits while dnSpy is running");
-			ps.Kill();
+			var script = ElevatedUpdate.CreateScript(running.Id, running.StartTime, zipFile, hash, install, null);
+			using (var ps = System.Diagnostics.Process.Start(new System.Diagnostics.ProcessStartInfo(ElevatedUpdate.PowerShellPath, ElevatedUpdate.CreateArguments(script)) { CreateNoWindow = true, UseShellExecute = false })!) {
+				Check(!ps.WaitForExit(4000), "elevated update: waits while dnSpy is running");
+				ps.Kill();
+			}
+			// The same id with another start time: another process got dnSpy's id after it exited, so it doesn't wait
+			var reused = ElevatedUpdate.CreateScript(running.Id, running.StartTime.AddSeconds(-5), zipFile, hash, install, null);
+			using (var ps = System.Diagnostics.Process.Start(new System.Diagnostics.ProcessStartInfo(ElevatedUpdate.PowerShellPath, ElevatedUpdate.CreateArguments(reused)) { CreateNoWindow = true, UseShellExecute = false })!) {
+				Check(ps.WaitForExit(60_000) && ps.ExitCode == 0, "elevated update: a process that got dnSpy's id isn't waited for");
+			}
 			running.Kill(true);
 		}
 
 		try {
-			ElevatedUpdate.CreateScript(1, zipFile, "not a hash", install, null);
+			ElevatedUpdate.CreateScript(1, DateTime.Now, zipFile, "not a hash", install, null);
 			Check(false, "elevated update: a bad hash is refused");
 		}
 		catch (ArgumentException) { }
