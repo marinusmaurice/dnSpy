@@ -1,54 +1,171 @@
+<!--
+    Copyright (C) 2026- marinusmaurice@outlook.com
+-->
 # dnSpy
 
-dnSpy is a debugger and .NET assembly editor: decompile, debug and edit .NET programs (`.exe` and `.dll` files) without their source code.
+> **This is a continuation of the original dnSpy by 0xd4d: https://github.com/dnSpy/dnSpy**
+> The original was archived in December 2020 at version [6.1.8](https://github.com/dnSpy/dnSpy/releases/tag/v6.1.8). Version 7 picks up where it left off.
 
-**This is a continuation of the original dnSpy: https://github.com/dnSpy/dnSpy** (by 0xd4d, archived in December 2020; its last release is [6.1.8](https://github.com/dnSpy/dnSpy/releases/tag/v6.1.8)). Version 7 picks up where 6.1.8 left off.
+dnSpy is a debugger and .NET assembly editor. Use it to decompile, debug and edit .NET programs (`.exe` and `.dll` files) without their source code.
 
-## Why this new work
+## Download
 
-dnSpy is still one of the best tools to look inside .NET programs, but the original project stopped in 2020, and .NET kept moving. In practice that meant:
-
-- **It couldn't debug programs built for today's .NET.** dnSpy 6.1.8 itself runs on .NET 5, which has been out of support since 2022. To attach its debugger to a .NET program it needs a helper file, `dbgshim.dll`, that .NET used to install with the runtime. Since .NET 7 that file isn't installed anymore, so debugging any app built for .NET 7, 8, 9 or 10 failed with "Couldn't find dbgshim.dll". Only .NET Framework and older .NET apps could still be debugged.
-- **Its decompiler (the part that turns compiled code back into C#) was from 2017.** It was a copy of ILSpy 2.3, so it didn't know any C# feature added since then. Code that used `async`/`await` came out as the compiler's hidden state machine instead of the `await` you wrote; switch expressions, pattern matching, records, local functions, `out var` and so on came out as long, low-level code. The result was hard to read and often didn't compile, which also broke Export to Project.
-- **Its C# compiler was from 2018.** dnSpy uses Microsoft's Roslyn compiler for Edit Method (change a method and compile it back into the assembly), the C# Interactive window and the debugger's Watch expressions. Its Roslyn 2.10 only understood C# up to 7.3, so editing code or typing a Watch expression with anything from C# 8 or later (eg. `x is { Length: > 0 }`, `using var`, `??=`) failed.
-- **Its libraries were old**, several of them with known security problems that had been fixed in newer versions.
-- **Nobody maintained it**, so bugs stayed unfixed and nothing was done for new .NET releases.
-
-The goal of this work is to make dnSpy useful for current .NET again without breaking anything that already works: existing extensions, saved settings and the .NET Framework 4.8 build keep working next to the new .NET 10 build, and the old decompiler is still there if you want it.
-
-## Getting started
-
-1. Download the latest release from https://github.com/marinusmaurice/dnSpy/releases:
-   - `dnSpy-net-win64.zip` (or `dnSpy-net-win32.zip` for 32-bit): runs on .NET 10, nothing to install.
-   - `dnSpy-netframework.zip`: runs on .NET Framework 4.8 (`dnSpy.exe` is 64-bit, `dnSpy-x86.exe` 32-bit).
+1. Get the latest release from the [Releases page](https://github.com/marinusmaurice/dnSpy/releases):
+   | File | Runs on |
+   |---|---|
+   | `dnSpy-net-win64.zip` | .NET 10, 64-bit (nothing to install) |
+   | `dnSpy-net-win32.zip` | .NET 10, 32-bit (nothing to install) |
+   | `dnSpy-netframework.zip` | .NET Framework 4.8 (`dnSpy.exe` 64-bit, `dnSpy-x86.exe` 32-bit) |
 2. Unzip it anywhere and run `dnSpy.exe`.
-3. **Select "C# (ILSpy 11)" in the language drop-down in the toolbar** (next to the Start button). That's the new decompiler, and it's what gives you modern C# (`async`/`await`, records, switch expressions, ...), the choice of C# version and everything else listed below. New installs use it by default; if you've used an older dnSpy, check that it's selected. The other languages in the list ("C#", "Visual Basic", "IL") are the old ones.
-4. Its options are in **View → Options → Decompiler → C# (ILSpy 11)**, for example the C# version to decompile to (C# 1 to 14, or "Latest").
+3. In the toolbar's language box, pick **C# (ILSpy 11)**. That's the new decompiler, and new installs use it by default.
 
-You can also install it with Scoop: `scoop install https://github.com/marinusmaurice/dnSpy/releases/latest/download/dnspy.json`.
+You can also install it with Scoop:
+
+```
+scoop install https://github.com/marinusmaurice/dnSpy/releases/latest/download/dnspy.json
+```
 
 dnSpy checks for new versions once a day and can update itself (**Help → Check for Updates**).
 
-## Most important changes so far
+## Why this fork
 
-- **Debugs current .NET**: dnSpy runs on .NET 10 (self-contained, nothing to install) and on .NET Framework 4.8, and debugs .NET Core 3.1 and .NET 5–10 apps as well as .NET Framework and Unity.
-- **New decompiler, C# (ILSpy 11)**: the current ILSpy engine (ICSharpCode.Decompiler 11.2) gives back modern C#: `async`/`await`, records, switch expressions, patterns, LINQ queries, local functions, tuples, nullable types, collection expressions and more. You can choose the C# version to decompile to (also in the toolbar), so the code also compiles with an older compiler. dnSpy cleans up ILSpy's output further (eg. `let` clauses, string interpolation, no needless casts), and the debugger works with it (stepping, breakpoints, locals with the right names).
-- **Current C# for editing and debugging**: Roslyn 5.9, so Edit Method, C# Interactive and the debugger's Watch expressions understand C# 14. Watch expressions with `out var` and with `out`/`ref` locals work.
-- **Export to Project that builds**: export an assembly as a Visual Studio 2022/2026 project (SDK-style for .NET Core/.NET 5+) that compiles again; WPF apps, in C# and VB, keep their XAML event handlers.
-- **Open single-file apps, NuGet and Android packages**: browse the assemblies inside a .NET single-file app (`PublishSingleFile`), a `.nupkg` file or an Android `.apk`/`.aab` (Xamarin and .NET 6–10 MAUI apps, decompressed), or search nuget.org and your own NuGet feeds and open a package directly (**File → Open from NuGet**).
-- **Debug History (time-travel debugging)**: record every stop of a debugged program, then step back through earlier call stacks and locals, see what changed at each stop and a variable's value history (Options → Debugger → Debug History).
-- **Original source with Source Link**: right-click a member → **Go to Original Source** to see the real source file from its PDB (embedded, or downloaded from GitHub and the Microsoft/NuGet symbol servers).
-- **Find and compare faster**: a command palette (**F1**) runs any menu command or jumps to a type or member (`#name`); **Window → Compare Side by Side** shows the same code in two languages, eg. the new and the old C#, or C# and IL; the Search window searches the decompiled code too (plain text or `/regex/`), and the Analyzer groups usages by assembly.
-- **Debugging help**: an exception helper with the inner exceptions and call stack, an **Async Tasks** window (each async method's task, the `await` it's waiting at and which async method awaits it), a **Heap** window (objects by type, what grew since the last break, why an object is still alive, Find All Instances), dnSpy as the just-in-time debugger for `Debugger.Launch()`, an **HTTP Traffic** window (the program's HTTP and HTTPS requests live, like Fiddler, with the bodies, the code that sent them and break on a request or status), and **Generate PDB...** to debug a third-party DLL in Visual Studio with its decompiled code.
-- **Editing**: Edit Method/Class can **Test Compile** (Shift+F6) without changing the assembly; **Export Patch / Apply Patch** keeps your edits in a file and applies them to a newer version of the assembly.
-- **Assembly diff**: compare two versions of an assembly (select both and choose **Compare Assemblies**) and see the added, removed, renamed and changed types and members and resources, with a code diff; also `dnSpy.Console --diff` (text or JSON).
-- **Detect Protection**: right-click an assembly to see whether it looks obfuscated or packed (ConfuserEx, Costura, unreadable names, ...); also `dnSpy.Console --protection`.
-- **Portable mode and pinned files**: an empty `dnSpy.xml` next to `dnSpy.exe` keeps all settings in the dnSpy folder; pin files to the top of File → Recent Files.
-- **Updates itself**: dnSpy tells you when a new version is out, shows what changed and installs it for you.
-- **Release notes and tested releases**: every release says what changed ([CHANGELOG.md](CHANGELOG.md)), and is built by GitHub Actions with regression tests for the decompiler, Export to Project, XAML and the assembly diff.
+The original dnSpy stopped in 2020 and .NET moved on:
 
-The details of every change, what was tested and dnSpy's features are in [docs/CHANGES.md](docs/CHANGES.md); what's planned next is in [docs/TODO.md](docs/TODO.md). How to build dnSpy yourself is in [docs/CHANGES.md](docs/CHANGES.md#building).
+- It **couldn't debug .NET 7 or later** ("Couldn't find dbgshim.dll").
+- Its **decompiler was from 2017**: no `async`/`await`, records, switch expressions or other modern C#.
+- Its **C# compiler was from 2018**, so Edit Method and Watch expressions stopped at C# 7.3.
+- Its **libraries were old**, some with known security problems.
+
+This fork fixes all of that and adds new features. Existing extensions, saved settings and the .NET Framework 4.8 build still work.
+
+## New features since the fork
+
+The version in brackets is the release that added it. Details are in [CHANGELOG.md](CHANGELOG.md).
+
+### Modern .NET and C#
+
+- **Runs on .NET 10** (self-contained) and .NET Framework 4.8. **Debugs .NET Core 3.1 and .NET 5–10**, .NET Framework and Unity. *(7.0)*
+- **New decompiler, C# (ILSpy 11)**: modern C# output (`async`/`await`, records, switch expressions, patterns, LINQ, local functions, tuples, collection expressions). The old decompiler is still available. *(7.0, engine updated to ILSpy 11.2 in 7.4)*
+- **Choose the C# version** to decompile to (C# 1 to 14), in the options or the toolbar. *(7.0, toolbar in 7.25)*
+- **Roslyn 5.9**: Edit Method, C# Interactive and Watch expressions understand C# 14. *(7.0)*
+- **Decompile a whole namespace** in one view. *(7.25)*
+
+### Opening files
+
+- **Single-file apps** (`PublishSingleFile`) and **NuGet packages** (`.nupkg`). *(7.1)*
+- **Open from NuGet**: search nuget.org with a search dialog *(7.1, 7.2)*, including your own private feeds and local folders from NuGet.config *(7.11)*.
+- **Android packages** (`.apk`, `.aab`): Xamarin and .NET 6–10 MAUI apps, decompressed. *(7.17, .NET 9+ in 7.21)*
+- **Pin files** to the top of File → Recent Files. *(7.20)*
+- **Portable mode**: an empty `dnSpy.xml` next to `dnSpy.exe` keeps all settings in the dnSpy folder. *(7.12)*
+
+### Finding and comparing code
+
+- **Command palette (F1)**: run any menu command, or jump to a type or member with `#name`. *(7.6)*
+- **Compare Side by Side**: the same code in two languages, eg. new and old C#, or C# and IL. *(7.7)*
+- **Assembly diff**: compare two versions of an assembly: added, removed, renamed and changed types, members and resources, with a code diff. *(7.2, renames and resources in 7.10)*
+- **Search the decompiled code** (plain text or `/regex/`). *(7.23)*
+- **Analyzer**: results grouped by assembly *(7.23)*, and Export Results to CSV or text *(7.25)*.
+- **Go to Original Source**: the real source file through Source Link and the symbol servers. *(7.26)*
+
+### Debugging
+
+- **Debug History (time-travel debugging)**: record every stop, then step back through earlier call stacks and locals, see what changed and a variable's history. *(7.5)*
+- **Tracepoint keywords**: `$HITCOUNT`, `$TICK` and `$TIME`. *(7.9)*
+- **Dependent breakpoints** (only after another breakpoint was hit) and **one-time breakpoints**. *(7.22)*
+- **Exception helper**: the exception's message, inner exceptions and call stack when the debugger stops. *(7.23)*
+- **Async Tasks window**: every task, the `await` it's waiting at, and async call stacks. *(7.24, call stacks in 7.25, .NET Framework in 7.27)*
+- **Just-in-time debugger** for `Debugger.Launch()`. *(7.25)*
+- **Heap window**: objects by type and what grew since the last break *(7.27)*, **Find All Instances** *(7.27)*, **Why Alive?** and Export *(7.28)*.
+- **Heap snapshots**: compare two breaks to find leaks, and see each object's **retained size**. *(7.33)*
+- **HTTP Traffic window**: live HTTP and HTTPS requests of the debugged program, like Fiddler, with bodies, call stacks and break on a request. *(7.29, incoming bodies in 7.30)*
+- **Bookmark notes**. *(7.28)*
+
+### Editing
+
+- **Export to Project that builds**: Visual Studio 2022/2026 projects, SDK-style for .NET Core/.NET 5+, WPF apps keep their XAML event handlers *(7.0)*, WinForms forms get `.resx` files *(7.21.1)*.
+- **Export Patch / Apply Patch**: keep your edits in a file and apply them to a newer version of the assembly. *(7.8)*
+- **Test Compile (Shift+F6)** in Edit Method/Class, without changing the assembly. *(7.19)*
+- **Generate PDB**: debug a third-party DLL in Visual Studio with its decompiled code. *(7.22, menu in 7.23)*
+- **IL editor**: a stack check as you edit, a warning before saving broken IL, and **branch arrows**. *(7.34)*
+
+### Deobfuscation
+
+- **Detect Protection**: does an assembly look obfuscated or packed (ConfuserEx, Costura, unreadable names, ...)? *(7.15, menu in 7.16)*
+- **Rename (F2)** types and members, and **rename maps** to apply your names to the next version of an obfuscated assembly. *(7.31)*
+- **Decrypt Strings**: replace an obfuscator's string decryptor calls by the strings, without running the obfuscated code. *(7.32)*
+
+### Command line (`dnSpy.Console`)
+
+- `--diff` (text or `--json`) *(7.2, 7.13)*, `--list` *(7.14)*, `--protection` *(7.15)*, `--patch-create`/`--patch-apply` *(7.8)*, `--pdb` *(7.22)*, `--rename-create`/`--rename-apply` *(7.31)*, `--decrypt-strings` *(7.32)*.
+- `--batch jobs.txt` and `@response` files. *(7.18)*
+
+### Updates and releases
+
+- **Updates itself**: shows what changed and installs the new version. *(7.3)*, with optional beta versions *(7.22)*.
+- **Scoop and winget** manifests with every release. *(7.26)*
+- Every release is built by GitHub Actions and checked by regression tests.
+
+## Bug fixes since the fork
+
+### Debugger
+
+- Debugging .NET 7–10 apps failed with "Couldn't find dbgshim.dll". *(7.0)*
+- Stepping over `await` with the new decompiler ran to the end of the program. *(7.0)*
+- Watch expressions with `out var` or `out`/`ref` locals showed "Internal debugger error". *(7.0.4, 7.0.5)*
+- The heap walk stopped early in .NET Framework programs, and dnSpy's own handles could crash the debugged program. *(7.27)*
+- The Async Tasks window found no tasks in .NET Framework programs. *(7.26)*
+- Why Alive? on .NET showed dnSpy's own handle instead of the program's references. *(7.33)*
+- The .NET Framework build couldn't start debugging when dnSpy was started through a short path (`C:\Users\ADMINI~1\...`). *(7.33.1)*
+
+### HTTP Traffic window
+
+- With capture on, dnSpy skipped the stop at the program's entry point. *(7.29.1)*
+- A status filter didn't show new requests. *(7.29.1)*
+- Start Capture didn't work after detaching and attaching again. *(7.29.2)*
+- Failed .NET Framework requests stayed pending. *(7.29.2)*
+- Partial bodies looked complete, and Clear didn't restart the numbering. *(7.29.2)*
+- Start Capture failed when the program was stopped where no code can run. *(7.29.3)*
+- Save as HAR corrupted binary bodies. *(7.29.3)*
+- Other debugged programs stayed paused while one loaded the capture. *(7.29.3)*
+- Memory use had no limit. *(7.29.3)*
+
+### Decompiler and Export to Project
+
+- Exported WPF projects lost every XAML event handler. *(7.0.1)*
+- Export to Project of Roslyn didn't build, and a `file` class could decompile to nothing. *(7.0.2)*
+- Span collection expressions inside `fixed` exported as code that doesn't compile. *(7.0.3)*
+- Exported VB WPF apps didn't build. *(7.0.7)*
+- Many decompiler fixes from the ILSpy 11.2 engine. *(7.4)*
+- WinForms resources were exported as raw `.resources` files instead of `.resx`. *(7.21.1)*
+- Types with `extern` local functions (eg. `Thread` in .NET 7+) showed a NullReferenceException. *(7.29.3)*
+
+### Other
+
+- An option label in the C# (ILSpy 11) settings was cut off. *(7.0.6)*
+- Building in Visual Studio after a single-framework build failed with a confusing path error. *(7.2)*
+- Help → Latest Release opened the original dnSpy's releases. *(7.3)*
+- A build could keep an old copy of the decompiler after a package update. *(7.4)*
+- The title bar showed the full commit hash. *(7.5)*
+- A broken `.nupkg`, `.apk` or `.aab` file stayed locked after dnSpy failed to open it. *(7.18.1)*
+
+## Building
+
+You need Windows, the .NET 10 SDK and Visual Studio 2026 (or its Build Tools).
+
+```
+git clone --recursive https://github.com/marinusmaurice/dnSpy.git
+cd dnSpy
+./build.ps1
+```
+
+`--recursive` matters: the decompiler, the Roslyn expression compiler, the Mono debugger, the tree view and the images are git submodules. If you forgot it, run `git submodule update --init --recursive`. More details are in [docs/CHANGES.md](docs/CHANGES.md#building).
+
+## More
+
+- [CHANGELOG.md](CHANGELOG.md): what changed in each release.
+- [docs/CHANGES.md](docs/CHANGES.md): technical details of every change.
+- [docs/TODO.md](docs/TODO.md): ideas that are left.
 
 ## License
 
-dnSpy is licensed under [GPLv3](dnSpy/dnSpy/LicenseInfo/GPLv3.txt). [Credits](dnSpy/dnSpy/LicenseInfo/CREDITS.txt).
+dnSpy is licensed under [GPLv3](dnSpy/dnSpy/LicenseInfo/GPLv3.txt). See [Credits](dnSpy/dnSpy/LicenseInfo/CREDITS.txt).
