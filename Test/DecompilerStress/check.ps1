@@ -351,8 +351,24 @@ try {
 	Write-Host '== Extern local functions (System.Private.CoreLib)'
 	$runtimeDirs = Get-ChildItem (Join-Path $env:ProgramFiles 'dotnet\shared\Microsoft.NETCore.App') -Directory -ErrorAction SilentlyContinue |
 		Where-Object { $_.Name -match '^(\d+)\.\d+\.\d+$' -and [int]$Matches[1] -ge 7 } | Sort-Object { [version]$_.Name }
-	$coreLibDir = $runtimeDirs | Select-Object -Last 1
-	if ($null -eq $coreLibDir) { Write-Host '  (skipped: no .NET 7 or later runtime)' }
+	# The check is for .NET 7-10's CoreLib (Thread and Monitor have [LibraryImport] extern local functions). A newer runtime
+	# (eg. .NET 11 on the CI runner) may not have them any more: its Thread and Monitor only have to decompile without errors.
+	foreach ($newer in ($runtimeDirs | Where-Object { [int]($_.Name.Split('.')[0]) -gt 10 })) {
+		$newerFile = Join-Path $newer.FullName 'System.Private.CoreLib.dll'
+		foreach ($typeName in 'System.Threading.Thread', 'System.Threading.Monitor') {
+			$code = & $Console --no-color --no-tokens -t $typeName $newerFile 2>&1 | Out-String
+			if ($LASTEXITCODE -or $code -cmatch '(?m)^ERROR: ') {
+				Fail "$typeName (.NET $($newer.Name)) didn't decompile"
+				$code -split "`n" | Select-Object -First 15 | ForEach-Object { Write-Host "  $_" }
+			}
+			else {
+				$pinvoke = if ($code -match 'static extern [^\r\n]*__PInvoke\(') { 'with' } else { 'without' }
+				Write-Host "  OK: $typeName of .NET $($newer.Name) decompiled ($pinvoke extern local functions)"
+			}
+		}
+	}
+	$coreLibDir = $runtimeDirs | Where-Object { [int]($_.Name.Split('.')[0]) -le 10 } | Select-Object -Last 1
+	if ($null -eq $coreLibDir) { Write-Host '  (skipped: no .NET 7 to 10 runtime)' }
 	else {
 		$coreLibFile = Join-Path $coreLibDir.FullName 'System.Private.CoreLib.dll'
 		$externOk = $true
