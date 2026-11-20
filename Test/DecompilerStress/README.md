@@ -8,7 +8,7 @@
 | File | What it is |
 |---|---|
 | `check.ps1` | Automated regression test (runs in CI): see below. |
-| `check-publish.ps1` | Release smoke test (runs in CI on the three release builds): `-PublishDir <folder with dnSpy.exe and bin\>` checks that C# (ILSpy 11) is in the build, then runs `check.ps1` with that build's own dnSpy.Console. |
+| `check-publish.ps1` | Release smoke test (runs in CI on the three release builds): `-PublishDir <folder with dnSpy.exe and bin\>` checks that C# (ILSpy 11) is in the build and that a project made with `dotnet new dnspy-extension` builds against it (only the extension's own files in its build folder), then runs `check.ps1` with that build's own dnSpy.Console. |
 | `../DebugInfoCheck` | Debugger info test that `check.ps1` runs (.NET builds only): see below. |
 | `../DebugHistoryCheck` | Debug History (time-travel debugging) test that `check.ps1` runs: compiles dnSpy.Debugger's snapshot and history classes on their own and checks the ring buffer (drop oldest, shrink, clear) and Step Back/Forward/Return to Live. |
 | `../CommandPaletteCheck` | Command palette test that `check.ps1` runs: compiles dnSpy's command palette matcher on its own and checks the fuzzy matching (words, initials, word order), the order of the results, the access key removal and the type/member texts (`#` search) of a real module. |

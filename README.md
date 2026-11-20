@@ -107,6 +107,10 @@ The version in brackets is the release that added it. Details are in [CHANGELOG.
 - `--diff` (text or `--json`) *(7.2, 7.13)*, `--list` *(7.14)*, `--protection` *(7.15)*, `--patch-create`/`--patch-apply` *(7.8)*, `--pdb` *(7.22)*, `--rename-create`/`--rename-apply` *(7.31)*, `--decrypt-strings` *(7.32)*.
 - `--batch jobs.txt` and `@response` files. *(7.18)*
 
+### Extensions
+
+- **`dotnet new dnspy-extension`**: a project template for your own extension; `dotnet run` starts dnSpy with it loaded. See [docs/EXTENSIONS.md](docs/EXTENSIONS.md). *(7.38)*
+
 ### Updates and releases
 
 - **Updates itself**: shows what changed and installs the new version. *(7.3)*, with optional beta versions *(7.22)*, also in Program Files (Windows asks for permission) *(7.37)*.
@@ -173,6 +177,7 @@ cd dnSpy
 - [CHANGELOG.md](CHANGELOG.md): what changed in each release.
 - [docs/CHANGES.md](docs/CHANGES.md): technical details of every change.
 - [docs/TODO.md](docs/TODO.md): ideas that are left.
+- [docs/EXTENSIONS.md](docs/EXTENSIONS.md): writing an extension.
 
 ## License
 

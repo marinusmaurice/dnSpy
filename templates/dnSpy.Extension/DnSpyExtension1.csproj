@@ -1,0 +1,53 @@
+<!--#if (false)
+    Copyright (C) 2026- marinusmaurice@outlook.com
+#endif-->
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <!-- Must match your dnSpy: net10.0-windows for dnSpy-net-win64.zip / dnSpy-net-win32.zip, net48 for dnSpy-netframework.zip -->
+    <TargetFramework>TARGET_FRAMEWORK_VALUE</TargetFramework>
+    <UseWPF>true</UseWPF>
+    <Nullable>enable</Nullable>
+    <LangVersion>latest</LangVersion>
+    <RootNamespace>DnSpyExtension1</RootNamespace>
+    <!-- dnSpy only loads extensions whose file name ends in .x.dll -->
+    <AssemblyName>DnSpyExtension1.x</AssemblyName>
+
+    <!-- The folder with dnSpy.exe. Or build with -p:DnSpyDir="D:\Tools\dnSpy" -->
+    <DnSpyDir Condition=" '$(DnSpyDir)' == '' ">DNSPY_DIR_VALUE</DnSpyDir>
+    <!-- dnSpy's own files are in its bin folder -->
+    <DnSpyBinDir>$([System.IO.Path]::Combine($(DnSpyDir), 'bin'))</DnSpyBinDir>
+    <DnSpyBinDir Condition=" !Exists('$(DnSpyBinDir)\dnSpy.Contracts.DnSpy.dll') ">$(DnSpyDir)</DnSpyBinDir>
+
+    <!-- dotnet run starts dnSpy in a new window (the multiple option) with the extension loaded from the build folder -->
+    <RunCommand>$([System.IO.Path]::Combine($(DnSpyDir), 'dnSpy.exe'))</RunCommand>
+  </PropertyGroup>
+
+  <!-- dnSpy already has these files: build against them, don't copy them to the build folder -->
+  <ItemGroup>
+    <Reference Include="dnSpy.Contracts.DnSpy" HintPath="$(DnSpyBinDir)\dnSpy.Contracts.DnSpy.dll" Private="false" />
+    <Reference Include="dnSpy.Contracts.Logic" HintPath="$(DnSpyBinDir)\dnSpy.Contracts.Logic.dll" Private="false" />
+    <Reference Include="dnlib" HintPath="$(DnSpyBinDir)\dnlib.dll" Private="false" />
+  </ItemGroup>
+<!--#if (isNetFramework) -->
+  <ItemGroup>
+    <Reference Include="System.ComponentModel.Composition" />
+  </ItemGroup>
+<!--#else -->
+  <ItemGroup>
+    <Reference Include="System.ComponentModel.Composition" HintPath="$(DnSpyBinDir)\System.ComponentModel.Composition.dll" Private="false" />
+  </ItemGroup>
+<!--#endif -->
+
+  <!-- The build folder is only known after the project is read -->
+  <Target Name="SetDnSpyRunArguments" BeforeTargets="ComputeRunArguments">
+    <PropertyGroup>
+      <RunArguments>--multiple --extension-directory "$(TargetDir.TrimEnd('\'))"</RunArguments>
+    </PropertyGroup>
+  </Target>
+
+  <Target Name="CheckDnSpyDir" BeforeTargets="ResolveAssemblyReferences" Condition=" !Exists('$(DnSpyBinDir)\dnSpy.Contracts.DnSpy.dll') ">
+    <Error Text="dnSpy wasn't found in '$(DnSpyDir)' (no dnSpy.Contracts.DnSpy.dll in it or its bin folder). Set DnSpyDir in $(MSBuildProjectFile) or build with -p:DnSpyDir=&quot;folder with dnSpy.exe&quot;." />
+  </Target>
+
+</Project>

@@ -7,6 +7,14 @@ What changed in each release of this fork, newest first. The release workflow pu
 
 Each section starts with a short summary, then **New Features** (new things you can do), **Enhancements** (existing things that work better) and **Bug Fixes**, with a link to the commit for each item. Technical details are in [All changes in detail](docs/CHANGES.md#all-changes-in-detail) and in [docs/MODERNIZATION_PLAN.md](docs/MODERNIZATION_PLAN.md).
 
+## 7.38.0.0
+
+A project template for writing dnSpy extensions. Nothing in dnSpy itself changed. Also has everything in 7.37.0.0 and earlier.
+
+### New Features
+
+- **`dotnet new dnspy-extension`**: creates an extension that builds against the dnSpy you have installed, with a menu command and an Assembly Explorer context menu command to start from. `dotnet run` starts dnSpy with the extension loaded. See [docs/EXTENSIONS.md](docs/EXTENSIONS.md).
+
 ## 7.37.0.0
 
 Save heap snapshots to compare a later debugging session, updates for a dnSpy in Program Files, and a switch for font ligatures. Also has everything in 7.36.0.0 and earlier.

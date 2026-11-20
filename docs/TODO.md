@@ -123,7 +123,7 @@ Suggested first, in this order:
 
 - [ ] **M** Scripting with dnSpy's own API (C# Interactive with access to the open assemblies).
 - [ ] **M** Extension manager: browse, install and update extensions from a GitHub-based list.
-- [ ] **S** `dotnet new dnspy-extension` template + docs.
+- [x] **S** `dotnet new dnspy-extension` template + docs (7.38.0.0: `templates/dnSpy.Extension`, [EXTENSIONS.md](EXTENSIONS.md); built against each release build in CI. Not on NuGet: installed from the source folder).
 - [ ] **S–M** dnSpy.Console: JSON output, batch export, headless scripts (`--diff`/`--diff-code` are in 7.2.0.0; `--diff --json` is in 7.13.0.0, `--list`/`--list --json` (types and members with visibility and tokens) in 7.14.0.0, [CONSOLE_JSON.md](CONSOLE_JSON.md), tested by `check.ps1`). Batch export and scripts: `--batch file` (one command line per line) and `@file` response files are in 7.18.0.0. Next: scripts that use dnSpy's API (see Scripting below).
 
 ### Platform

@@ -1,0 +1,53 @@
+{
+  "$schema": "http://json.schemastore.org/template",
+  "author": "dnSpy",
+  "classifications": [ "dnSpy", "Extension", "WPF" ],
+  "identity": "dnSpy.Extension.CSharp",
+  "name": "dnSpy extension",
+  "description": "A dnSpy extension with a menu and an Assembly Explorer context menu command. It builds against the dnSpy you have installed.",
+  "shortName": "dnspy-extension",
+  "sourceName": "DnSpyExtension1",
+  "preferNameDirectory": true,
+  "tags": {
+    "language": "C#",
+    "type": "project"
+  },
+  "symbols": {
+    "dnspyDir": {
+      "type": "parameter",
+      "datatype": "string",
+      "defaultValue": "C:\\Program Files\\dnSpy",
+      "replaces": "DNSPY_DIR_VALUE",
+      "displayName": "dnSpy folder",
+      "description": "The folder with dnSpy.exe. The extension builds against the dnSpy files in it, and dotnet run starts it."
+    },
+    "framework": {
+      "type": "parameter",
+      "datatype": "choice",
+      "defaultValue": "net10.0-windows",
+      "replaces": "TARGET_FRAMEWORK_VALUE",
+      "displayName": "Framework",
+      "description": "Must match your dnSpy: net10.0-windows for dnSpy-net-win64.zip and dnSpy-net-win32.zip, net48 for dnSpy-netframework.zip.",
+      "choices": [
+        { "choice": "net10.0-windows", "description": "dnSpy for .NET (dnSpy-net-win64.zip, dnSpy-net-win32.zip)" },
+        { "choice": "net48", "description": "dnSpy for .NET Framework (dnSpy-netframework.zip)" }
+      ]
+    },
+    "isNetFramework": {
+      "type": "computed",
+      "value": "(framework == \"net48\")"
+    }
+  },
+  "guids": [
+    "7C2E1B5A-3D4F-4A6B-9E8D-1F2A3B4C5D6E",
+    "2A9F4E61-8B3C-4D7E-A5F0-6C1B2D3E4F5A",
+    "E5B8C1D2-4F6A-4B3C-8D9E-0A1B2C3D4E5F"
+  ],
+  "sources": [
+    {
+      "modifiers": [
+        { "exclude": [ "**/bin/**", "**/obj/**", "**/.vs/**" ] }
+      ]
+    }
+  ]
+}
