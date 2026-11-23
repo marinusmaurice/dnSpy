@@ -54,6 +54,7 @@ The version in brackets is the release that added it. Details are in [CHANGELOG.
 - **Choose the C# version** to decompile to (C# 1 to 14), in the options or the toolbar. *(7.0, toolbar in 7.25)*
 - **Roslyn 5.9**: Edit Method, C# Interactive and Watch expressions understand C# 14. *(7.0)*
 - **Decompile a whole namespace** in one view. *(7.25)*
+- **ReadyToRun**: see the native x64/x86 code that precompiled assemblies (eg. the .NET framework) run, with the methods they call named. *(7.39)*
 
 ### Opening files
 
@@ -110,6 +111,7 @@ The version in brackets is the release that added it. Details are in [CHANGELOG.
 ### Extensions
 
 - **`dotnet new dnspy-extension`**: a project template for your own extension; `dotnet run` starts dnSpy with it loaded. See [docs/EXTENSIONS.md](docs/EXTENSIONS.md). *(7.38)*
+- **Scripts on the open assemblies** in C# Interactive: `Modules`, `SelectedMember`, `Decompile(...)`, `Refresh()`. See [docs/SCRIPTING.md](docs/SCRIPTING.md). *(7.39)*
 
 ### Updates and releases
 
@@ -178,6 +180,7 @@ cd dnSpy
 - [docs/CHANGES.md](docs/CHANGES.md): technical details of every change.
 - [docs/TODO.md](docs/TODO.md): ideas that are left.
 - [docs/EXTENSIONS.md](docs/EXTENSIONS.md): writing an extension.
+- [docs/SCRIPTING.md](docs/SCRIPTING.md): scripts on the open assemblies.
 
 ## License
 

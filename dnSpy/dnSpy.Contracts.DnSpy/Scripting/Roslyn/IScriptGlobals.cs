@@ -1,5 +1,6 @@
 /*
     Copyright (C) 2014-2019 de4dot@gmail.com
+    Copyright (C) 2026- marinusmaurice@outlook.com
 
     This file is part of dnSpy
 
@@ -18,11 +19,13 @@
 */
 
 using System;
+using System.Collections.Generic;
 using System.Threading;
 using System.Windows;
 using System.Windows.Threading;
 using dnSpy.Contracts.App;
 using dnSpy.Contracts.Text;
+using dnlib.DotNet;
 
 namespace dnSpy.Contracts.Scripting.Roslyn {
 	/// <summary>
@@ -267,6 +270,43 @@ namespace dnSpy.Contracts.Scripting.Roslyn {
 		/// <typeparam name="T">Type of service</typeparam>
 		/// <returns></returns>
 		T? TryResolve<T>() where T : class;
+
+		/// <summary>
+		/// The modules of the assemblies open in the Assembly Explorer. Changes a script makes to them (eg. renames)
+		/// show after <see cref="Refresh"/> and are saved with File, Save Module.
+		/// </summary>
+		IList<ModuleDef> Modules { get; }
+
+		/// <summary>
+		/// Returns the open module whose file name, module name or assembly name is <paramref name="name"/> (the
+		/// extension can be left out), or null
+		/// </summary>
+		/// <param name="name">Name, eg. "System.Private.CoreLib"</param>
+		/// <returns></returns>
+		ModuleDef? GetModule(string name);
+
+		/// <summary>
+		/// The type, method, field, property or event selected in the Assembly Explorer, or null
+		/// </summary>
+		IMemberDef? SelectedMember { get; }
+
+		/// <summary>
+		/// The module of the node selected in the Assembly Explorer, or null
+		/// </summary>
+		ModuleDef? SelectedModule { get; }
+
+		/// <summary>
+		/// Decompiles a type, method, field, property, event, module or assembly and returns the code
+		/// </summary>
+		/// <param name="member">What to decompile</param>
+		/// <param name="language">Language name (eg. "C#", "IL", "ReadyToRun") or null for the selected language</param>
+		/// <returns></returns>
+		string Decompile(object member, string? language = null);
+
+		/// <summary>
+		/// Redraws the Assembly Explorer and the open tabs after a script changed the modules (eg. renamed members)
+		/// </summary>
+		void Refresh();
 
 		/// <summary>
 		/// Shows a message box

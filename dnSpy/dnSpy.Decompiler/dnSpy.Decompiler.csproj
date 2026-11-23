@@ -1,4 +1,7 @@
 <Project Sdk="Microsoft.NET.Sdk.WindowsDesktop">
+  <!--
+    Copyright (C) 2026- marinusmaurice@outlook.com
+  -->
 
   <Import Project="..\..\DnSpyCommon.props" />
 
@@ -31,6 +34,11 @@
 
   <ItemGroup>
     <ProjectReference Include="..\dnSpy.Contracts.Logic\dnSpy.Contracts.Logic.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <!-- The ReadyToRun language disassembles precompiled code -->
+    <PackageReference Include="Iced" Version="$(IcedVersion)" />
   </ItemGroup>
 
 </Project>

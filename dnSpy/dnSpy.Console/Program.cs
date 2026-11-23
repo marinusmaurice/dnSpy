@@ -257,6 +257,9 @@ namespace dnSpy_Console {
 				foreach (var l in GetLanguagesInAssembly(asmName))
 					yield return l;
 			}
+			// -l ReadyToRun: the precompiled native code of a ReadyToRun assembly
+			foreach (var l in new dnSpy.Decompiler.ReadyToRun.ReadyToRunDecompilerProvider().Create())
+				yield return l;
 		}
 
 		static IEnumerable<IDecompiler> GetLanguagesInAssembly(string asmName) {

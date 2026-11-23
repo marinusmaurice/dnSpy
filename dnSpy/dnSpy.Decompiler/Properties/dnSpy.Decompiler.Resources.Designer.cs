@@ -464,5 +464,104 @@ namespace dnSpy.Decompiler.Properties {
                 return ResourceManager.GetString("VisualBasic_Extension_Method", resourceCulture);
             }
         }
+
+        /// <summary>
+        ///   Looks up a localized string similar to This assembly has no precompiled native code (it isn't ReadyToRun). The JIT compiles its methods when they're first called..
+        /// </summary>
+        internal static string ReadyToRun_NotReadyToRun {
+            get {
+                return ResourceManager.GetString("ReadyToRun_NotReadyToRun", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   Looks up a localized string similar to This assembly's native code is in another file, a composite ReadyToRun image: {0}.
+        /// </summary>
+        internal static string ReadyToRun_Composite {
+            get {
+                return ResourceManager.GetString("ReadyToRun_Composite", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   Looks up a localized string similar to This assembly's native code is for {0}: only x86 and x64 code can be shown..
+        /// </summary>
+        internal static string ReadyToRun_UnsupportedMachine {
+            get {
+                return ResourceManager.GetString("ReadyToRun_UnsupportedMachine", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   Looks up a localized string similar to ReadyToRun {0}, {1} code for {2}.
+        /// </summary>
+        internal static string ReadyToRun_ImageInfo {
+            get {
+                return ResourceManager.GetString("ReadyToRun_ImageInfo", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   Looks up a localized string similar to {0} of {1} methods are precompiled.
+        /// </summary>
+        internal static string ReadyToRun_MethodCount {
+            get {
+                return ResourceManager.GetString("ReadyToRun_MethodCount", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   Looks up a localized string similar to {0} bytes at RVA {1}.
+        /// </summary>
+        internal static string ReadyToRun_CodeHeader {
+            get {
+                return ResourceManager.GetString("ReadyToRun_CodeHeader", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   Looks up a localized string similar to Funclet (an exception handler, eg. catch or finally): {0} bytes at RVA {1}.
+        /// </summary>
+        internal static string ReadyToRun_FuncletHeader {
+            get {
+                return ResourceManager.GetString("ReadyToRun_FuncletHeader", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   Looks up a localized string similar to No code: the method has no body (eg. it's abstract or extern)..
+        /// </summary>
+        internal static string ReadyToRun_NoBody {
+            get {
+                return ResourceManager.GetString("ReadyToRun_NoBody", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   Looks up a localized string similar to Not precompiled here: generic code is compiled for each instantiation, which this view doesn't show..
+        /// </summary>
+        internal static string ReadyToRun_Generic {
+            get {
+                return ResourceManager.GetString("ReadyToRun_Generic", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   Looks up a localized string similar to Not precompiled: the JIT compiles this method when it's first called..
+        /// </summary>
+        internal static string ReadyToRun_NotPrecompiled {
+            get {
+                return ResourceManager.GetString("ReadyToRun_NotPrecompiled", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   Looks up a localized string similar to Fields have no code. Select a method or a type to see its native code..
+        /// </summary>
+        internal static string ReadyToRun_FieldNoCode {
+            get {
+                return ResourceManager.GetString("ReadyToRun_FieldNoCode", resourceCulture);
+            }
+        }
     }
 }

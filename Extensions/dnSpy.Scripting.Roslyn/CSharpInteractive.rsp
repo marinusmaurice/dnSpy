@@ -1,3 +1,4 @@
+# Copyright (C) 2026- marinusmaurice@outlook.com
 # C:\Program Files (x86)\Microsoft Visual Studio 14.0\Common7\IDE\PrivateAssemblies\CSharpInteractive.rsp
 /r:System
 /r:System.Core
@@ -22,3 +23,5 @@
 /u:dnSpy.Contracts.Scripting.Roslyn
 # For TextColor
 /u:dnSpy.Contracts.Text
+# For the open assemblies (Modules, SelectedMember, ...)
+/u:dnlib.DotNet

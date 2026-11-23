@@ -7,6 +7,15 @@ What changed in each release of this fork, newest first. The release workflow pu
 
 Each section starts with a short summary, then **New Features** (new things you can do), **Enhancements** (existing things that work better) and **Bug Fixes**, with a link to the commit for each item. Technical details are in [All changes in detail](docs/CHANGES.md#all-changes-in-detail) and in [docs/MODERNIZATION_PLAN.md](docs/MODERNIZATION_PLAN.md).
 
+## 7.39.0.0
+
+See the precompiled native code of ReadyToRun assemblies, and scripts that work on the open assemblies. Also has everything in 7.38.0.0 and earlier.
+
+### New Features
+
+- **ReadyToRun** language (in the toolbar's language list): shows the x64 or x86 code that a ReadyToRun assembly was precompiled to, eg. the .NET framework's own assemblies. Each method's code is listed with its address and bytes, and calls and loads through import cells name what they use (the method called, a string literal, a type), as links. It also works in `dnSpy.Console -l ReadyToRun`.
+- **Scripts on the open assemblies** (View → C# Interactive): `Modules`, `GetModule(name)`, `SelectedMember`, `SelectedModule`, `Decompile(member, language)` and `Refresh()`, eg. to rename every method that matches a pattern and see the result at once. See [docs/SCRIPTING.md](docs/SCRIPTING.md).
+
 ## 7.38.0.0
 
 A project template for writing dnSpy extensions. Nothing in dnSpy itself changed. Also has everything in 7.37.0.0 and earlier.

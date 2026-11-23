@@ -252,4 +252,37 @@
   <data name="VisualBasic_Extension_Method" xml:space="preserve">
     <value>Extension</value>
   </data>
+  <data name="ReadyToRun_NotReadyToRun" xml:space="preserve">
+    <value>This assembly has no precompiled native code (it isn't ReadyToRun). The JIT compiles its methods when they're first called.</value>
+  </data>
+  <data name="ReadyToRun_Composite" xml:space="preserve">
+    <value>This assembly's native code is in another file, a composite ReadyToRun image: {0}</value>
+  </data>
+  <data name="ReadyToRun_UnsupportedMachine" xml:space="preserve">
+    <value>This assembly's native code is for {0}: only x86 and x64 code can be shown.</value>
+  </data>
+  <data name="ReadyToRun_ImageInfo" xml:space="preserve">
+    <value>ReadyToRun {0}, {1} code for {2}</value>
+  </data>
+  <data name="ReadyToRun_MethodCount" xml:space="preserve">
+    <value>{0} of {1} methods are precompiled</value>
+  </data>
+  <data name="ReadyToRun_CodeHeader" xml:space="preserve">
+    <value>{0} bytes at RVA {1}</value>
+  </data>
+  <data name="ReadyToRun_FuncletHeader" xml:space="preserve">
+    <value>Funclet (an exception handler, eg. catch or finally): {0} bytes at RVA {1}</value>
+  </data>
+  <data name="ReadyToRun_NoBody" xml:space="preserve">
+    <value>No code: the method has no body (eg. it's abstract or extern).</value>
+  </data>
+  <data name="ReadyToRun_Generic" xml:space="preserve">
+    <value>Not precompiled here: generic code is compiled for each instantiation, which this view doesn't show.</value>
+  </data>
+  <data name="ReadyToRun_NotPrecompiled" xml:space="preserve">
+    <value>Not precompiled: the JIT compiles this method when it's first called.</value>
+  </data>
+  <data name="ReadyToRun_FieldNoCode" xml:space="preserve">
+    <value>Fields have no code. Select a method or a type to see its native code.</value>
+  </data>
 </root>

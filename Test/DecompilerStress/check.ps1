@@ -30,6 +30,7 @@
 	  - the type and member list of ../DiffCases as text and as JSON (--list, --list --json)
 	  - obfuscator/packer detection of ../ProtectionCases' assembly and of DiffCases (--protection, --protection --json)
 	  - response files (@file) and batch files (--batch file)
+	  - the ReadyToRun language on the newest .NET 7-10 runtime's System.Private.CoreLib, and on dnlib.dll (not ReadyToRun)
 	Exits with 1 when a check fails.
 #>
 param(
@@ -382,6 +383,49 @@ try {
 			}
 		}
 		if ($externOk) { Write-Host "  OK: Thread and Monitor of .NET $($coreLibDir.Name) with their [LibraryImport] extern local functions" }
+	}
+
+	# ReadyToRun language (dnSpy.Decompiler/ReadyToRun): the runtime's CoreLib is precompiled. Math.Max(int, int) must
+	# disassemble to a compare and a ret, Environment.NewLine must load "\r\n" through a string import cell, a call
+	# through an import cell must name the method it calls, and an assembly without native code must say so.
+	Write-Host '== ReadyToRun'
+	$r2rDir = $runtimeDirs | Where-Object { [int]($_.Name.Split('.')[0]) -le 10 } | Select-Object -Last 1
+	if ($null -eq $r2rDir) { Write-Host '  (skipped: no .NET 7 to 10 runtime)' }
+	else {
+		$r2rFile = Join-Path $r2rDir.FullName 'System.Private.CoreLib.dll'
+		$r2rOk = $true
+		$math = & $Console --no-color -l ReadyToRun -t System.Math $r2rFile 2>&1 | Out-String
+		$maxInt = [regex]::Match($math, '(?s)// System\.Math\.Max\(Int32, Int32\)\r?\n(.*?)\r?\n\r?\n').Groups[1].Value
+		if ($LASTEXITCODE -or $math -cmatch '(?m)^ERROR: ' -or $maxInt -notmatch '\bcmp\b' -or $maxInt -notmatch '\bret\b') {
+			$r2rOk = $false
+			Fail "ReadyToRun: Math.Max(int, int) of .NET $($r2rDir.Name) wasn't disassembled"
+			($maxInt, $math)[[int]($maxInt -eq '')] -split "`n" | Select-Object -First 15 | ForEach-Object { Write-Host "  $_" }
+		}
+		$envCode = & $Console --no-color -l ReadyToRun -t System.Environment $r2rFile 2>&1 | Out-String
+		if ($envCode -notmatch [regex]::Escape('; StringHandle "\r\n"')) {
+			$r2rOk = $false
+			Fail "ReadyToRun: Environment.NewLine of .NET $($r2rDir.Name) didn't load ""\r\n"" through an import cell"
+		}
+		# Only the names in a comment are escaped, not the ", " between parameters (it was written as  )
+		$stringCode = & $Console --no-color -l ReadyToRun -t System.String $r2rFile 2>&1 | Out-String
+		if ($stringCode -match '\\u0020' -or $stringCode -notmatch '; System\.[\w.]+\([^)]*, [^)]*\)') {
+			$r2rOk = $false
+			Fail "ReadyToRun: the methods called by System.String of .NET $($r2rDir.Name) aren't named with their parameters"
+		}
+		if ($envCode -notmatch 'call\s+qword ptr \[[0-9A-F]+h\]\s+; System\.[\w.]+\(') {
+			$r2rOk = $false
+			Fail "ReadyToRun: no call through an import cell named its method in System.Environment of .NET $($r2rDir.Name)"
+		}
+		$notR2R = @(Join-Path (Split-Path $Console) 'bin\dnlib.dll'; Join-Path (Split-Path $Console) 'dnlib.dll') | Where-Object { Test-Path $_ } | Select-Object -First 1
+		if ($notR2R) {
+			$code = & $Console --no-color -l ReadyToRun -t dnlib.DotNet.UTF8String $notR2R 2>&1 | Out-String
+			if ($code -notmatch "isn't ReadyToRun") {
+				$r2rOk = $false
+				Fail "ReadyToRun: dnlib.dll (not ReadyToRun) didn't say it has no native code"
+				$code -split "`n" | Select-Object -First 5 | ForEach-Object { Write-Host "  $_" }
+			}
+		}
+		if ($r2rOk) { Write-Host "  OK: Math.Max, Environment.NewLine and its calls in CoreLib of .NET $($r2rDir.Name), and an assembly without native code" }
 	}
 
 	# Android packages: the reader compiled on its own, test .apk/.aab files written in memory

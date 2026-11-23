@@ -1,3 +1,4 @@
+# Copyright (C) 2026- marinusmaurice@outlook.com
 /R:System
 /R:System.Core
 /R:System.Data
@@ -23,3 +24,5 @@
 /Imports:dnSpy.Contracts.Scripting.Roslyn
 # For TextColor
 /Imports:dnSpy.Contracts.Text
+# For the open assemblies (Modules, SelectedMember, ...)
+/Imports:dnlib.DotNet

@@ -61,7 +61,7 @@ Suggested first, in this order:
 - [x] **S** Assembly diff: compare the resources too, and match renamed members (7.10.0.0: renamed types and members (same signature and code, one candidate) and resources by name, with the entries of `.resources` files; `Test/DiffCases` in `check.ps1`). Not matched yet: a renamed member whose code also changed, a type renamed together with its members.
 - [x] **S** Export to Project: WinForms forms got a raw `Form1.resources` file next to `Form1.cs` instead of `Form1.resx` under it (7.21.1.0: `.resx` files are written from the raw resource data without deserializing, images/icons/sounds as `Resources\` files; `Test/WinFormsResx` in `check.ps1`). Not tried in the WinForms designer.
 - [x] **M** Generate a PDB from decompiled code, to debug third-party DLLs in Visual Studio. (7.22.0.0: `dnSpy.Console --pdb`; 7.23.0.0: assembly explorer context menu → Generate PDB..., click-tested; the PDB's ID matches the DLL, sources embedded, sequence points. Still to do: trying the PDB in Visual Studio's debugger.)
-- [ ] **M** ReadyToRun / NativeAOT viewer: show the precompiled native code next to the IL.
+- [ ] **M** ReadyToRun / NativeAOT viewer: show the precompiled native code next to the IL. (ReadyToRun x64/x86: 7.39.0.0, the ReadyToRun language. Still open: NativeAOT, ARM64 code, generic instantiations, composite images, IL offsets per instruction.)
 - [x] **M** Single-file bundles: open a .NET 6+ single-file `.exe` and browse the DLLs inside (7.1.0.0; .NET Core 3.x to .NET 10 bundles, also compressed ones; references between the bundle's assemblies, eg. a self-contained app's runtime, resolve to the bundle's copies).
 - [x] **S–M** Xamarin/MAUI Android: unpack compressed `XALZ` assemblies from APKs (7.17.0.0: `.apk`/`.aab` open like a NuGet package; `XALZ` (LZ4) assemblies and .NET 6–8 assembly stores (format 1) with `assemblies.manifest`; `Test/AndroidPackageCheck` in `check.ps1`, not click-tested). .NET 9+ stores (format 2/3 in `libassemblies.<abi>.blob.so` / `libassembly-store.so`): 7.21.0.0, tested with a real .NET 10 MAUI app.
 - [x] **S** C# language version picker in the toolbar. (7.25.0.0)
@@ -121,7 +121,7 @@ Suggested first, in this order:
 
 ### Extensibility and scripting
 
-- [ ] **M** Scripting with dnSpy's own API (C# Interactive with access to the open assemblies).
+- [x] **M** Scripting with dnSpy's own API (C# Interactive with access to the open assemblies): 7.39.0.0, `Modules`, `SelectedMember`, `Decompile`, `Refresh` ([SCRIPTING.md](SCRIPTING.md)).
 - [ ] **M** Extension manager: browse, install and update extensions from a GitHub-based list.
 - [x] **S** `dotnet new dnspy-extension` template + docs (7.38.0.0: `templates/dnSpy.Extension`, [EXTENSIONS.md](EXTENSIONS.md); built against each release build in CI. Not on NuGet: installed from the source folder).
 - [ ] **S–M** dnSpy.Console: JSON output, batch export, headless scripts (`--diff`/`--diff-code` are in 7.2.0.0; `--diff --json` is in 7.13.0.0, `--list`/`--list --json` (types and members with visibility and tokens) in 7.14.0.0, [CONSOLE_JSON.md](CONSOLE_JSON.md), tested by `check.ps1`). Batch export and scripts: `--batch file` (one command line per line) and `@file` response files are in 7.18.0.0. Next: scripts that use dnSpy's API (see Scripting below).

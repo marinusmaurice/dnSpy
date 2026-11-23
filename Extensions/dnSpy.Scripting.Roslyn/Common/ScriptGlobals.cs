@@ -1,5 +1,6 @@
 /*
     Copyright (C) 2014-2019 de4dot@gmail.com
+    Copyright (C) 2026- marinusmaurice@outlook.com
 
     This file is part of dnSpy
 
@@ -19,13 +20,21 @@
 
 using System;
 using System.Collections.Generic;
+using System.IO;
+using System.Linq;
 using System.Threading;
 using System.Windows;
 using System.Windows.Threading;
+using dnlib.DotNet;
 using dnSpy.Contracts.App;
+using dnSpy.Contracts.Decompiler;
+using dnSpy.Contracts.Documents;
+using dnSpy.Contracts.Documents.Tabs;
+using dnSpy.Contracts.Documents.TreeView;
 using dnSpy.Contracts.Scripting;
 using dnSpy.Contracts.Scripting.Roslyn;
 using dnSpy.Contracts.Text;
+using dnSpy.Contracts.TreeView;
 
 namespace dnSpy.Scripting.Roslyn.Common {
 	sealed class ScriptGlobals : IScriptGlobals {
@@ -81,6 +90,76 @@ namespace dnSpy.Scripting.Roslyn.Common {
 		public void Break() => System.Diagnostics.Debugger.Break();
 		public T Resolve<T>() where T : class => owner.ServiceLocator.Resolve<T>();
 		public T? TryResolve<T>() where T : class => owner.ServiceLocator.TryResolve<T>();
+
+		// Helpers for the open assemblies. The Assembly Explorer and the tabs are only used on the UI thread; the
+		// script runs on another thread.
+		IEnumerable<ModuleDef> GetModules() {
+			foreach (var document in Resolve<IDocumentTreeView>().DocumentService.GetDocuments()) {
+				foreach (var doc in document.GetAllChildrenAndSelf()) {
+					if (doc.ModuleDef is ModuleDef module)
+						yield return module;
+				}
+			}
+		}
+
+		public IList<ModuleDef> Modules => dispatcher.UI(() => GetModules().Distinct().ToList());
+
+		public ModuleDef? GetModule(string name) {
+			if (name is null)
+				throw new ArgumentNullException(nameof(name));
+			static bool Same(string? a, string b) =>
+				a is not null && (StringComparer.OrdinalIgnoreCase.Equals(a, b) || StringComparer.OrdinalIgnoreCase.Equals(Path.GetFileNameWithoutExtension(a), b));
+			return Modules.FirstOrDefault(m => Same(Path.GetFileName(m.Location), name) || Same(m.Name, name) || Same(m.Assembly?.Name, name));
+		}
+
+		public IMemberDef? SelectedMember => dispatcher.UI(() => (Resolve<IDocumentTreeView>().TreeView.SelectedItem as IMDTokenNode)?.Reference as IMemberDef);
+
+		public ModuleDef? SelectedModule => dispatcher.UI(() => Resolve<IDocumentTreeView>().TreeView.SelectedItem.GetModule());
+
+		public string Decompile(object member, string? language = null) {
+			if (member is null)
+				throw new ArgumentNullException(nameof(member));
+			var decompilerService = Resolve<IDecompilerService>();
+			IDecompiler decompiler;
+			if (language is null)
+				decompiler = decompilerService.Decompiler;
+			else {
+				decompiler = decompilerService.AllDecompilers.FirstOrDefault(a => StringComparer.OrdinalIgnoreCase.Equals(a.UniqueNameUI, language)) ??
+					decompilerService.AllDecompilers.FirstOrDefault(a => StringComparer.OrdinalIgnoreCase.Equals(a.GenericNameUI, language)) ??
+					throw new ArgumentException("Unknown language: " + language + ". Languages: " + string.Join(", ", decompilerService.AllDecompilers.Select(a => a.UniqueNameUI)), nameof(language));
+			}
+			var output = new StringBuilderDecompilerOutput();
+			var ctx = new DecompilationContext { CancellationToken = token };
+			switch (member) {
+			case MethodDef method: decompiler.Decompile(method, output, ctx); break;
+			case FieldDef field: decompiler.Decompile(field, output, ctx); break;
+			case PropertyDef property: decompiler.Decompile(property, output, ctx); break;
+			case EventDef ev: decompiler.Decompile(ev, output, ctx); break;
+			case TypeDef type: decompiler.Decompile(type, output, ctx); break;
+			case ModuleDef module: decompiler.Decompile(module, output, ctx); break;
+			case AssemblyDef asm: decompiler.Decompile(asm, output, ctx); break;
+			default: throw new ArgumentException("Can't decompile a " + member.GetType().FullName + ": use a type, method, field, property, event, module or assembly", nameof(member));
+			}
+			return output.ToString();
+		}
+
+		public void Refresh() => dispatcher.UI(() => {
+			var documentTreeView = Resolve<IDocumentTreeView>();
+			foreach (var node in documentTreeView.GetAllCreatedDocumentNodes())
+				RefreshUI(node.TreeNode);
+			// Clears the decompiled code of the documents and decompiles their open tabs again
+			var documentTabService = Resolve<IDocumentTabService>();
+			foreach (var document in documentTreeView.DocumentService.GetDocuments())
+				documentTabService.RefreshModifiedDocument(document);
+		});
+
+		static void RefreshUI(ITreeNode treeNode) {
+			treeNode.RefreshUI();
+			if (treeNode.LazyLoading)
+				return;
+			foreach (var child in treeNode.Children)
+				RefreshUI(child);
+		}
 
 		public void Print(CachedWriter cw, Exception ex, object? color) => owner.Print(this, cw, color, ex);
 		public void Print(CachedWriter cw, object value, object? color) => owner.Print(this, cw, color, cw.PrintOptions, value);
