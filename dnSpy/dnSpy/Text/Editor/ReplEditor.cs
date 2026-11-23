@@ -1,5 +1,6 @@
 /*
     Copyright (C) 2014-2019 de4dot@gmail.com
+    Copyright (C) 2026- marinusmaurice@outlook.com
 
     This file is part of dnSpy
 
@@ -751,6 +752,37 @@ namespace dnSpy.Text.Editor {
 				offs = eol;
 				prompt = SecondaryPrompt;
 			}
+		}
+
+		public string? GetAllCodeAtBufferOffsets(ITextSnapshot snapshot) {
+			if (snapshot != wpfTextView.TextBuffer.CurrentSnapshot)
+				return null;
+			var chars = new char[snapshot.Length];
+			for (int i = 0; i < chars.Length; i++)
+				chars[i] = ' ';
+			foreach (var line in snapshot.Lines) {
+				int end = line.EndIncludingLineBreak.Position;
+				for (int i = line.End.Position; i < end; i++)
+					chars[i] = snapshot[i];
+			}
+			foreach (var buf in AllSubBuffers) {
+				if (buf.Kind != ReplBufferKind.Code || buf.Span.Length == 0)
+					continue;
+				var prompt = PrimaryPrompt;
+				int offs = buf.Span.Start;
+				while (offs < buf.Span.End) {
+					var line = snapshot.GetLineFromPosition(offs);
+					int start = line.Start.Position + prompt.Length;
+					int end = Math.Min(line.End.Position, buf.Span.End);
+					for (int i = start; i < end; i++)
+						chars[i] = snapshot[i];
+					offs = line.EndIncludingLineBreak.Position;
+					if (offs == line.End.Position)
+						break;
+					prompt = SecondaryPrompt;
+				}
+			}
+			return new string(chars);
 		}
 
 		public bool CanCopyCode => !wpfTextView.Selection.IsEmpty;

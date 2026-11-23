@@ -1,5 +1,6 @@
 /*
     Copyright (C) 2014-2019 de4dot@gmail.com
+    Copyright (C) 2026- marinusmaurice@outlook.com
 
     This file is part of dnSpy
 
@@ -47,6 +48,8 @@ namespace dnSpy.Scripting.Roslyn.Common {
 
 		protected ScriptContent(IReplEditorProvider replEditorProvider, ReplEditorOptions replOpts, ReplSettings replSettings, IServiceLocator serviceLocator, string appearanceCategory) {
 			replOpts.Roles.Add(PredefinedDsTextViewRoles.RoslynRepl);
+			// Roslyn completion, signature help and quick info (ScriptDocumentProvider)
+			replOpts.Roles.Add(PredefinedDsTextViewRoles.RoslynCodeEditor);
 			replEditor = replEditorProvider.Create(replOpts);
 			replEditor.TextView.Options.SetOptionValue(DefaultWpfViewOptions.AppearanceCategory, appearanceCategory);
 			scriptControl = new ScriptControl();

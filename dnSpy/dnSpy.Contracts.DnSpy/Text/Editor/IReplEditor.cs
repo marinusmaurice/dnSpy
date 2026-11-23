@@ -1,5 +1,6 @@
 /*
     Copyright (C) 2014-2019 de4dot@gmail.com
+    Copyright (C) 2026- marinusmaurice@outlook.com
 
     This file is part of dnSpy
 
@@ -22,6 +23,7 @@ using System.Collections.Generic;
 using dnSpy.Contracts.Command;
 using dnSpy.Contracts.Controls;
 using dnSpy.Contracts.Text.Operations;
+using Microsoft.VisualStudio.Text;
 
 namespace dnSpy.Contracts.Text.Editor {
 	/// <summary>
@@ -99,6 +101,16 @@ namespace dnSpy.Contracts.Text.Editor {
 		/// </summary>
 		/// <returns></returns>
 		string GetCode();
+
+		/// <summary>
+		/// Gets the code of all commands, the one being typed included, at the same offsets as in
+		/// <paramref name="snapshot"/>: output and prompts are replaced by spaces and line breaks are kept.
+		/// Returns null if <paramref name="snapshot"/> isn't the current snapshot. Used to give the
+		/// window's text to Roslyn (completion) without moving any position.
+		/// </summary>
+		/// <param name="snapshot">Snapshot, must be the text buffer's current snapshot</param>
+		/// <returns></returns>
+		string? GetAllCodeAtBufferOffsets(ITextSnapshot snapshot);
 
 		/// <summary>
 		/// Adds script output. This method can be called from any thread

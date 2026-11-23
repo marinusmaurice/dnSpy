@@ -112,6 +112,7 @@ The version in brackets is the release that added it. Details are in [CHANGELOG.
 
 - **`dotnet new dnspy-extension`**: a project template for your own extension; `dotnet run` starts dnSpy with it loaded. See [docs/EXTENSIONS.md](docs/EXTENSIONS.md). *(7.38)*
 - **Scripts on the open assemblies** in C# Interactive: `Modules`, `SelectedMember`, `Decompile(...)`, `Refresh()`. See [docs/SCRIPTING.md](docs/SCRIPTING.md). *(7.39)*
+- **Code completion in C# Interactive**: member lists, parameter help and tooltips while you type a script. *(7.40)*
 
 ### Updates and releases
 

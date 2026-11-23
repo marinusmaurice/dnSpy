@@ -7,6 +7,18 @@ What changed in each release of this fork, newest first. The release workflow pu
 
 Each section starts with a short summary, then **New Features** (new things you can do), **Enhancements** (existing things that work better) and **Bug Fixes**, with a link to the commit for each item. Technical details are in [All changes in detail](docs/CHANGES.md#all-changes-in-detail) and in [docs/MODERNIZATION_PLAN.md](docs/MODERNIZATION_PLAN.md).
 
+## 7.40.0.0
+
+Code completion in C# Interactive. Also has everything in 7.39.0.0 and earlier.
+
+### New Features
+
+- **Code completion in C# Interactive** (and VB Interactive): a member list after `.` and Ctrl+Space, parameter help after `(`, and a tooltip when the mouse is over a name. It knows the script helpers (`Modules`, `SelectedMember`, ...), dnlib's types and the variables of the commands run before. Tab or Enter picks the selected item; Enter again runs the command.
+
+### Enhancements
+
+- Code completion (also in Edit Method / Edit Class): the list closes when a character that can't be in a name is typed and nothing is selected (eg. after `[`), so the next `.` opens a new one. Where a new name is typed (eg. after `var`), the best match is only highlighted, so typing a new name doesn't replace it.
+
 ## 7.39.0.0
 
 See the precompiled native code of ReadyToRun assemblies, and scripts that work on the open assemblies. Also has everything in 7.38.0.0 and earlier.

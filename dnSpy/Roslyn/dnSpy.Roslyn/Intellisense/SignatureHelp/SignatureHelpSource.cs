@@ -1,5 +1,6 @@
 /*
     Copyright (C) 2014-2019 de4dot@gmail.com
+    Copyright (C) 2026- marinusmaurice@outlook.com
 
     This file is part of dnSpy
 
@@ -29,6 +30,7 @@ namespace dnSpy.Roslyn.Intellisense.SignatureHelp {
 	[Export(typeof(ISignatureHelpSourceProvider))]
 	[Name(PredefinedDsSignatureHelpSourceProviders.Roslyn)]
 	[ContentType(ContentTypes.RoslynCode)]
+	[ContentType(ContentTypes.ReplRoslyn)]
 	sealed class SignatureHelpSourceProvider : ISignatureHelpSourceProvider {
 		public ISignatureHelpSource TryCreateSignatureHelpSource(ITextBuffer textBuffer) => new SignatureHelpSource();
 	}

@@ -1,5 +1,6 @@
 /*
     Copyright (C) 2014-2019 de4dot@gmail.com
+    Copyright (C) 2026- marinusmaurice@outlook.com
 
     This file is part of dnSpy
 
@@ -34,6 +35,7 @@ namespace dnSpy.Roslyn.Intellisense.Completions {
 	[Export(typeof(ICompletionSourceProvider))]
 	[Name(PredefinedDsCompletionSourceProviders.Roslyn)]
 	[ContentType(ContentTypes.RoslynCode)]
+	[ContentType(ContentTypes.ReplRoslyn)]
 	sealed class CompletionSourceProvider : ICompletionSourceProvider {
 		readonly IMruCompletionService mruCompletionService;
 

@@ -1,5 +1,6 @@
 /*
     Copyright (C) 2014-2019 de4dot@gmail.com
+    Copyright (C) 2026- marinusmaurice@outlook.com
 
     This file is part of dnSpy
 
@@ -166,6 +167,7 @@ namespace dnSpy.Scripting.Roslyn.Common {
 			this.serviceLocator = serviceLocator;
 
 			ReplEditor.TextView.Options.OptionChanged += Options_OptionChanged;
+			ReplEditor.TextView.TextBuffer.Properties[typeof(IRoslynDocumentProvider)] = new ScriptDocumentProvider(ReplEditor, GetCompletionCompilation);
 
 			var themeClassificationTypeService = serviceLocator.Resolve<IThemeClassificationTypeService>();
 			roslynClassificationTypes = RoslynClassificationTypes.GetClassificationTypeInstance(themeClassificationTypeService);
@@ -186,6 +188,17 @@ namespace dnSpy.Scripting.Roslyn.Common {
 				WordWrapStyle = replSettings.WordWrapStyle;
 			else if (e.PropertyName == nameof(replSettings.ShowLineNumbers))
 				ShowLineNumbers = replSettings.ShowLineNumbers;
+		}
+
+		// The script's compilation for completion (ScriptDocumentProvider), and a key that changes when the script is reset
+		(object key, Compilation compilation)? GetCompletionCompilation() {
+			var state = execState;
+			if (state is null || state.IsInitializing)
+				return null;
+			var scriptState = state.ScriptState;
+			if (scriptState is null)
+				return null;
+			return (state, scriptState.Script.GetCompilation());
 		}
 
 		protected abstract string Logo { get; }

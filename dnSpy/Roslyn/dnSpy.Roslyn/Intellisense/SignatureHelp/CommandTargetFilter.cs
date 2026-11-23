@@ -1,5 +1,6 @@
 /*
     Copyright (C) 2014-2019 de4dot@gmail.com
+    Copyright (C) 2026- marinusmaurice@outlook.com
 
     This file is part of dnSpy
 
@@ -57,7 +58,7 @@ namespace dnSpy.Roslyn.Intellisense.SignatureHelp {
 			textView.Caret.PositionChanged += Caret_PositionChanged;
 		}
 
-		bool IsSupportedContentType => textView.TextDataModel.ContentType.IsOfType(ContentTypes.RoslynCode);
+		bool IsSupportedContentType => textView.TextDataModel.ContentType.IsOfType(ContentTypes.RoslynCode) || textView.TextDataModel.ContentType.IsOfType(ContentTypes.ReplRoslyn);
 
 		public CommandTargetStatus CanExecute(Guid group, int cmdId) {
 			if (!IsSupportedContentType)

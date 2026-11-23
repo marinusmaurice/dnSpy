@@ -16,6 +16,8 @@
 
 `dnlib.DotNet` is imported, so `TypeDef`, `MethodDef` and so on can be used as they are. `Print(...)` writes text without quotes; a value that's not printed is shown as C# (eg. a string with `\r\n`).
 
+Typing gets code completion: a member list after `.` (or Ctrl+Space), parameter help after `(`, and a tooltip when the mouse is over a name. It knows the helpers above, dnlib's types and the variables of the commands run before. Tab or Enter picks the selected item; Enter again runs the command. *(7.40)*
+
 ## Examples
 
 Rename every method whose name starts with `a_` in the selected type:

@@ -1,5 +1,6 @@
 /*
     Copyright (C) 2014-2019 de4dot@gmail.com
+    Copyright (C) 2026- marinusmaurice@outlook.com
 
     This file is part of dnSpy
 
@@ -76,8 +77,14 @@ namespace dnSpy.Roslyn.Intellisense.Completions {
 			var completions = new List<Completion>(completionList.Items.Length);
 			var remainingFilters = new List<(RoslynIntellisenseFilter filter, int index)>(RoslynIntellisenseFilters.CreateFilters().Select((a, index) => (a, index)));
 			var filters = new List<(RoslynIntellisenseFilter filter, int index)>(remainingFilters.Count);
+			bool hasDocumentProvider = HasDocumentProvider(applicableTo.TextBuffer);
 			foreach (var item in completionList.Items) {
 				if (string.IsNullOrEmpty(item.DisplayText))
+					continue;
+				// Types and extension methods of namespaces that aren't imported (the namespace is the inline description)
+				// add a using directive at the top of the document when committed. A buffer with its own document
+				// (eg. C# Interactive) has other text (output, earlier commands) there, so leave them out.
+				if (hasDocumentProvider && !string.IsNullOrEmpty(item.InlineDescription))
 					continue;
 				for (int i = remainingFilters.Count - 1; i >= 0; i--) {
 					var kv = remainingFilters[i];
@@ -93,7 +100,22 @@ namespace dnSpy.Roslyn.Intellisense.Completions {
 			}
 			filters.Sort((a, b) => a.index - b.index);
 			var completionBuilders = new List<Completion>();
-			return new RoslynCompletionSet(mruCompletionService, completionService, textView, moniker, displayName, applicableTo, completions, completionBuilders, filters.Select(a => a.filter).ToArray());
+			return new RoslynCompletionSet(mruCompletionService, completionService, textView, moniker, displayName, applicableTo, completions, completionBuilders, filters.Select(a => a.filter).ToArray()) {
+				isSuggestionMode = completionList.SuggestionModeItem is not null,
+			};
+		}
+
+		static bool HasDocumentProvider(ITextBuffer buffer) => buffer.Properties.ContainsProperty(typeof(IRoslynDocumentProvider));
+
+		// Roslyn's suggestion mode: a new name can be typed here (eg. after 'var' or a lambda parameter), so the best
+		// match is only soft-selected: typing doesn't commit it, Tab and the arrow keys still do (as in Visual Studio)
+		bool isSuggestionMode;
+
+		protected override CompletionSelectionStatus GetBestMatch() {
+			var status = base.GetBestMatch();
+			if (isSuggestionMode && status.IsSelected)
+				return new CompletionSelectionStatus(status.Completion, isSelected: false, isUnique: status.IsUnique);
+			return status;
 		}
 
 		protected override int GetMruIndex(Completion completion) => mruCompletionService.GetMruIndex(completion.DisplayText);
@@ -146,6 +168,10 @@ matched:
 			var change = completionService.GetChangeAsync(info.Value.Document, completion.CompletionItem, commitCharacter: null).GetAwaiter().GetResult();
 			var buffer = ApplicableTo.TextBuffer;
 			var currentSnapshot = buffer.CurrentSnapshot;
+			if (HasDocumentProvider(buffer)) {
+				CommitWithDocumentProvider(completion, change, info.Value, currentSnapshot);
+				return;
+			}
 			using (var ed = buffer.CreateEdit()) {
 				var textChange = change.TextChange;
 				Debug.Assert(textChange.Span.End <= originalSnapshot.Length);
@@ -159,6 +185,38 @@ matched:
 			if (change.NewPosition is not null) {
 				var snapshot = buffer.CurrentSnapshot;
 				Debug.Assert(change.NewPosition.Value <= snapshot.Length);
+				if (change.NewPosition.Value <= snapshot.Length) {
+					textView.Caret.MoveTo(new SnapshotPoint(snapshot, change.NewPosition.Value));
+					textView.Caret.EnsureVisible();
+				}
+			}
+		}
+
+		// The change's positions are in the snapshot the completion list was created from (originalSnapshot), as in Commit().
+		// The document (IRoslynDocumentProvider) doesn't have the buffer's text everywhere (eg. C# Interactive's output
+		// and prompts are spaces in it): if the change replaces text that's different in the document, only replace
+		// the typed word with the completion's text.
+		void CommitWithDocumentProvider(RoslynCompletion completion, CompletionChange change, CompletionInfo info, ITextSnapshot currentSnapshot) {
+			var textChange = change.TextChange;
+			var buffer = currentSnapshot.TextBuffer;
+			if (textChange.Span.End > originalSnapshot.Length)
+				return;
+			var span = new SnapshotSpan(originalSnapshot, textChange.Span.ToSpan()).TranslateTo(currentSnapshot, SpanTrackingMode.EdgeInclusive).Span;
+			bool sameText = span.End <= info.SourceText.Length && info.SourceText.ToString(span.ToTextSpan()) == currentSnapshot.GetText(span);
+			using (var ed = buffer.CreateEdit()) {
+				if (sameText) {
+					if (!ed.Replace(span, textChange.NewText))
+						return;
+				}
+				else {
+					var text = completion.InsertionText ?? completion.DisplayText;
+					if (!ed.Replace(ApplicableTo.GetSpan(currentSnapshot).Span, text))
+						return;
+				}
+				ed.Apply();
+			}
+			if (sameText && change.NewPosition is not null) {
+				var snapshot = buffer.CurrentSnapshot;
 				if (change.NewPosition.Value <= snapshot.Length) {
 					textView.Caret.MoveTo(new SnapshotPoint(snapshot, change.NewPosition.Value));
 					textView.Caret.EnsureVisible();

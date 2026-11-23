@@ -1,5 +1,6 @@
 /*
     Copyright (C) 2014-2019 de4dot@gmail.com
+    Copyright (C) 2026- marinusmaurice@outlook.com
 
     This file is part of dnSpy
 
@@ -71,7 +72,7 @@ namespace dnSpy.Roslyn.Intellisense.Completions {
 			return TryGetRoslynCompletionService()?.GetRules().DefaultEnterKeyRule;
 		}
 
-		bool IsSupportedContentType => textView.TextDataModel.ContentType.IsOfType(ContentTypes.RoslynCode);
+		bool IsSupportedContentType => textView.TextDataModel.ContentType.IsOfType(ContentTypes.RoslynCode) || textView.TextDataModel.ContentType.IsOfType(ContentTypes.ReplRoslyn);
 
 		public CommandTargetStatus CanExecute(Guid group, int cmdId) {
 			if (!IsSupportedContentType)
@@ -168,6 +169,11 @@ namespace dnSpy.Roslyn.Intellisense.Completions {
 								break;
 							TryCommitCharacter(s[0]);
 						}
+						else if (HasSession && args is string s2 && s2.Length == 1 && !IsIdentifierChar(s2[0])) {
+							// Nothing is selected (eg. the list after '['): close it so the next character
+							// (eg. '.') can start a new list, as in Visual Studio
+							completionSession.Dismiss();
+						}
 						break;
 					}
 				}
@@ -227,6 +233,8 @@ namespace dnSpy.Roslyn.Intellisense.Completions {
 		}
 
 		bool HasSession => completionSession is not null;
+
+		static bool IsIdentifierChar(char c) => char.IsLetterOrDigit(c) || c == '_';
 
 		void StartSession(CompletionInfo? info = null, CompletionTrigger? completionTrigger = null) {
 			if (HasSession)

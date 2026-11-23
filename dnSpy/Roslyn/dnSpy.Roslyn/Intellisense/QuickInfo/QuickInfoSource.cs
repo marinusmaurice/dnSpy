@@ -1,5 +1,6 @@
 /*
     Copyright (C) 2014-2019 de4dot@gmail.com
+    Copyright (C) 2026- marinusmaurice@outlook.com
 
     This file is part of dnSpy
 
@@ -32,6 +33,7 @@ namespace dnSpy.Roslyn.Intellisense.QuickInfo {
 	[Export(typeof(IQuickInfoSourceProvider))]
 	[Name(PredefinedDsQuickInfoSourceProviders.Roslyn)]
 	[ContentType(ContentTypes.RoslynCode)]
+	[ContentType(ContentTypes.ReplRoslyn)]
 	sealed class QuickInfoSourceProvider : IQuickInfoSourceProvider {
 		readonly IQuickInfoContentCreatorProvider quickInfoContentCreatorProvider;
 		readonly IQuickInfoTriggerServiceProvider quickInfoTriggerServiceProvider;

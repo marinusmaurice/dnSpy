@@ -1,5 +1,6 @@
 /*
     Copyright (C) 2014-2019 de4dot@gmail.com
+    Copyright (C) 2026- marinusmaurice@outlook.com
 
     This file is part of dnSpy
 
@@ -48,6 +49,9 @@ namespace dnSpy.Roslyn.Intellisense.Completions {
 			var completionService = CompletionService.GetService(document);
 			if (completionService is null)
 				return null;
+			// The document's text if it has its own (IRoslynDocumentProvider), else the snapshot's
+			if (document.TryGetText(out var documentText))
+				sourceText = documentText;
 			return new CompletionInfo(completionService, document, sourceText, snapshot);
 		}
 	}

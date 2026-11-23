@@ -1,5 +1,6 @@
 /*
     Copyright (C) 2014-2019 de4dot@gmail.com
+    Copyright (C) 2026- marinusmaurice@outlook.com
 
     This file is part of dnSpy
 
@@ -121,6 +122,10 @@ namespace dnSpy.Roslyn.Text {
 		/// <param name="text">Source text</param>
 		/// <returns></returns>
 		public static Document? GetOpenDocumentInCurrentContextWithChanges(this SourceText text) {
+			// A buffer without a workspace, eg. the C# Interactive window, can give its own document
+			if (text.TryFindEditorSnapshot() is ITextSnapshot snapshot && snapshot.TextBuffer.Properties.TryGetProperty(typeof(IRoslynDocumentProvider), out IRoslynDocumentProvider provider))
+				return provider.GetDocument(snapshot);
+
 			// This internal Roslyn method was copied from roslyn/src/Workspaces/Core/Portable/Workspace/TextExtensions.cs
 			if (Workspace.TryGetWorkspace(text.Container, out var workspace)) {
 				var id = workspace.GetDocumentIdInCurrentContext(text.Container);
